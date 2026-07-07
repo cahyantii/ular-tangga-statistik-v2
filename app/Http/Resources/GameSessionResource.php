@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Http\Resources;
+
+use App\Enums\GameStatus;
+use App\Repositories\Game\GameSettingsRepository;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class GameSessionResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'mode' => $this->mode->value,
+            'room_id' => $this->room_id,
+            'status' => $this->status->value,
+            'total_turn' => $this->total_turn,
+            'current_turn_game_player_id' => $this->current_turn_game_player_id,
+            'winner_game_player_id' => $this->winner_game_player_id,
+            'win_reason' => $this->win_reason?->value,
+            'duration_seconds' => $this->duration_seconds,
+            'active_question_expires_at' => $this->active_question_expires_at?->toIso8601String(),
+            'active_question' => $this->when(
+                $this->active_question_id !== null,
+                fn () => new SoalPublicResource($this->activeQuestion)
+            ),
+            // Tahap 12c: batas waktu reconnect (untuk countdown 60 detik di UI,
+            // Stage 4 keputusan final) — dihitung dari updated_at saat status
+            // baru saja dijadikan Paused (lihat GameSessionService::pauseForDisconnect()),
+            // bukan kolom baru di database.
+            'reconnect_deadline_at' => $this->when(
+                $this->status === GameStatus::Paused,
+                fn () => $this->updated_at
+                    ->copy()
+                    ->addSeconds(app(GameSettingsRepository::class)->getInt('reconnect_timeout_seconds'))
+                    ->toIso8601String()
+            ),
+            'players' => GamePlayerResource::collection($this->whenLoaded('players')),
+        ];
+    }
+}
