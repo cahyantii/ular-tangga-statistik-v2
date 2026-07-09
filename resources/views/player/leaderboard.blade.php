@@ -1,20 +1,20 @@
 <x-player-layout>
     <x-slot name="header">
-        <h2 class="text-xl font-semibold text-slate-800">Leaderboard</h2>
+        <h2 class="text-xl font-bold text-slate-800">Leaderboard</h2>
     </x-slot>
 
-    <div class="mb-6 flex gap-2">
+    <div class="mb-6 flex flex-wrap gap-2">
         @foreach (['global' => 'Global', 'robot' => 'Vs Robot', 'multiplayer' => 'Multiplayer'] as $key => $label)
             <a href="{{ route('leaderboard', ['tab' => $key]) }}"
-               class="rounded-lg px-4 py-2 text-sm font-medium {{ $tab === $key ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50' }}">
+               class="rounded-xl px-4 py-2 text-sm font-semibold transition-all duration-200 {{ $tab === $key ? 'bg-primary-500 text-white shadow-soft' : 'bg-white text-slate-600 hover:bg-slate-50' }}">
                 {{ $label }}
             </a>
         @endforeach
     </div>
 
-    <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+    <div class="overflow-x-auto rounded-3xl bg-white shadow-sm">
         <table class="w-full text-left text-sm">
-            <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                     <th class="px-4 py-3">#</th>
                     <th class="px-4 py-3">Nama</th>
@@ -25,12 +25,18 @@
             </thead>
             <tbody class="divide-y divide-slate-100">
                 @forelse ($peringkat as $index => $row)
-                    <tr class="{{ $row['user_id'] === $currentUserId ? 'bg-emerald-50' : '' }}">
-                        <td class="px-4 py-3 font-semibold text-slate-500">{{ $index + 1 }}</td>
+                    <tr class="transition-colors {{ $row['user_id'] === $currentUserId ? 'bg-primary-50' : 'hover:bg-slate-50' }}">
+                        <td class="px-4 py-3 font-semibold text-slate-500">
+                            @if ($index < 3)
+                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full {{ ['bg-accent-500 text-white', 'bg-slate-300 text-white', 'bg-accent-700 text-white'][$index] }}">{{ $index + 1 }}</span>
+                            @else
+                                {{ $index + 1 }}
+                            @endif
+                        </td>
                         <td class="px-4 py-3 font-medium text-slate-800">
                             {{ $row['nama'] }}{{ $row['user_id'] === $currentUserId ? ' (Anda)' : '' }}
                         </td>
-                        <td class="px-4 py-3 text-right font-semibold text-emerald-700">{{ $row['total_skor'] }}</td>
+                        <td class="px-4 py-3 text-right font-semibold text-primary-600">{{ $row['total_skor'] }}</td>
                         <td class="px-4 py-3 text-right text-slate-600">{{ $row['total_menang'] }}</td>
                         <td class="px-4 py-3 text-right text-slate-600">{{ $row['total_main'] }}</td>
                     </tr>

@@ -1,14 +1,19 @@
-import { renderBoardGrid, renderPawns } from './board-renderer';
-
 /**
- * Kontroler gameplay Vs Robot & Multiplayer (Tahap 10c/12c). Frontend TIDAK
- * menyimpan state otoritatif apa pun — setiap aksi memanggil server, dan
- * tampilan hanya merender ulang respons/​state server (Tahap 2/5, keputusan
- * final). Animasi (dadu, dsb.) selalu terjadi SETELAH respons server
- * diterima. Untuk Multiplayer, broadcast Reverb (Tahap 12b) hanya dipakai
- * sebagai SINYAL "ada yang berubah" — begitu diterima, kita re-fetch state
- * lewat endpoint yang sama dengan refresh-recovery, bukan merender langsung
- * dari payload broadcast (yang sengaja minim, lihat memori Tahap 12b).
+ * Kontroler gameplay Vs Robot & Multiplayer — presentasi visual (papan modern,
+ * animasi dadu 3D, animasi pion berjalan, panel pemain/robot, log, dsb).
+ *
+ * Arsitektur data TIDAK berubah dari versi sebelumnya (keputusan final,
+ * dipertahankan): frontend tidak pernah menyimpan state otoritatif, setiap
+ * aksi memanggil server, dan tampilan hanya merender ulang respons/state
+ * server. Untuk Multiplayer, broadcast Reverb hanya dipakai sebagai sinyal
+ * "ada yang berubah" — begitu diterima, kita re-fetch state lewat endpoint
+ * yang sama dengan refresh-recovery, bukan merender langsung dari payload
+ * broadcast (yang sengaja minim).
+ *
+ * Catatan: fungsi layout grid (computeCellPosition) sengaja diduplikasi di
+ * sini (bukan diimpor dari board-renderer.js) supaya modul ini tidak
+ * tersambung ke Editor Board Admin — mengubah animasi gameplay tidak boleh
+ * berisiko terhadap board-renderer.js yang dipakai admin.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('game-play-data');
@@ -16,96 +21,346 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    const board = JSON.parse(root.dataset.board);
     const stateUrl = root.dataset.stateUrl;
     const rollUrl = root.dataset.rollUrl;
     const answerUrl = root.dataset.answerUrl;
     const leaveUrl = root.dataset.leaveUrl;
     const heartbeatUrl = root.dataset.heartbeatUrl;
     const currentUserId = parseInt(root.dataset.currentUserId, 10);
+    const jumlahPetak = parseInt(root.dataset.jumlahPetak, 10);
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
 
-    const boardGrid = document.getElementById('board-grid');
+    const boardEl = document.getElementById('game-board');
+    const pawnLayer = document.getElementById('pawn-layer');
+    const jumlahKolom = parseInt(boardEl.dataset.jumlahKolom, 10);
+    const totalRows = parseInt(boardEl.dataset.totalRows, 10);
+
     const rollButton = document.getElementById('roll-dice-button');
-    const diceValueEl = document.getElementById('dice-value');
+    const diceCube = document.getElementById('dice-3d');
+    const diceGlowWrap = document.getElementById('dice-glow-wrap');
+    const turnAvatarEl = document.getElementById('turn-avatar');
     const turnIndicatorEl = document.getElementById('turn-indicator');
+    const turnSubtextEl = document.getElementById('turn-subtext');
     const toastEl = document.getElementById('game-toast');
-    const finishedBannerEl = document.getElementById('game-finished-banner');
     const pausedBannerEl = document.getElementById('game-paused-banner');
     const pausedTimerEl = document.getElementById('game-paused-timer');
-    const playerListEl = document.getElementById('player-list');
+    const playerPanelListEl = document.getElementById('player-panel-list');
+    const logListEl = document.getElementById('game-log-list');
+    const logEmptyEl = document.getElementById('game-log-empty');
 
-    const questionModal = document.getElementById('question-modal');
+    const progressPosisiEl = document.getElementById('progress-posisi');
+    const progressTotalEl = document.getElementById('progress-total');
+    const progressPercentEl = document.getElementById('progress-percent');
+    const progressBarEl = document.getElementById('progress-bar');
+    progressTotalEl.textContent = jumlahPetak;
+
     const questionTextEl = document.getElementById('question-text');
     const questionOptionsEl = document.getElementById('question-options');
     const questionTimerEl = document.getElementById('question-timer');
     const questionFeedbackEl = document.getElementById('question-feedback');
 
+    const playerCardTemplate = document.getElementById('player-card-template');
+    const robotCardTemplate = document.getElementById('robot-card-template');
+
     let myGamePlayerId = null;
     let latestSession = null;
+    let knownPositions = new Map(); // game_player_id -> posisi_pion (untuk animasi diff)
     let questionCountdownInterval = null;
     let pausedCountdownInterval = null;
     let heartbeatIntervalId = null;
     let presenceChannel = null;
     let leaveConfirmed = false;
+    let diceRotation = { x: 0, y: 0 };
+    let animationChain = Promise.resolve(); // memastikan animasi pion tidak tumpang tindih
 
-    renderBoardGrid(boardGrid, {
-        jumlahKolom: board.jumlah_kolom,
-        jumlahPetak: board.jumlah_petak,
-        petak: board.petak,
-        konektor: board.konektor,
-    });
+    // ---------------------------------------------------------------
+    // Util
+    // ---------------------------------------------------------------
+    function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function initials(name) {
+        return (name || '?').trim().charAt(0).toUpperCase();
+    }
+
+    function computeCellPosition(posisi) {
+        const rowIndexFromBottom = Math.floor((posisi - 1) / jumlahKolom);
+        const posInRow = (posisi - 1) % jumlahKolom;
+        const isEvenRowFromBottom = rowIndexFromBottom % 2 === 0;
+        const colIndex = isEvenRowFromBottom ? posInRow : jumlahKolom - 1 - posInRow;
+
+        return {
+            row: totalRows - rowIndexFromBottom,
+            col: colIndex + 1,
+        };
+    }
+
+    function cellCenterPercent(posisi) {
+        const clamped = Math.max(1, Math.min(posisi, jumlahPetak));
+        const { row, col } = computeCellPosition(clamped);
+
+        return {
+            left: ((col - 0.5) / jumlahKolom) * 100,
+            top: ((row - 0.5) / totalRows) * 100,
+        };
+    }
 
     function showToast(message) {
         toastEl.textContent = message;
         toastEl.classList.remove('hidden');
-        setTimeout(() => toastEl.classList.add('hidden'), 4000);
+        toastEl.classList.add('flex');
+        clearTimeout(showToast._t);
+        showToast._t = setTimeout(() => {
+            toastEl.classList.add('hidden');
+            toastEl.classList.remove('flex');
+        }, 3800);
     }
 
-    /**
-     * Giliran robot (Tahap 11) sudah selesai dieksekusi server SEBELUM respons
-     * ini diterima (sinkron, satu transaksi) — di sini kita hanya menyusun
-     * ulang urutan kejadiannya sebagai toast berjeda, murni presentasi.
-     */
-    function describeRobotTurn(turn) {
-        const dadu = `Robot: dadu ${turn.nilai_dadu ?? '-'}`;
+    // ---------------------------------------------------------------
+    // Log Permainan — dibangun dari respons aksi nyata (bukan data karangan),
+    // lihat catatan di resources/views/components/game/log-card.blade.php
+    // ---------------------------------------------------------------
+    const LOG_ICONS = {
+        dice: { icon: '\u{1F3B2}', color: 'text-primary-600' },
+        correct: { icon: '✅', color: 'text-secondary-600' },
+        wrong: { icon: '❌', color: 'text-rose-600' },
+        ladder: { icon: '\u{1FA9C}', color: 'text-secondary-600' },
+        snake: { icon: '\u{1F40D}', color: 'text-rose-600' },
+        bonus: { icon: '⭐', color: 'text-accent-600' },
+        penalti: { icon: '⚠️', color: 'text-rose-600' },
+        mystery: { icon: '❓', color: 'text-violet-600' },
+        info: { icon: '\u{1F514}', color: 'text-slate-500' },
+        finish: { icon: '\u{1F3C6}', color: 'text-accent-600' },
+    };
 
-        switch (turn.type) {
-            case 'blocked':
-                return `${dadu}, langkah terlalu jauh (giliran dilewati).`;
-            case 'bonus':
-                return `${dadu}, kena petak Bonus.`;
-            case 'penalti':
-                return `${dadu}, kena petak Penalti.`;
-            case 'mystery':
-                return `${dadu}, kena petak Mystery.`;
-            case 'soal':
-                return `${dadu}, menjawab soal (${turn.benar ? 'benar' : 'salah'}).`;
-            case 'finished':
-                return `${dadu}, robot mencapai Finish!`;
-            default:
-                return `${dadu}.`;
+    function pushLog(kind, message) {
+        const meta = LOG_ICONS[kind] ?? LOG_ICONS.info;
+        logEmptyEl?.remove();
+
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-2 rounded-lg px-2 py-1.5 animate-fade-in-up';
+        li.innerHTML = `
+            <span class="shrink-0">${meta.icon}</span>
+            <span class="font-medium ${meta.color}">${message}</span>
+        `;
+        logListEl.insertBefore(li, logListEl.firstChild);
+
+        while (logListEl.children.length > 30) {
+            logListEl.removeChild(logListEl.lastChild);
         }
     }
 
-    function queueRobotTurnToasts(robotTurns) {
-        (robotTurns ?? []).forEach((turn, index) => {
-            setTimeout(() => showToast(describeRobotTurn(turn)), (index + 1) * 1800);
+    function playerLabel(player) {
+        if (!player) return '?';
+        if (player.is_robot) return 'Robot';
+        return (!player.is_robot && myGamePlayerId === player.id) ? 'Anda' : player.nama;
+    }
+
+    function logTurnResult(player, result) {
+        const nama = playerLabel(player);
+
+        if (result.nilai_dadu !== undefined && result.nilai_dadu !== null) {
+            pushLog('dice', `${nama} melempar dadu ${result.nilai_dadu}`);
+        }
+
+        switch (result.type) {
+            case 'blocked':
+                pushLog('info', `${nama}: langkah terlalu jauh, giliran dilewati`);
+                break;
+            case 'bonus':
+                pushLog('bonus', `${nama} mendapat petak Bonus`);
+                break;
+            case 'penalti':
+                pushLog('penalti', `${nama} kena petak Penalti`);
+                break;
+            case 'mystery':
+                pushLog('mystery', `${nama} kena petak Mystery`);
+                break;
+            case 'finished':
+                pushLog('finish', `${nama} mencapai Finish!`);
+                break;
+        }
+    }
+
+    function logAnswerResult(player, benar) {
+        const nama = playerLabel(player);
+        pushLog(benar ? 'correct' : 'wrong', benar ? `${nama} menjawab benar` : `${nama} menjawab salah`);
+    }
+
+    // ---------------------------------------------------------------
+    // Dadu 3D
+    // ---------------------------------------------------------------
+    const FACE_ROTATIONS = {
+        1: { x: 0, y: 0 },
+        2: { x: 0, y: -90 },
+        3: { x: 90, y: 0 },
+        4: { x: -90, y: 0 },
+        5: { x: 0, y: 90 },
+        6: { x: 0, y: 180 },
+    };
+
+    function initDiceSize() {
+        if (!diceCube) return;
+        const half = diceCube.parentElement.offsetWidth / 2;
+        diceCube.style.setProperty('--dice-half', `${half}px`);
+    }
+
+    async function animateDiceRoll(finalValue) {
+        if (!diceCube) return;
+
+        diceGlowWrap?.classList.add('ring-4', 'ring-accent-300', 'animate-pulse');
+        diceCube.classList.add('dice-rolling');
+
+        await delay(650);
+
+        diceCube.classList.remove('dice-rolling');
+
+        const target = FACE_ROTATIONS[finalValue] ?? FACE_ROTATIONS[1];
+        const spins = 2; // putaran ekstra penuh supaya terasa "dilempar"
+        diceRotation.x += spins * 360 + (target.x - (diceRotation.x % 360));
+        diceRotation.y += spins * 360 + (target.y - (diceRotation.y % 360));
+
+        diceCube.style.transform = `rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg)`;
+
+        await delay(800);
+        diceGlowWrap?.classList.remove('ring-4', 'ring-accent-300', 'animate-pulse');
+    }
+
+    // ---------------------------------------------------------------
+    // Pion & animasi pergerakan
+    // ---------------------------------------------------------------
+    function pawnColorStyle(player) {
+        if (player.is_robot) return { bg: '#475569', ring: '#e2e8f0' };
+        return { bg: player.pawn_color === 'red' ? '#e11d48' : (player.pawn_color || '#1d4ed8'), ring: '#ffffff' };
+    }
+
+    function getOrCreatePawnEl(player) {
+        let el = pawnLayer.querySelector(`[data-pawn-id="${player.id}"]`);
+        if (el) return el;
+
+        const { bg, ring } = pawnColorStyle(player);
+        el = document.createElement('div');
+        el.dataset.pawnId = String(player.id);
+        el.className = 'game-pawn';
+        el.style.width = `${(100 / jumlahKolom) * 0.52}%`;
+        el.style.height = `${(100 / totalRows) * 0.52}%`;
+        el.innerHTML = `
+            <div class="pawn-body" style="background:${bg}; border-color:${ring};">
+                <span class="pawn-head" style="background:${ring};"></span>
+            </div>
+        `;
+        el.title = player.is_robot ? 'Robot' : (player.nama ?? 'Pemain');
+        pawnLayer.appendChild(el);
+        return el;
+    }
+
+    function placePawnAt(el, posisi, stackIndex = 0) {
+        // posisi_pion 0 = belum bergerak dari Start; tampilkan pion bertengger
+        // di kotak Start (posisi 1) alih-alih menyembunyikannya.
+        el.style.opacity = '1';
+        const { left, top } = cellCenterPercent(Math.max(posisi, 1));
+        const nudge = stackIndex * 5;
+        el.style.left = `calc(${left}% + ${nudge}px)`;
+        el.style.top = `calc(${top}% - ${nudge}px)`;
+    }
+
+    function setTileGlow(posisi) {
+        boardEl.querySelectorAll('.tile-active-ring').forEach((ring) => ring.classList.remove('opacity-100'));
+        if (!posisi) return;
+        const cell = boardEl.querySelector(`[data-posisi="${posisi}"] .tile-active-ring`);
+        cell?.classList.add('opacity-100');
+    }
+
+    function bumpPawn(el) {
+        el.classList.add('pawn-bump');
+        setTimeout(() => el.classList.remove('pawn-bump'), 450);
+    }
+
+    /**
+     * Menggerakkan satu pion selangkah demi selangkah dari `from` ke `to`
+     * (bukan langsung berpindah), lalu jika posisi akhir sungguhan (dari
+     * server) berbeda dari hasil dadu murni, lanjutkan dengan animasi
+     * tangga (naik) atau ular (meluncur turun) menuju posisi akhir itu.
+     */
+    async function animatePlayerTurn(player, fromPosisi, result) {
+        const el = getOrCreatePawnEl(player);
+        const finalPosisi = player.posisi_pion;
+        const nilaiDadu = result.nilai_dadu ?? null;
+
+        if (result.type === 'blocked' || nilaiDadu === null) {
+            bumpPawn(el);
+            return;
+        }
+
+        const landingPosisi = Math.min(fromPosisi + nilaiDadu, jumlahPetak);
+
+        for (let step = fromPosisi + 1; step <= landingPosisi; step++) {
+            placePawnAt(el, step);
+            // eslint-disable-next-line no-await-in-loop
+            await delay(220);
+        }
+
+        if (finalPosisi !== landingPosisi) {
+            // Konektor diterapkan: tangga (naik) atau ular (turun)
+            el.classList.add(finalPosisi > landingPosisi ? 'pawn-climb' : 'pawn-slide');
+            await delay(120);
+            placePawnAt(el, finalPosisi);
+            await delay(550);
+            el.classList.remove('pawn-climb', 'pawn-slide');
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Panel pemain / robot
+    // ---------------------------------------------------------------
+    function renderPlayerPanels(session) {
+        playerPanelListEl.innerHTML = '';
+
+        session.players.forEach((p) => {
+            const template = p.is_robot ? robotCardTemplate : playerCardTemplate;
+            const node = template.content.firstElementChild.cloneNode(true);
+
+            const isMe = !p.is_robot && myGamePlayerId === p.id;
+            const isTurn = session.current_turn_game_player_id === p.id && session.status === 'playing';
+
+            if (!p.is_robot) {
+                node.querySelector('[data-field="avatar"]').textContent = initials(p.nama);
+                node.querySelector('[data-field="nama"]').textContent = p.nama ?? 'Pemain';
+                if (isMe) node.querySelector('.me-badge')?.classList.remove('hidden');
+            }
+
+            const turnBadge = node.querySelector('.turn-badge');
+            if (isTurn) {
+                turnBadge?.classList.remove('hidden');
+                turnBadge?.classList.add('flex');
+                node.querySelector('.turn-glow')?.classList.add('opacity-100', 'ring-2', 'ring-accent-300');
+                node.classList.add('border-accent-300');
+            }
+
+            node.querySelector('[data-field="skor"]').textContent = p.skor ?? 0;
+            node.querySelector('[data-field="posisi"]').textContent = p.posisi_pion ?? 0;
+
+            const akurasiEl = node.querySelector('[data-field="akurasi"]');
+            const akurasi = p.accuracy !== null && p.accuracy !== undefined ? parseFloat(p.accuracy) : null;
+            akurasiEl.textContent = akurasi !== null ? `${Math.round(akurasi)}%` : '—';
+
+            const progressBar = node.querySelector('[data-field="progress-bar"]');
+            const pct = jumlahPetak > 0 ? Math.min(100, Math.max(0, (p.posisi_pion / jumlahPetak) * 100)) : 0;
+            progressBar.style.width = `${pct}%`;
+
+            playerPanelListEl.appendChild(node);
         });
     }
 
-    function renderPlayers(session) {
-        playerListEl.innerHTML = '';
-        session.players.forEach((p) => {
-            const isMe = !p.is_robot && myGamePlayerId === p.id;
-            const card = document.createElement('div');
-            card.className = `rounded-xl border p-4 ${session.current_turn_game_player_id === p.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white'}`;
-            card.innerHTML = `
-                <p class="text-sm font-semibold text-slate-800">${p.nama}${isMe ? ' (Anda)' : ''}</p>
-                <p class="text-xs text-slate-500 mt-1">Posisi: ${p.posisi_pion} &middot; Skor: ${p.skor}</p>
-            `;
-            playerListEl.appendChild(card);
-        });
+    function renderMyProgress(session) {
+        const me = session.players.find((p) => p.id === myGamePlayerId);
+        if (!me) return;
+
+        const pct = jumlahPetak > 0 ? Math.min(100, Math.max(0, Math.round((me.posisi_pion / jumlahPetak) * 100))) : 0;
+        progressPosisiEl.textContent = me.posisi_pion;
+        progressPercentEl.textContent = `${pct}%`;
+        progressBarEl.style.width = `${pct}%`;
     }
 
     function updateTurnIndicator(session) {
@@ -114,58 +369,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (session.status !== 'playing') {
             turnIndicatorEl.textContent = '';
+            turnSubtextEl.textContent = '';
+            turnAvatarEl.textContent = '';
             rollButton.classList.add('hidden');
+            setTileGlow(null);
             return;
         }
+
+        turnAvatarEl.textContent = currentPlayer ? (currentPlayer.is_robot ? '\u{1F916}' : initials(currentPlayer.nama)) : '?';
+        turnAvatarEl.className = `flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white ${currentPlayer?.is_robot ? 'bg-slate-700' : 'bg-primary-500'}`;
 
         turnIndicatorEl.textContent = isMyTurn
             ? 'Giliran Anda'
             : `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
 
+        turnSubtextEl.textContent = currentPlayer
+            ? `Posisi: ${currentPlayer.posisi_pion} • Skor: ${currentPlayer.skor}`
+            : '';
+
+        setTileGlow(currentPlayer?.posisi_pion);
+
         const questionPending = !!session.active_question;
         rollButton.classList.toggle('hidden', !isMyTurn || questionPending);
+        rollButton.classList.toggle('flex', isMyTurn && !questionPending);
     }
 
     function renderFinished(session) {
         if (session.status === 'finished') {
             const winner = session.players.find((p) => p.id === session.winner_game_player_id);
             const isMeWinner = winner && myGamePlayerId === winner.id;
-            finishedBannerEl.textContent = isMeWinner
+
+            document.getElementById('finished-title').textContent = isMeWinner
                 ? 'Selamat, Anda menang!'
-                : `Permainan selesai. ${winner?.is_robot ? 'Robot' : winner?.nama} menang.`;
-            finishedBannerEl.classList.remove('hidden');
+                : 'Permainan selesai';
+            document.getElementById('finished-subtitle').textContent = isMeWinner
+                ? 'Anda berhasil mencapai garis Finish lebih dulu.'
+                : `${winner?.is_robot ? 'Robot' : (winner?.nama ?? 'Lawan')} mencapai Finish lebih dulu.`;
+
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'game-finished-modal' }));
             rollButton.classList.add('hidden');
         } else if (session.status === 'abandoned') {
-            finishedBannerEl.textContent = 'Permainan ini telah dihentikan.';
-            finishedBannerEl.classList.remove('hidden');
+            document.getElementById('finished-title').textContent = 'Permainan dihentikan';
+            document.getElementById('finished-subtitle').textContent = 'Permainan ini telah dihentikan sebelum selesai.';
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'game-finished-modal' }));
             rollButton.classList.add('hidden');
-        } else {
-            finishedBannerEl.classList.add('hidden');
         }
     }
 
-    /**
-     * Paused = lawan multiplayer terputus koneksi (Tahap 12a). Countdown
-     * dihitung dari `reconnect_deadline_at` yang dikirim server (Tahap 12c) —
-     * bukan dihitung sendiri oleh klien, supaya tetap konsisten walau klien
-     * baru membuka/refresh halaman di tengah masa tenggang.
-     */
     function renderPaused(session) {
         clearInterval(pausedCountdownInterval);
 
         if (session.status !== 'paused' || !pausedBannerEl) {
             pausedBannerEl?.classList.add('hidden');
+            pausedBannerEl?.classList.remove('flex');
             return;
         }
 
         pausedBannerEl.classList.remove('hidden');
+        pausedBannerEl.classList.add('flex');
 
         const update = () => {
             if (!session.reconnect_deadline_at) {
                 pausedTimerEl.textContent = '';
                 return;
             }
-
             const remaining = Math.max(0, Math.floor((new Date(session.reconnect_deadline_at).getTime() - Date.now()) / 1000));
             pausedTimerEl.textContent = `${remaining}s`;
         };
@@ -174,6 +441,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pausedCountdownInterval = setInterval(update, 1000);
     }
 
+    // ---------------------------------------------------------------
+    // Modal Soal
+    // ---------------------------------------------------------------
     function startQuestionCountdown(expiresAtIso, soalId) {
         clearInterval(questionCountdownInterval);
 
@@ -199,21 +469,24 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'w-full text-left rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-emerald-50 hover:border-emerald-400';
-            button.textContent = `${kunci}. ${teks}`;
+            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50';
+            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
             button.addEventListener('click', () => submitAnswer(soal.id, kunci));
             questionOptionsEl.appendChild(button);
         });
 
-        questionModal.classList.remove('hidden');
+        window.dispatchEvent(new CustomEvent('open-modal', { detail: 'question-modal' }));
         startQuestionCountdown(expiresAtIso, soal.id);
     }
 
     function hideQuestion() {
         clearInterval(questionCountdownInterval);
-        questionModal.classList.add('hidden');
+        window.dispatchEvent(new CustomEvent('close-modal'));
     }
 
+    // ---------------------------------------------------------------
+    // Realtime (Multiplayer)
+    // ---------------------------------------------------------------
     const REALTIME_EVENT_LABELS = {
         'dice-rolled': 'Lawan melempar dadu.',
         'pawn-moved': 'Lawan menggerakkan pion.',
@@ -226,12 +499,6 @@ document.addEventListener('DOMContentLoaded', () => {
         'session-resumed': 'Lawan telah kembali terhubung.',
     };
 
-    /**
-     * Vs Robot tidak pernah join channel apa pun (hanya satu manusia, hasil
-     * aksinya sendiri sudah didapat lewat respons HTTP - Tahap 12b). Setiap
-     * broadcast yang diterima di sini hanya memicu re-fetch state, TIDAK
-     * dirender langsung dari payloadnya (payload sengaja minim).
-     */
     function joinRealtimeChannel(session) {
         if (session.mode !== 'multiplayer' || !session.room_id || presenceChannel || !window.Echo) {
             return;
@@ -242,12 +509,12 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.keys(REALTIME_EVENT_LABELS).forEach((eventName) => {
             presenceChannel.listen(`.${eventName}`, (payload) => {
                 const actorId = payload.game_player_id ?? null;
-
                 if (actorId !== null && actorId === myGamePlayerId) {
                     return;
                 }
 
                 showToast(REALTIME_EVENT_LABELS[eventName]);
+                pushLog('info', REALTIME_EVENT_LABELS[eventName]);
                 loadState();
             });
         });
@@ -260,11 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Sinyal "aku masih di sini" (Tahap 12a) — hanya relevan untuk Multiplayer,
-     * jauh di bawah `heartbeat_timeout_seconds` (default 15s) supaya tidak
-     * salah terdeteksi terputus akibat jeda jaringan wajar.
-     */
     function startHeartbeat(session) {
         if (session.mode !== 'multiplayer' || heartbeatIntervalId) {
             return;
@@ -286,19 +548,99 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function applySessionState(session) {
-        latestSession = session;
+    // ---------------------------------------------------------------
+    // Sinkronisasi pion untuk pemain LAIN (mis. lawan multiplayer) yang
+    // posisinya berubah lewat sinyal realtime, bukan aksi kita sendiri —
+    // kita tidak punya rincian nilai dadu lawan (payload sengaja minim),
+    // jadi cukup animasikan selisih posisi lama -> baru secara wajar.
+    // ---------------------------------------------------------------
+    async function animateExternalDiff(session) {
+        for (const p of session.players) {
+            const el = getOrCreatePawnEl(p);
+            const prev = knownPositions.get(p.id);
 
-        renderPawns(boardGrid, session.players);
-        renderPlayers(session);
-        updateTurnIndicator(session);
+            if (prev === undefined) {
+                placePawnAt(el, p.posisi_pion);
+                continue;
+            }
+
+            if (prev === p.posisi_pion) {
+                continue;
+            }
+
+            if (p.posisi_pion > prev && p.posisi_pion - prev <= 6) {
+                // eslint-disable-next-line no-await-in-loop
+                for (let step = prev + 1; step <= p.posisi_pion; step++) {
+                    placePawnAt(el, step);
+                    // eslint-disable-next-line no-await-in-loop
+                    await delay(180);
+                }
+            } else {
+                el.classList.add(p.posisi_pion > prev ? 'pawn-climb' : 'pawn-slide');
+                await delay(100);
+                placePawnAt(el, p.posisi_pion);
+                await delay(450);
+                el.classList.remove('pawn-climb', 'pawn-slide');
+            }
+        }
+    }
+
+    function syncKnownPositions(session) {
+        session.players.forEach((p) => knownPositions.set(p.id, p.posisi_pion));
+    }
+
+    /**
+     * pawnMode:
+     *  - 'diff' (default): animasikan selisih posisi lama->baru untuk SEMUA
+     *     pemain (dipakai saat refresh-recovery / sinyal realtime — kita
+     *     tidak tahu siapa yang baru saja bergerak).
+     *  - 'instant': langsung tempatkan semua pion tanpa animasi (dipakai
+     *     saat pemuatan awal halaman).
+     *  - 'skip': langsung tempatkan semua pion KECUALI yang ada di
+     *     `skipPawnIds` — dipakai setelah aksi kita sendiri (roll/answer),
+     *     karena pemain yang beraksi (dan robot jika ada) sudah/akan
+     *     dianimasikan manual oleh pemanggil.
+     */
+    /**
+     * Menampilkan hasil akhir (modal menang/kalah) & modal soal — dipisah dari
+     * applySessionState supaya bisa DITUNDA sampai animasi pion selesai
+     * (mis. giliran robot yang baru saja menyentuh Finish tidak boleh
+     * memunculkan modal "selesai" sebelum pion robot terlihat berjalan).
+     */
+    function finalizeOutcome(session) {
         renderFinished(session);
-        renderPaused(session);
 
         if (session.active_question) {
             showQuestion(session.active_question, session.active_question_expires_at);
         } else {
             hideQuestion();
+        }
+    }
+
+    function applySessionState(session, { pawnMode = 'diff', skipPawnIds = new Set(), deferOutcome = false } = {}) {
+        latestSession = session;
+
+        if (pawnMode === 'instant') {
+            session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion));
+            syncKnownPositions(session);
+        } else if (pawnMode === 'skip') {
+            session.players.forEach((p) => {
+                if (!skipPawnIds.has(p.id)) {
+                    placePawnAt(getOrCreatePawnEl(p), p.posisi_pion);
+                }
+            });
+            syncKnownPositions(session);
+        } else {
+            animationChain = animationChain.then(() => animateExternalDiff(session)).then(() => syncKnownPositions(session));
+        }
+
+        renderPlayerPanels(session);
+        renderMyProgress(session);
+        updateTurnIndicator(session);
+        renderPaused(session);
+
+        if (!deferOutcome) {
+            finalizeOutcome(session);
         }
 
         joinRealtimeChannel(session);
@@ -306,6 +648,9 @@ document.addEventListener('DOMContentLoaded', () => {
         stopRealtimeIfSessionOver(session);
     }
 
+    // ---------------------------------------------------------------
+    // HTTP
+    // ---------------------------------------------------------------
     async function postJson(url, body = {}) {
         const response = await fetch(url, {
             method: 'POST',
@@ -329,26 +674,35 @@ document.addEventListener('DOMContentLoaded', () => {
     async function rollDice() {
         rollButton.disabled = true;
 
+        const me = latestSession?.players.find((p) => p.id === myGamePlayerId);
+        const fromPosisi = me ? me.posisi_pion : 1;
+        // Posisi robot SEBELUM giliran ini harus diambil sebelum applySessionState
+        // menimpa knownPositions dengan posisi akhirnya (lihat playRobotTurns).
+        const robotBefore = latestSession?.players.find((p) => p.is_robot);
+        const robotFromPosisi = robotBefore ? (knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
+
         try {
             const result = await postJson(rollUrl);
 
-            diceValueEl.textContent = result.nilai_dadu ?? '-';
-            diceValueEl.classList.remove('hidden');
+            await animateDiceRoll(result.nilai_dadu ?? 1);
 
-            if (result.type === 'blocked') {
-                showToast(`Dadu ${result.nilai_dadu}: langkah terlalu jauh, giliran dilewati.`);
-            } else if (result.type === 'bonus') {
-                showToast('Petak Bonus! Skor bertambah.');
-            } else if (result.type === 'penalti') {
-                showToast('Kena petak Penalti. Skor berkurang.');
-            } else if (result.type === 'mystery') {
-                showToast('Petak Mystery! Efek acak diterapkan.');
-            } else if (result.type === 'finished') {
-                showToast('Permainan selesai!');
+            const actingPlayer = result.session.players.find((p) => p.id === myGamePlayerId) ?? me;
+            if (actingPlayer) {
+                logTurnResult(actingPlayer, result);
+                await animatePlayerTurn(actingPlayer, fromPosisi, result);
+                knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
             }
 
-            applySessionState(result.session);
-            queueRobotTurnToasts(result.robot_turns);
+            if (result.type === 'answered') {
+                logAnswerResult(actingPlayer, result.benar);
+            }
+
+            const robot = result.session.players.find((p) => p.is_robot);
+            const skipIds = new Set([myGamePlayerId, robot?.id].filter((id) => id !== undefined && id !== null));
+            applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
+
+            await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
+            finalizeOutcome(result.session);
         } catch (error) {
             showToast(error.message);
         } finally {
@@ -356,19 +710,76 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function playRobotTurns(robotTurns, session, startFromPosisi) {
+        if (!robotTurns || robotTurns.length === 0) return;
+
+        const robot = session.players.find((p) => p.is_robot);
+        if (!robot) return;
+
+        let fromPosisi = startFromPosisi ?? (knownPositions.get(robot.id) ?? robot.posisi_pion);
+
+        for (const turn of robotTurns) {
+            await delay(500);
+            await animateDiceRoll(turn.nilai_dadu ?? 1);
+            logTurnResult({ ...robot }, turn);
+            if (turn.type === 'answered' || turn.benar !== undefined) {
+                logAnswerResult(robot, turn.benar);
+            }
+
+            // Turn terakhir membawa posisi akhir robot yang sesungguhnya (session
+            // sudah final di titik ini); turn di tengah diasumsikan tidak
+            // memindahkan posisi lebih lanjut (server memainkan robot secara
+            // berurutan dalam satu putaran, lihat GameSessionService).
+            const isLast = turn === robotTurns[robotTurns.length - 1];
+            const toPosisi = isLast ? robot.posisi_pion : fromPosisi;
+
+            // eslint-disable-next-line no-await-in-loop
+            await animatePlayerTurn(robot, fromPosisi, { ...turn, posisi_pion: toPosisi });
+            fromPosisi = toPosisi;
+        }
+
+        knownPositions.set(robot.id, robot.posisi_pion);
+        setTileGlow(latestSession?.status === 'playing' ? latestSession.players.find((p) => p.id === latestSession.current_turn_game_player_id)?.posisi_pion : null);
+    }
+
     async function submitAnswer(soalId, jawaban) {
+        const robotBefore = latestSession?.players.find((p) => p.is_robot);
+        const robotFromPosisi = robotBefore ? (knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
+        const meBefore = latestSession?.players.find((p) => p.id === myGamePlayerId);
+        const myFromPosisi = meBefore ? meBefore.posisi_pion : 1;
+
         try {
             const result = await postJson(answerUrl, { soal_id: soalId, jawaban });
 
             questionFeedbackEl.textContent = result.benar
                 ? 'Jawaban benar!'
-                : `Jawaban salah. ${result.pembahasan}`;
+                : `Jawaban salah. ${result.pembahasan ?? ''}`;
             questionFeedbackEl.classList.remove('hidden');
 
-            setTimeout(() => {
-                applySessionState(result.session);
-                queueRobotTurnToasts(result.robot_turns);
-            }, 2000);
+            const actingPlayer = result.session.players.find((p) => p.id === myGamePlayerId);
+            if (actingPlayer) {
+                logAnswerResult(actingPlayer, result.benar);
+            }
+
+            await delay(1800);
+            hideQuestion();
+
+            // Jawaban bisa memindahkan pion penjawab (mis. efek soal khusus) —
+            // animasikan selisih posisi sebelum -> sesudah menjawab, bukan
+            // langsung memindahkan.
+            if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
+                await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
+            }
+            if (actingPlayer) {
+                knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
+            }
+
+            const robot = result.session.players.find((p) => p.is_robot);
+            const skipIds = new Set([myGamePlayerId, robot?.id].filter((id) => id !== undefined && id !== null));
+            applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
+
+            await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
+            finalizeOutcome(result.session);
         } catch (error) {
             showToast(error.message);
             hideQuestion();
@@ -378,21 +789,23 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadState() {
         const response = await fetch(stateUrl, { headers: { Accept: 'application/json' } });
         const session = await response.json();
-
         applySessionState(session);
     }
 
     async function loadInitialState() {
+        initDiceSize();
+
         const response = await fetch(stateUrl, { headers: { Accept: 'application/json' } });
         const session = await response.json();
 
         const me = session.players.find((p) => p.user_id === currentUserId);
         myGamePlayerId = me ? me.id : null;
 
-        applySessionState(session);
+        applySessionState(session, { pawnMode: 'instant' });
     }
 
     rollButton?.addEventListener('click', rollDice);
+    window.addEventListener('resize', initDiceSize);
 
     document.getElementById('leave-game-button')?.addEventListener('click', async () => {
         const isMultiplayer = latestSession?.mode === 'multiplayer';

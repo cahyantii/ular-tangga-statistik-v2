@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B7BFF"/>
+      <stop offset="45%" stop-color="#0F4CBA"/>
+      <stop offset="100%" stop-color="#082A6E"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="55%" cy="52%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="woodDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#B9752E"/>
+      <stop offset="100%" stop-color="#7A4A1E"/>
+    </linearGradient>
+    <linearGradient id="woodLight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F0B15E"/>
+      <stop offset="100%" stop-color="#C97F34"/>
+    </linearGradient>
+
+    <linearGradient id="snakeBody" x1="0%" y1="0%" x2="30%" y2="100%">
+      <stop offset="0%" stop-color="#8CF3B4"/>
+      <stop offset="45%" stop-color="#22C56A"/>
+      <stop offset="100%" stop-color="#0B6B45"/>
+    </linearGradient>
+    <radialGradient id="snakeHead" cx="35%" cy="30%" r="75%">
+      <stop offset="0%" stop-color="#9CF6C0"/>
+      <stop offset="55%" stop-color="#2ECC71"/>
+      <stop offset="100%" stop-color="#0F8A4E"/>
+    </radialGradient>
+
+    <linearGradient id="diceFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="60%" stop-color="#F3F5F9"/>
+      <stop offset="100%" stop-color="#DCE1EA"/>
+    </linearGradient>
+    <linearGradient id="diceSide" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C7CDD8"/>
+      <stop offset="100%" stop-color="#9CA5B4"/>
+    </linearGradient>
+
+    <filter id="softShadow" x="-60%" y="-60%" width="220%" height="220%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#04184a" flood-opacity="0.38"/>
+    </filter>
+    <filter id="blurSoft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+    <filter id="blurSmall" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+
+    <clipPath id="squareClip">
+      <rect x="16" y="16" width="480" height="480" rx="106" ry="106"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect x="16" y="16" width="480" height="480" rx="106" ry="106" fill="url(#bgGrad)"/>
+
+  <g clip-path="url(#squareClip)">
+    <!-- soft radial glow behind composition -->
+    <circle cx="290" cy="300" r="230" fill="url(#glow)"/>
+
+    <!-- glossy top-left sheen -->
+    <ellipse cx="150" cy="90" rx="230" ry="150" fill="#FFFFFF" opacity="0.16" filter="url(#blurSoft)" transform="rotate(-18 150 90)"/>
+
+    <!-- subtle bottom inner shadow for depth -->
+    <ellipse cx="360" cy="470" rx="260" ry="90" fill="#04184a" opacity="0.25" filter="url(#blurSoft)"/>
+
+    <!-- ===== composite group with drop shadow ===== -->
+    <g filter="url(#softShadow)">
+
+      <!-- Ladder (behind dice, leaning right side) -->
+      <g transform="translate(6 -14) rotate(13 355 265)">
+        <rect x="322" y="140" width="22" height="240" rx="10" fill="url(#woodDark)"/>
+        <rect x="384" y="140" width="22" height="240" rx="10" fill="url(#woodDark)"/>
+        <rect x="316" y="158" width="96" height="17" rx="8" fill="url(#woodLight)"/>
+        <rect x="316" y="208" width="96" height="17" rx="8" fill="url(#woodLight)"/>
+        <rect x="316" y="258" width="96" height="17" rx="8" fill="url(#woodLight)"/>
+        <rect x="316" y="308" width="96" height="17" rx="8" fill="url(#woodLight)"/>
+        <rect x="316" y="358" width="96" height="17" rx="8" fill="url(#woodLight)"/>
+      </g>
+
+      <!-- Snake body (coils around the dice, tail sweeps along the bottom-right edge) -->
+      <path d="M138 150
+               C 84 192, 72 266, 108 326
+               C 142 384, 220 418, 300 414
+               C 372 410, 424 388, 440 336"
+            fill="none" stroke="url(#snakeBody)" stroke-width="52"
+            stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- belly highlight texture, subtle -->
+      <g opacity="0.32" fill="#EFFFF6">
+        <ellipse cx="102" cy="300" rx="12" ry="7" transform="rotate(35 102 300)"/>
+        <ellipse cx="160" cy="382" rx="12" ry="7" transform="rotate(75 160 382)"/>
+        <ellipse cx="260" cy="410" rx="12" ry="7" transform="rotate(100 260 410)"/>
+        <ellipse cx="368" cy="400" rx="12" ry="7" transform="rotate(125 368 400)"/>
+      </g>
+
+      <!-- tapering tail tip, clearly visible beside the dice (not underneath it) -->
+      <circle cx="438" cy="358" r="22" fill="url(#snakeBody)"/>
+      <circle cx="430" cy="380" r="14" fill="url(#snakeBody)"/>
+      <circle cx="420" cy="396" r="7" fill="url(#snakeBody)"/>
+
+      <!-- Snake head (top-left) -->
+      <g>
+        <circle cx="136" cy="150" r="80" fill="url(#snakeHead)"/>
+
+        <!-- cute big eyes -->
+        <ellipse cx="108" cy="126" rx="24" ry="28" fill="#FFFFFF"/>
+        <ellipse cx="164" cy="118" rx="24" ry="28" fill="#FFFFFF"/>
+        <circle cx="113" cy="132" r="13" fill="#1F2A3A"/>
+        <circle cx="169" cy="124" r="13" fill="#1F2A3A"/>
+        <circle cx="108" cy="126" r="4.5" fill="#FFFFFF"/>
+        <circle cx="164" cy="118" r="4.5" fill="#FFFFFF"/>
+
+        <!-- friendly smile -->
+        <path d="M96 168 Q136 196 178 162" fill="none" stroke="#0B5C36" stroke-width="7" stroke-linecap="round" opacity="0.75"/>
+
+        <!-- tiny forked tongue -->
+        <path d="M178 168 L200 176 L182 182 L196 190" fill="none" stroke="#E11D48" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+
+      <!-- Dice: slightly tilted, main focal point -->
+      <g transform="rotate(-9 300 300)">
+        <!-- side sliver for depth -->
+        <rect x="-72" y="-72" width="170" height="170" rx="30" fill="url(#diceSide)" transform="translate(316 316)"/>
+
+        <!-- main face -->
+        <rect x="215" y="215" width="170" height="170" rx="30" fill="url(#diceFace)"/>
+
+        <!-- glossy diagonal streak -->
+        <path d="M228 260 L268 220 L300 220 L240 296 Z" fill="#FFFFFF" opacity="0.45" filter="url(#blurSmall)"/>
+
+        <!-- inner bottom-right shadow crescent for volume -->
+        <path d="M215 330 Q300 260 385 330 L385 385 Q300 385 215 385 Z" fill="#B9C2D1" opacity="0.35"/>
+
+        <!-- 5-pip face -->
+        <g fill="#27324A">
+          <circle cx="255" cy="255" r="14"/>
+          <circle cx="345" cy="255" r="14"/>
+          <circle cx="300" cy="300" r="14"/>
+          <circle cx="255" cy="345" r="14"/>
+          <circle cx="345" cy="345" r="14"/>
+        </g>
+        <g fill="#FFFFFF" opacity="0.55">
+          <circle cx="251" cy="251" r="3.4"/>
+          <circle cx="341" cy="251" r="3.4"/>
+          <circle cx="296" cy="296" r="3.4"/>
+          <circle cx="251" cy="341" r="3.4"/>
+          <circle cx="341" cy="341" r="3.4"/>
+        </g>
+      </g>
+
+      <!-- Small Indonesia flag, planted beside the ladder top (clear sky area, drawn last so it stays visible) -->
+      <g transform="rotate(-7 345 120)">
+        <rect x="343" y="108" width="5" height="46" rx="2.5" fill="#7A4A1E"/>
+        <path d="M347 108 h26 v9 h-26 Z" fill="#DC2626"/>
+        <path d="M347 117 h26 v9 h-26 Z" fill="#F8FAFC"/>
+      </g>
+
+      <!-- Small statistic accent (bar chart), tucked in the clear bottom-left corner -->
+      <g transform="translate(50 392)">
+        <rect x="0" y="20" width="14" height="22" rx="4" fill="#3B82F6"/>
+        <rect x="18" y="10" width="14" height="32" rx="4" fill="#10B981"/>
+        <rect x="36" y="-4" width="14" height="46" rx="4" fill="#F59E0B"/>
+        <path d="M2 18 L20 8 L38 -6" fill="none" stroke="#F8FAFC" stroke-width="3.2" stroke-linecap="round" opacity="0.9"/>
+        <circle cx="38" cy="-6" r="4" fill="#F8FAFC"/>
+      </g>
+    </g>
+  </g>
+
+  <!-- outer premium rim highlight -->
+  <rect x="17.5" y="17.5" width="477" height="477" rx="104.5" ry="104.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="3"/>
+</svg>
