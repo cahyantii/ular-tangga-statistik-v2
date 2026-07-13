@@ -867,7 +867,7 @@ Universitas Trunojoyo Madura
 GitHub Repository
 
 ```text
-https://github.com/cahyantii/ular-tangga-statistik
+https://github.com/cahyantii/ular-tangga-statistik-v2
 ```
 
 ---
