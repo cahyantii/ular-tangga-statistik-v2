@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Avatar pria rambut pendek">
+    <circle cx="50" cy="50" r="50" fill="#DBEAFE" />
+    <path d="M28 88c2-14 10-22 22-22s20 8 22 22" fill="#0F4CBA" />
+    <ellipse cx="50" cy="52" rx="16" ry="17" fill="#F4C7A1" />
+    <path d="M34 46c0-11 7-18 16-18s16 7 16 18c-3-2-8-4-16-4s-13 2-16 4Z" fill="#1E293B" />
+    <circle cx="44" cy="53" r="2.2" fill="#3B2A20" />
+    <circle cx="56" cy="53" r="2.2" fill="#3B2A20" />
+    <path d="M45 61c2 2 8 2 10 0" stroke="#3B2A20" stroke-width="1.6" stroke-linecap="round" fill="none" />
+</svg>

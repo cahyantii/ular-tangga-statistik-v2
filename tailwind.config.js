@@ -63,12 +63,17 @@ export default {
                     '0%, 100%': { transform: 'translateY(0px)' },
                     '50%': { transform: 'translateY(-8px)' },
                 },
+                fadeInRight: {
+                    '0%': { opacity: '0', transform: 'translateX(40px)' },
+                    '100%': { opacity: '1', transform: 'translateX(0)' },
+                },
             },
             animation: {
                 'fade-in-up': 'fadeInUp 0.5s ease-out both',
                 'fade-in': 'fadeIn 0.4s ease-out both',
                 'scale-in': 'scaleIn 0.35s ease-out both',
                 float: 'float 4s ease-in-out infinite',
+                'fade-in-right': 'fadeInRight 0.5s ease-out both',
             },
         },
     },

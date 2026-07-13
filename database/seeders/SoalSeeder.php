@@ -56,6 +56,42 @@ class SoalSeeder extends Seeder
                 'kunci_jawaban' => 'B',
                 'pembahasan' => 'Statistika inferensia digunakan untuk menarik kesimpulan atau membuat prediksi tentang populasi berdasarkan data sampel.',
             ],
+            [
+                'pertanyaan' => 'Data nilai ujian: 60, 65, 70, 75, 90. Berapakah range (jangkauan) dari data tersebut?',
+                'opsi_jawaban' => ['A' => '20', 'B' => '25', 'C' => '30', 'D' => '90'],
+                'kunci_jawaban' => 'C',
+                'pembahasan' => 'Range dihitung dari nilai maksimum dikurangi nilai minimum: 90 - 60 = 30.',
+            ],
+            [
+                'pertanyaan' => 'Ukuran yang menunjukkan seberapa jauh sebaran data terhadap nilai rata-ratanya disebut...',
+                'opsi_jawaban' => ['A' => 'Modus', 'B' => 'Median', 'C' => 'Standar deviasi', 'D' => 'Frekuensi'],
+                'kunci_jawaban' => 'C',
+                'pembahasan' => 'Standar deviasi mengukur sebaran/variasi data terhadap nilai rata-rata (mean); semakin besar nilainya, semakin tersebar datanya.',
+            ],
+            [
+                'pertanyaan' => 'Data seperti "warna favorit" dan "jenis kelamin" termasuk jenis data...',
+                'opsi_jawaban' => ['A' => 'Kuantitatif diskrit', 'B' => 'Kuantitatif kontinu', 'C' => 'Kualitatif', 'D' => 'Data time series'],
+                'kunci_jawaban' => 'C',
+                'pembahasan' => 'Data kualitatif berupa kategori/label (bukan angka), seperti warna favorit atau jenis kelamin.',
+            ],
+            [
+                'pertanyaan' => 'Sebagian kecil anggota populasi yang diambil untuk mewakili keseluruhan populasi disebut...',
+                'opsi_jawaban' => ['A' => 'Sensus', 'B' => 'Sampel', 'C' => 'Parameter', 'D' => 'Variabel'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Sampel adalah sebagian anggota populasi yang dipilih untuk mewakili karakteristik keseluruhan populasi.',
+            ],
+            [
+                'pertanyaan' => 'Diagram lingkaran (pie chart) paling cocok digunakan untuk menampilkan...',
+                'opsi_jawaban' => ['A' => 'Tren data dari waktu ke waktu', 'B' => 'Proporsi/persentase tiap kategori terhadap keseluruhan', 'C' => 'Hubungan dua variabel numerik', 'D' => 'Urutan data dari terkecil ke terbesar'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Diagram lingkaran menunjukkan proporsi atau persentase setiap kategori terhadap total keseluruhan data.',
+            ],
+            [
+                'pertanyaan' => 'Nilai yang membagi data terurut menjadi empat bagian sama besar disebut...',
+                'opsi_jawaban' => ['A' => 'Persentil', 'B' => 'Kuartil', 'C' => 'Desil', 'D' => 'Modus'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Kuartil membagi data yang sudah terurut menjadi empat bagian sama besar (Q1, Q2/median, dan Q3).',
+            ],
         ];
 
         $soalPengenalanBps = [
@@ -100,6 +136,53 @@ class SoalSeeder extends Seeder
                 'kunci_jawaban' => 'A',
                 'pembahasan' => 'Sensus mendata seluruh unit populasi, sedangkan survei menggunakan sampel yang mewakili populasi agar lebih efisien.',
             ],
+            [
+                'pertanyaan' => 'Apa status kelembagaan BPS di pemerintahan Indonesia?',
+                'opsi_jawaban' => ['A' => 'Kementerian', 'B' => 'Lembaga Pemerintah Non-Kementerian (LPNK)', 'C' => 'Badan Usaha Milik Negara', 'D' => 'Lembaga Swadaya Masyarakat'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'BPS adalah Lembaga Pemerintah Non-Kementerian (LPNK) yang bertanggung jawab langsung kepada Presiden.',
+            ],
+            [
+                'pertanyaan' => 'Pendataan Potensi Desa yang dilakukan BPS untuk mengetahui potensi wilayah administrasi terkecil disebut...',
+                'opsi_jawaban' => ['A' => 'Susenas', 'B' => 'Sakernas', 'C' => 'Podes', 'D' => 'SUPAS'],
+                'kunci_jawaban' => 'C',
+                'pembahasan' => 'Podes (Pendataan Potensi Desa) mengumpulkan data potensi desa/kelurahan di seluruh Indonesia.',
+            ],
+            [
+                'pertanyaan' => 'Survei Sosial Ekonomi Nasional yang mengukur kesejahteraan rumah tangga dikenal dengan singkatan...',
+                'opsi_jawaban' => ['A' => 'Susenas', 'B' => 'Sakernas', 'C' => 'SPTN', 'D' => 'ST'],
+                'kunci_jawaban' => 'A',
+                'pembahasan' => 'Susenas (Survei Sosial Ekonomi Nasional) digunakan untuk mengukur tingkat kesejahteraan rumah tangga.',
+            ],
+            [
+                'pertanyaan' => 'Sensus Penduduk Indonesia tahun 2020 (SP2020) untuk pertama kalinya menggunakan metode kombinasi data...',
+                'opsi_jawaban' => ['A' => 'Wawancara tatap muka saja', 'B' => 'Registrasi penduduk dan sensus lapangan', 'C' => 'Survei telepon saja', 'D' => 'Estimasi tanpa data lapangan'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'SP2020 menggunakan metode kombinasi, memanfaatkan data registrasi penduduk (Dukcapil) yang dilengkapi sensus lapangan.',
+            ],
+            [
+                'pertanyaan' => 'Publikasi tahunan BPS yang memuat rangkuman data statistik seluruh Indonesia berjudul...',
+                'opsi_jawaban' => ['A' => 'Statistik Indonesia', 'B' => 'Berita Resmi Statistik', 'C' => 'Buku Saku BPS', 'D' => 'Indikator Ekonomi'],
+                'kunci_jawaban' => 'A',
+                'pembahasan' => '"Statistik Indonesia" adalah publikasi tahunan BPS yang merangkum data statistik dari berbagai bidang di seluruh Indonesia.',
+            ],
+            [
+                'pertanyaan' => 'Apa fungsi utama Berita Resmi Statistik (BRS) yang rutin dirilis BPS?',
+                'opsi_jawaban' => [
+                    'A' => 'Mengumumkan hasil rilis data terbaru secara resmi dan berkala kepada publik',
+                    'B' => 'Mengumumkan kebijakan anggaran pemerintah',
+                    'C' => 'Menyampaikan hasil pemilu',
+                    'D' => 'Mengatur kurikulum pendidikan statistik',
+                ],
+                'kunci_jawaban' => 'A',
+                'pembahasan' => 'BRS adalah rilis resmi dan berkala (misalnya inflasi bulanan atau pertumbuhan ekonomi triwulanan) yang dipublikasikan BPS ke masyarakat.',
+            ],
+            [
+                'pertanyaan' => 'Semboyan/motto BPS adalah "Penyedia Data Statistik Terpercaya untuk ..."',
+                'opsi_jawaban' => ['A' => 'Pemerintah', 'B' => 'Semua', 'C' => 'Peneliti', 'D' => 'Dunia Usaha'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Motto BPS adalah "Penyedia Data Statistik Terpercaya untuk Semua", menegaskan data BPS terbuka dan dapat diandalkan oleh siapa saja.',
+            ],
         ];
 
         $soalIndikatorStatistik = [
@@ -143,6 +226,47 @@ class SoalSeeder extends Seeder
                 'opsi_jawaban' => ['A' => 'Indeks Pembangunan Manusia', 'B' => 'Indeks Harga Konsumen', 'C' => 'Indeks Ketimpangan Gini', 'D' => 'Indeks Produksi Industri'],
                 'kunci_jawaban' => 'B',
                 'pembahasan' => 'BPS mengukur inflasi melalui Indeks Harga Konsumen (IHK) yang memantau perubahan harga barang/jasa yang dikonsumsi rumah tangga.',
+            ],
+            [
+                'pertanyaan' => 'Indikator yang mengukur tingkat ketimpangan pengeluaran/pendapatan penduduk disebut...',
+                'opsi_jawaban' => ['A' => 'Gini Ratio', 'B' => 'Indeks Harga Konsumen', 'C' => 'Nilai Tukar Petani', 'D' => 'Rasio Ketergantungan'],
+                'kunci_jawaban' => 'A',
+                'pembahasan' => 'Gini Ratio (Rasio Gini) mengukur tingkat ketimpangan distribusi pendapatan/pengeluaran, dengan nilai 0 (merata sempurna) hingga 1 (timpang sempurna).',
+            ],
+            [
+                'pertanyaan' => 'Penduduk digolongkan miskin oleh BPS apabila rata-rata pengeluaran per kapita per bulan berada di bawah...',
+                'opsi_jawaban' => ['A' => 'Upah Minimum Regional', 'B' => 'Garis Kemiskinan', 'C' => 'Indeks Harga Konsumen', 'D' => 'PDRB per kapita'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Garis Kemiskinan adalah nilai rupiah pengeluaran minimum untuk memenuhi kebutuhan dasar; penduduk di bawahnya digolongkan miskin.',
+            ],
+            [
+                'pertanyaan' => 'Nilai Tukar Petani (NTP) digunakan untuk mengukur...',
+                'opsi_jawaban' => [
+                    'A' => 'Tingkat kesejahteraan petani dari selisih harga jual hasil produksi dan harga barang yang dikonsumsi/biaya produksi',
+                    'B' => 'Jumlah petani di suatu wilayah',
+                    'C' => 'Luas lahan pertanian nasional',
+                    'D' => 'Harga pupuk bersubsidi',
+                ],
+                'kunci_jawaban' => 'A',
+                'pembahasan' => 'NTP membandingkan indeks harga yang diterima petani dengan indeks harga yang dibayar petani, sebagai proksi kesejahteraan petani.',
+            ],
+            [
+                'pertanyaan' => 'Perbandingan antara penduduk usia tidak produktif dengan penduduk usia produktif disebut...',
+                'opsi_jawaban' => ['A' => 'Rasio Jenis Kelamin', 'B' => 'Rasio Ketergantungan', 'C' => 'Angka Harapan Hidup', 'D' => 'Laju Pertumbuhan Penduduk'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Rasio Ketergantungan (Dependency Ratio) membandingkan penduduk usia non-produktif (di bawah 15 dan di atas 64 tahun) terhadap penduduk usia produktif.',
+            ],
+            [
+                'pertanyaan' => 'Selisih antara nilai ekspor dan nilai impor suatu negara disebut...',
+                'opsi_jawaban' => ['A' => 'Neraca perdagangan', 'B' => 'Produk Domestik Bruto', 'C' => 'Indeks Harga Konsumen', 'D' => 'Nilai Tukar Petani'],
+                'kunci_jawaban' => 'A',
+                'pembahasan' => 'Neraca perdagangan adalah selisih nilai ekspor dikurangi nilai impor; positif berarti surplus, negatif berarti defisit.',
+            ],
+            [
+                'pertanyaan' => 'Laju Pertumbuhan Ekonomi suatu wilayah umumnya dihitung dari perubahan...',
+                'opsi_jawaban' => ['A' => 'Jumlah penduduk', 'B' => 'PDRB atas dasar harga konstan', 'C' => 'Indeks Pembangunan Manusia', 'D' => 'Jumlah rumah tangga miskin'],
+                'kunci_jawaban' => 'B',
+                'pembahasan' => 'Laju pertumbuhan ekonomi dihitung dari persentase perubahan PDRB atas dasar harga konstan antar periode, agar tidak terpengaruh inflasi.',
             ],
         ];
 

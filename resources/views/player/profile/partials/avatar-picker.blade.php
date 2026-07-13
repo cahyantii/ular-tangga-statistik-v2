@@ -1,0 +1,60 @@
+<section id="avatar-picker">
+    <h3 class="text-base font-bold text-slate-800">Avatar</h3>
+    <p class="mt-1 text-sm text-slate-500">Pilih avatar yang kamu suka atau unggah foto sendiri.</p>
+
+    <div class="mt-5 grid grid-cols-3 gap-4 sm:grid-cols-4">
+        <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data">
+            @csrf
+            @method('patch')
+            <label class="group flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/50 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50">
+                <input
+                    type="file"
+                    name="avatar"
+                    accept="image/jpeg,image/jpg,image/png,image/webp"
+                    class="sr-only"
+                    aria-label="Unggah foto avatar"
+                    @change="$el.closest('form').submit()"
+                >
+                <x-player.icon name="upload-cloud" class="h-6 w-6" />
+                <span class="text-center text-xs font-semibold leading-tight">Unggah Foto</span>
+            </label>
+        </form>
+
+        @foreach ($presetAvatars as $preset)
+            @php $active = $user->avatar === $preset; @endphp
+            <form method="POST" action="{{ route('profile.avatar.update') }}">
+                @csrf
+                @method('patch')
+                <input type="hidden" name="preset" value="{{ $preset }}">
+                <button
+                    type="submit"
+                    aria-label="Pilih avatar bawaan"
+                    aria-pressed="{{ $active ? 'true' : 'false' }}"
+                    class="relative flex aspect-square w-full items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 {{ $active ? 'ring-4 ring-primary-400' : 'ring-2 ring-transparent hover:ring-primary-200' }}"
+                >
+                    <img src="{{ asset("images/avatars/{$preset}.svg") }}" alt="Pilihan avatar bawaan" loading="lazy" class="h-full w-full rounded-full object-cover">
+
+                    @if ($active)
+                        <span class="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 text-white ring-2 ring-white">
+                            <x-player.icon name="check" class="h-3 w-3" />
+                        </span>
+                    @endif
+                </button>
+            </form>
+        @endforeach
+    </div>
+
+    @error('avatar', 'avatar')
+        <p class="mt-3 text-xs font-medium text-rose-500">{{ $message }}</p>
+    @enderror
+
+    @if (session('status') === 'avatar-updated')
+        <p
+            x-data="{ show: true }"
+            x-show="show"
+            x-transition
+            x-init="setTimeout(() => show = false, 2500)"
+            class="mt-3 text-xs font-medium text-secondary-600"
+        >Avatar berhasil diperbarui.</p>
+    @endif
+</section>

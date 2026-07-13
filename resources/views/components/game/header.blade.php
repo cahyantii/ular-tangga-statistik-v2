@@ -11,7 +11,7 @@
                 <rect y="10" width="30" height="10" fill="#FFFFFF" />
             </svg>
         </div>
-        <p class="text-sm font-semibold text-primary-600">Papan {{ $papan->nama }}</p>
+        <p class="text-sm font-semibold text-primary-600">{{ $papan->nama }}</p>
         <p class="mt-0.5 text-xs text-slate-400 sm:text-sm">Jawab soal, kumpulkan poin, dan jadilah yang terbaik!</p>
     </div>
 </div>

@@ -64,6 +64,12 @@ class LearningProgressService
     /**
      * Rincian progress per kategori aktif (untuk widget progress belajar),
      * termasuk kategori yang belum pernah dimainkan sama sekali (0%).
+     *
+     * `progress_percent` & `status` (Tahap Progress Belajar redesign) mengukur
+     * CAKUPAN bank soal kategori (total_dijawab vs total soal aktif) — berbeda
+     * dari `akurasi` (ketepatan jawaban). Keduanya dipakai berdampingan di
+     * halaman Progress: kartu ringkasan menampilkan akurasi keseluruhan,
+     * baris per kategori menampilkan progres cakupan.
      */
     public function perKategori(User $user): Collection
     {
@@ -71,15 +77,30 @@ class LearningProgressService
 
         return KategoriMateri::query()
             ->active()
+            ->withCount(['soal' => fn ($query) => $query->active()])
             ->orderBy('urutan')
             ->get()
             ->map(function (KategoriMateri $kategori) use ($progressByKategori) {
                 $progress = $progressByKategori->get($kategori->id);
+                $totalDijawab = $progress->total_dijawab ?? 0;
+                $totalSoal = $kategori->soal_count;
+                $progressPercent = $totalSoal > 0
+                    ? min(100, (int) round($totalDijawab / $totalSoal * 100))
+                    : 0;
+
+                $status = $totalDijawab === 0
+                    ? 'belum_dimulai'
+                    : ($progressPercent >= 100 ? 'selesai' : 'sedang_belajar');
 
                 return [
+                    'kategori_id' => $kategori->id,
                     'kategori' => $kategori->nama,
-                    'total_dijawab' => $progress->total_dijawab ?? 0,
+                    'icon' => $kategori->icon ?? 'book',
+                    'total_dijawab' => $totalDijawab,
+                    'total_soal' => $totalSoal,
                     'akurasi' => $progress ? (float) $progress->accuracy : 0.0,
+                    'progress_percent' => $progressPercent,
+                    'status' => $status,
                 ];
             });
     }

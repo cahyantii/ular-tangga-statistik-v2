@@ -5,7 +5,7 @@
         @csrf
 
         <x-admin.input label="Nama Papan" name="nama" required />
-        <x-admin.input label="Jumlah Petak" name="jumlah_petak" type="number" :value="50" required />
+        <x-admin.input label="Jumlah Petak" name="jumlah_petak" type="number" :value="100" required />
         <x-admin.input label="Jumlah Kolom (untuk tata letak zig-zag)" name="jumlah_kolom" type="number" :value="10" required />
         <x-admin.input label="Thumbnail (opsional, URL/path gambar)" name="thumbnail" />
         <x-admin.checkbox label="Aktif" name="is_active" :checked="true" />

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Avatar hijab ungu">
+    <circle cx="50" cy="50" r="50" fill="#EDE9FE" />
+    <path d="M50 22c-16 0-26 12-26 28v20c0 4 3 7 7 7h4V64c0-14 7-24 15-24s15 10 15 24v13h4c4 0 7-3 7-7V50c0-16-10-28-26-28Z" fill="#7C3AED" />
+    <ellipse cx="50" cy="56" rx="15" ry="17" fill="#F4C7A1" />
+    <circle cx="44" cy="55" r="2.2" fill="#3B2A20" />
+    <circle cx="56" cy="55" r="2.2" fill="#3B2A20" />
+    <path d="M45 63c2 2 8 2 10 0" stroke="#3B2A20" stroke-width="1.6" stroke-linecap="round" fill="none" />
+</svg>

@@ -2,7 +2,6 @@
 
 @php
     $user = auth()->user();
-    $initial = mb_strtoupper(mb_substr($user->name, 0, 1));
 @endphp
 
 <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8">
@@ -47,9 +46,7 @@
 
         <div x-data="{ open: false }" class="relative">
             <button @click="open = !open" @click.outside="open = false" class="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition hover:bg-slate-100 sm:pr-3">
-                <span class="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white">
-                    {{ $initial }}
-                </span>
+                <x-player.avatar :user="$user" />
                 <span class="hidden text-left leading-tight sm:block">
                     <span class="block text-sm font-semibold text-slate-700">{{ $user->name }}</span>
                     <span class="block text-xs text-slate-400">{{ $user->role->label() }}</span>

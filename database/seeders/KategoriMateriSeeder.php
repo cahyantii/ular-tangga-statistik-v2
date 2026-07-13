@@ -13,16 +13,19 @@ class KategoriMateriSeeder extends Seeder
             [
                 'nama' => 'Statistika Dasar',
                 'slug' => 'statistika-dasar',
+                'icon' => 'book',
                 'urutan' => 1,
             ],
             [
                 'nama' => 'Pengenalan BPS',
                 'slug' => 'pengenalan-bps',
+                'icon' => 'building',
                 'urutan' => 2,
             ],
             [
                 'nama' => 'Indikator Statistik',
                 'slug' => 'indikator-statistik',
+                'icon' => 'pie-chart',
                 'urutan' => 3,
             ],
         ];
@@ -32,6 +35,7 @@ class KategoriMateriSeeder extends Seeder
                 ['slug' => $kategori['slug']],
                 [
                     'nama' => $kategori['nama'],
+                    'icon' => $kategori['icon'],
                     'urutan' => $kategori['urutan'],
                     'is_active' => true,
                 ]

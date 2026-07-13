@@ -25,6 +25,8 @@
         <span id="game-paused-timer" class="font-bold"></span>
     </div>
 
+    <x-game.board-stats :papan="$papan" class="mb-6" />
+
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-3">
         {{-- Kolom kiri/tengah: giliran, dadu, papan, tips --}}
         <div class="space-y-5 xl:col-span-2">

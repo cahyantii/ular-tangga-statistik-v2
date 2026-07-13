@@ -12,27 +12,53 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-slate-800 antialiased bg-white">
-        <header class="border-b border-slate-100 bg-white/80 backdrop-blur sticky top-0 z-30">
-            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
-                <a href="{{ route('home') }}" class="flex items-center gap-2 font-extrabold text-lg text-emerald-700">
-                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white">UT</span>
-                    Ular Tangga Statistik
+    <body class="overflow-x-hidden bg-white font-sans text-slate-800 antialiased">
+        <header class="sticky top-0 z-30 bg-white shadow-sm">
+            <nav class="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Navigasi utama">
+                <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3">
+                    <img
+                        src="{{ asset('images/brand/logo-baruuuu.png') }}"
+                        alt="Logo Ular Tangga Statistik"
+                        class="h-10 w-10 shrink-0 rounded-full object-contain shadow-sm sm:h-12 sm:w-12"
+                        loading="lazy"
+                    >
+                    <span class="truncate text-base font-extrabold text-slate-900 sm:text-lg">Ular Tangga Statistik</span>
                 </a>
 
-                <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-                    <a href="{{ route('home') }}" class="hover:text-emerald-700 {{ request()->routeIs('home') ? 'text-emerald-700' : '' }}">Beranda</a>
-                    <a href="{{ route('about') }}" class="hover:text-emerald-700 {{ request()->routeIs('about') ? 'text-emerald-700' : '' }}">Tentang</a>
-                    <a href="{{ route('how-to-play') }}" class="hover:text-emerald-700 {{ request()->routeIs('how-to-play') ? 'text-emerald-700' : '' }}">Cara Bermain</a>
-                    <a href="{{ route('faq') }}" class="hover:text-emerald-700 {{ request()->routeIs('faq') ? 'text-emerald-700' : '' }}">FAQ</a>
+                <div class="hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex">
+                    @foreach ([
+                        'home' => ['route' => 'home', 'label' => 'Beranda'],
+                        'about' => ['route' => 'about', 'label' => 'Tentang'],
+                        'how-to-play' => ['route' => 'how-to-play', 'label' => 'Cara Bermain'],
+                        'faq' => ['route' => 'faq', 'label' => 'FAQ'],
+                    ] as $key => $item)
+                        @php $active = request()->routeIs($item['route']); @endphp
+                        <a
+                            href="{{ route($item['route']) }}"
+                            aria-current="{{ $active ? 'page' : 'false' }}"
+                            class="border-b-2 pb-1 transition-colors duration-200 {{ $active ? 'border-primary-600 text-primary-600' : 'border-transparent hover:text-primary-600' }}"
+                        >
+                            {{ $item['label'] }}
+                        </a>
+                    @endforeach
                 </div>
 
-                <div class="flex items-center gap-3">
+                <div class="flex shrink-0 items-center gap-4">
                     @auth
-                        <a href="{{ route('dashboard') }}" class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition">Dashboard</a>
+                        <a
+                            href="{{ route('dashboard') }}"
+                            class="inline-flex shrink-0 items-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-primary-600 hover:to-primary-700 hover:shadow-soft sm:px-5 sm:py-2.5 sm:text-sm"
+                        >
+                            Dashboard
+                        </a>
                     @else
-                        <a href="{{ route('login') }}" class="text-sm font-medium text-slate-600 hover:text-emerald-700">Masuk</a>
-                        <a href="{{ route('register') }}" class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 transition">Daftar Gratis</a>
+                        <a href="{{ route('login') }}" class="hidden text-sm font-semibold text-slate-600 hover:text-primary-600 sm:inline">Masuk</a>
+                        <a
+                            href="{{ route('register') }}"
+                            class="inline-flex shrink-0 items-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-primary-600 hover:to-primary-700 hover:shadow-soft sm:px-5 sm:py-2.5 sm:text-sm"
+                        >
+                            Daftar Sekarang
+                        </a>
                     @endauth
                 </div>
             </nav>
@@ -42,12 +68,12 @@
             {{ $slot }}
         </main>
 
-        <footer class="border-t border-slate-100 mt-24">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+        <footer class="border-t border-slate-100">
+            <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-slate-500 sm:flex-row sm:px-6 lg:px-8">
                 <p>&copy; {{ now()->year }} Ular Tangga Statistik Indonesia. Dibuat untuk literasi statistik masyarakat.</p>
                 <div class="flex gap-6">
-                    <a href="{{ route('about') }}" class="hover:text-emerald-700">Tentang</a>
-                    <a href="{{ route('faq') }}" class="hover:text-emerald-700">FAQ</a>
+                    <a href="{{ route('about') }}" class="hover:text-primary-600">Tentang</a>
+                    <a href="{{ route('faq') }}" class="hover:text-primary-600">FAQ</a>
                 </div>
             </div>
         </footer>

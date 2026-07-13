@@ -23,6 +23,7 @@ class Achievement extends Model
         'warna_badge',
         'syarat_type',
         'syarat_value',
+        'reward_poin',
         'urutan',
         'is_active',
     ];
@@ -32,6 +33,7 @@ class Achievement extends Model
         return [
             'syarat_type' => AchievementCriteriaType::class,
             'syarat_value' => 'integer',
+            'reward_poin' => 'integer',
             'urutan' => 'integer',
             'is_active' => 'boolean',
         ];

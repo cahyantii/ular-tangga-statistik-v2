@@ -16,8 +16,8 @@ class PapanKonektorFactory extends Factory
         return [
             'papan_id' => PapanPermainan::factory(),
             'jenis' => ConnectorType::Tangga,
-            'posisi_awal' => fake()->numberBetween(2, 20),
-            'posisi_akhir' => fake()->numberBetween(21, 40),
+            'posisi_awal' => fake()->numberBetween(2, 40),
+            'posisi_akhir' => fake()->numberBetween(41, 80),
             'label' => null,
             'icon' => null,
         ];
@@ -27,8 +27,8 @@ class PapanKonektorFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'jenis' => ConnectorType::Ular,
-            'posisi_awal' => fake()->numberBetween(21, 40),
-            'posisi_akhir' => fake()->numberBetween(2, 20),
+            'posisi_awal' => fake()->numberBetween(41, 80),
+            'posisi_akhir' => fake()->numberBetween(2, 40),
         ]);
     }
 }

@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
@@ -26,20 +24,19 @@ class RegisteredUserController extends Controller
     /**
      * Handle an incoming registration request.
      *
-     * @throws ValidationException
+     * Role, avatar, dan level/XP/poin TIDAK diisi di sini secara sengaja:
+     * role & avatar sudah punya default kolom (lihat migrasi users), sedangkan
+     * level/XP/poin bukan kolom tersimpan — dihitung otomatis oleh LevelService
+     * dari aktivitas pemain (lihat Progress/Profil/Leaderboard), sehingga
+     * pengguna baru otomatis berada di Level 1 / 0 XP / 0 Poin tanpa perlu
+     * nilai default ditulis manual di sini.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(RegisterRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $request->string('name')->toString(),
+            'email' => $request->string('email')->toString(),
+            'password' => Hash::make($request->string('password')->toString()),
         ]);
 
         event(new Registered($user));

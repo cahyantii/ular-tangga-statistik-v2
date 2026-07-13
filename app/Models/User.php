@@ -5,17 +5,34 @@ namespace App\Models;
 use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, SoftDeletes;
+
+    /**
+     * Kunci avatar bawaan (Tahap Profil) — nilai kolom `avatar` yang BUKAN
+     * salah satu dari daftar ini dianggap path file di disk `public`
+     * (hasil unggahan sendiri), lihat accessor avatarUrl() di bawah.
+     *
+     * @var list<string>
+     */
+    public const PRESET_AVATARS = [
+        'avatar-1',
+        'avatar-2',
+        'avatar-3',
+        'avatar-robot',
+        'avatar-snake',
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -49,6 +66,27 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'role' => UserRole::class,
         ];
+    }
+
+    /**
+     * URL avatar siap-pakai untuk `<img>` — null berarti UI harus jatuh
+     * kembali ke inisial nama (lihat x-player.avatar).
+     */
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if (! $this->avatar) {
+                    return null;
+                }
+
+                if (in_array($this->avatar, self::PRESET_AVATARS, true)) {
+                    return asset("images/avatars/{$this->avatar}.svg");
+                }
+
+                return Storage::disk('public')->url($this->avatar);
+            },
+        );
     }
 
     public function gamePlayers(): HasMany

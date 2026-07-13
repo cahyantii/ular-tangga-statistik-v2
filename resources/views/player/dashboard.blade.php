@@ -1,53 +1,15 @@
 <x-player-layout>
     <div class="space-y-6">
-        {{-- Hero: sapaan + ilustrasi dekoratif papan ular tangga --}}
-        <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-            <div class="relative z-10 max-w-md">
-                <h1 class="text-2xl font-bold text-slate-800 sm:text-3xl">
+        {{-- Hero: sapaan + logo-dhas.png sebagai background penuh (cover) di belakang teks --}}
+        <div
+            class="relative min-h-[170px] overflow-hidden rounded-[28px] bg-white p-6 shadow-sm sm:p-8"
+            style="background-image: linear-gradient(90deg, rgba(255,255,255,0.97) 0%, rgba(255,255,255,0.92) 25%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 72%), url('{{ asset('images/brand/logo-dhas.png') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;"
+        >
+            <div class="relative z-10 flex h-full max-w-md flex-col justify-center">
+                <h1 class="text-2xl font-bold text-slate-800 sm:text-3xl lg:text-[42px]">
                     Halo, {{ auth()->user()->name }} <span class="inline-block animate-float">&#128075;</span>
                 </h1>
-                <p class="mt-2 text-slate-500">Siap bermain dan belajar hari ini?</p>
-            </div>
-
-            <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[420px] select-none lg:block" aria-hidden="true">
-                <svg viewBox="0 0 420 200" class="h-full w-full">
-                    <circle cx="70" cy="35" r="16" fill="#EAF1FC" />
-                    <circle cx="95" cy="30" r="12" fill="#EAF1FC" />
-                    <circle cx="230" cy="24" r="14" fill="#EAF1FC" />
-                    <circle cx="252" cy="30" r="10" fill="#EAF1FC" />
-
-                    <path d="M0 200V140c40-30 90-30 130-10s90 10 130-14 100-16 160 6V200Z" fill="#E5F8EE" />
-                    <path d="M0 200V165c60-18 120-6 170 8s110 4 160-14 60-8 90 2V200Z" fill="#CCF1DD" />
-
-                    <g transform="translate(300 40)">
-                        <path d="M18 62V10M18 10l-9 7M18 10l9 7" stroke="#F68B1F" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                        <path d="M2 62h32l-6 14H8Z" fill="#F68B1F" />
-                        <circle cx="18" cy="0" r="7" fill="#F6E27A" stroke="#F68B1F" stroke-width="2" />
-                    </g>
-
-                    <g transform="translate(150 118)">
-                        <line x1="0" y1="0" x2="0" y2="46" stroke="#0F4CBA" stroke-width="4" stroke-linecap="round" />
-                        <line x1="22" y1="0" x2="22" y2="46" stroke="#0F4CBA" stroke-width="4" stroke-linecap="round" />
-                        <line x1="0" y1="8" x2="22" y2="8" stroke="#0F4CBA" stroke-width="3" />
-                        <line x1="0" y1="20" x2="22" y2="20" stroke="#0F4CBA" stroke-width="3" />
-                        <line x1="0" y1="32" x2="22" y2="32" stroke="#0F4CBA" stroke-width="3" />
-                        <line x1="0" y1="44" x2="22" y2="44" stroke="#0F4CBA" stroke-width="3" />
-                    </g>
-
-                    <g class="animate-float" transform="translate(40 120)">
-                        <path d="M0 46c0-24 40-24 40-48 0-12-12-15-21-9" stroke="#00A65A" stroke-width="9" stroke-linecap="round" fill="none" />
-                        <circle cx="21" cy="-13" r="7" fill="#00A65A" />
-                        <circle cx="19" cy="-15" r="1.4" fill="#0A317A" />
-                        <path d="M14 -10c1.8 2 5 2 6.8 0" stroke="#0A317A" stroke-width="1.4" stroke-linecap="round" fill="none" />
-                    </g>
-
-                    <g transform="translate(230 150)">
-                        <rect x="0" y="0" width="26" height="26" rx="6" fill="#ffffff" stroke="#0F4CBA" stroke-width="2" transform="rotate(-10 13 13)" />
-                        <circle cx="8" cy="9" r="2" fill="#0F4CBA" transform="rotate(-10 13 13)" />
-                        <circle cx="18" cy="13" r="2" fill="#0F4CBA" transform="rotate(-10 13 13)" />
-                        <circle cx="8" cy="18" r="2" fill="#0F4CBA" transform="rotate(-10 13 13)" />
-                    </g>
-                </svg>
+                <p class="mt-2 text-lg text-slate-600">Siap bermain dan belajar hari ini?</p>
             </div>
         </div>
 
@@ -70,12 +32,8 @@
                 <p class="mt-1 text-sm text-secondary-600">Status: {{ $activeSession->status->label() }}</p>
             </a>
         @else
-            <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                <x-player.game-card
-                    variant="robot"
-                    title="Main vs Robot"
-                    description="Bermain sendiri melawan robot. Papan dipilih acak, giliran robot dijalankan otomatis."
-                    ctaLabel="Mulai Bermain"
+            <div class="grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2">
+                <x-player.robot-hero
                     :href="route('game.robot.store')"
                     method="post"
                 />
