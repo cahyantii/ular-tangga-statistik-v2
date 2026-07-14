@@ -705,7 +705,7 @@ Ikuti langkah-langkah berikut untuk menjalankan project pada komputer lokal.
 ## 1. Clone Repository
 
 ```bash
-git clone https://github.com/cahyantii/ular-tangga-statistik.git
+git clone https://github.com/cahyantii/ular-tangga-statistik-v2.git
 ```
 
 ---
