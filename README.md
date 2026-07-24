@@ -791,6 +791,21 @@ php artisan migrate --seed
 
 ---
 
+## 8. (Opsional) Aktifkan Login Google & GitHub
+
+Login/Register lewat Google dan GitHub sudah terintegrasi penuh (Laravel
+Socialite), tapi butuh kredensial OAuth asli sebelum tombolnya bisa dipakai.
+Panduan step-by-step membuat Client ID/Secret di Google Cloud Console &
+GitHub Developer Settings, nilai Redirect URI yang harus didaftarkan, serta
+troubleshooting error umum (`redirect_uri_mismatch`, `invalid_client`, dsb)
+ada di **[docs/OAUTH_SETUP.md](docs/OAUTH_SETUP.md)**.
+
+Tanpa langkah ini, aplikasi tetap berjalan normal - Login/Register manual
+via email tidak terpengaruh, tombol Google/GitHub hanya akan diam-diam
+tidak berfungsi sampai kredensial diisi.
+
+---
+
 # ▶️ Cara Menjalankan Project
 
 Setelah proses instalasi selesai, jalankan Laravel Development Server menggunakan perintah berikut.

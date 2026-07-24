@@ -2,11 +2,11 @@
     <h3 class="text-base font-bold text-slate-800">Avatar</h3>
     <p class="mt-1 text-sm text-slate-500">Pilih avatar yang kamu suka atau unggah foto sendiri.</p>
 
-    <div class="mt-5 grid grid-cols-3 gap-4 sm:grid-cols-4">
+    <div class="mt-5 grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] justify-items-center gap-4">
         <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data">
             @csrf
             @method('patch')
-            <label class="group flex aspect-square cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-primary-200 bg-primary-50/50 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50">
+            <label class="group flex h-[90px] w-[90px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-primary-200 bg-primary-50/50 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50">
                 <input
                     type="file"
                     name="avatar"
@@ -20,7 +20,7 @@
             </label>
         </form>
 
-        @foreach ($presetAvatars as $preset)
+        @foreach ($presetAvatars as $index => $preset)
             @php $active = $user->avatar === $preset; @endphp
             <form method="POST" action="{{ route('profile.avatar.update') }}">
                 @csrf
@@ -28,14 +28,19 @@
                 <input type="hidden" name="preset" value="{{ $preset }}">
                 <button
                     type="submit"
-                    aria-label="Pilih avatar bawaan"
+                    aria-label="Pilih Avatar {{ $index + 1 }}"
                     aria-pressed="{{ $active ? 'true' : 'false' }}"
-                    class="relative flex aspect-square w-full items-center justify-center rounded-full transition duration-200 hover:-translate-y-0.5 {{ $active ? 'ring-4 ring-primary-400' : 'ring-2 ring-transparent hover:ring-primary-200' }}"
+                    class="avatar-option relative flex h-[90px] w-[90px] items-center justify-center rounded-[20px] border-2 transition duration-200 {{ $active ? 'avatar-option--active border-[#2563EB]' : 'border-transparent' }}"
                 >
-                    <img src="{{ asset("images/avatars/{$preset}.svg") }}" alt="Pilihan avatar bawaan" loading="lazy" class="h-full w-full rounded-full object-cover">
+                    <img
+                        src="{{ asset('images/avatars/'.$preset.'.png') }}"
+                        alt="Avatar {{ $index + 1 }}"
+                        loading="lazy"
+                        class="h-[70px] w-[70px] object-contain"
+                    >
 
                     @if ($active)
-                        <span class="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary-500 text-white ring-2 ring-white">
+                        <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-white ring-2 ring-white">
                             <x-player.icon name="check" class="h-3 w-3" />
                         </span>
                     @endif

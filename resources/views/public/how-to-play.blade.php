@@ -22,71 +22,39 @@
     @endphp
 
     {{-- Hero --}}
-    <section class="relative overflow-hidden bg-gradient-to-b from-primary-50 via-blue-50 to-white">
-        <div class="mx-auto flex max-w-7xl flex-col items-center gap-8 px-4 py-16 sm:px-6 lg:flex-row lg:justify-between lg:px-8 lg:py-20">
-            <div class="hidden shrink-0 lg:block">
-                <svg viewBox="0 0 220 200" class="h-40 w-44 select-none xl:h-48 xl:w-52" aria-hidden="true">
-                    <g transform="translate(6 10) scale(0.55)">
-                        <path d="M0 260c0-80 150-80 150-185 0-46-46-58-80-35" stroke="#16A34A" stroke-width="52" stroke-linecap="round" fill="none" />
-                        <path d="M0 260c0-80 150-80 150-185 0-46-46-58-80-35" stroke="#22C55E" stroke-width="38" stroke-linecap="round" fill="none" />
-                        <circle cx="72" cy="40" r="34" fill="#22C55E" />
-                        <circle cx="62" cy="30" r="8" fill="#0A317A" />
-                        <circle cx="59" cy="27" r="3" fill="#ffffff" />
-                        <path d="M46 52c7 7 25 7 32 0" stroke="#0A317A" stroke-width="4.5" stroke-linecap="round" fill="none" />
-                        <path d="M73 58 85 72 73 68Z" fill="#EF4444" />
-                    </g>
-                    <g transform="translate(120 55) scale(0.55)">
-                        <rect x="0" y="0" width="12" height="200" rx="4" fill="#B45309" />
-                        <rect x="50" y="0" width="12" height="200" rx="4" fill="#B45309" />
-                        <rect x="0" y="30" width="62" height="11" rx="3" fill="#D97706" />
-                        <rect x="0" y="80" width="62" height="11" rx="3" fill="#D97706" />
-                        <rect x="0" y="130" width="62" height="11" rx="3" fill="#D97706" />
-                    </g>
-                    <g transform="translate(112 148) scale(0.5)">
-                        <rect x="0" y="0" width="80" height="80" rx="14" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="3" />
-                        <circle cx="20" cy="20" r="6.5" fill="#1E293B" />
-                        <circle cx="60" cy="20" r="6.5" fill="#1E293B" />
-                        <circle cx="40" cy="40" r="6.5" fill="#1E293B" />
-                        <circle cx="20" cy="60" r="6.5" fill="#1E293B" />
-                        <circle cx="60" cy="60" r="6.5" fill="#1E293B" />
-                    </g>
-                    <path d="M14 150l4 9 9 4-9 4-4 9-4-9-9-4 9-4Z" fill="#93C5FD" />
-                    <circle cx="192" cy="38" r="4" fill="#FCA5A5" />
-                    <rect x="178" y="118" width="8" height="8" fill="#FCD34D" transform="rotate(20 182 122)" />
-                </svg>
+    <section class="relative overflow-hidden bg-gradient-to-b from-[#EAF3FF] via-[#F4F8FF] to-white">
+        {{-- Decorative light --}}
+        <div aria-hidden="true" class="pointer-events-none absolute left-1/4 top-0 h-64 w-64 -translate-x-1/2 -translate-y-1/3 rounded-full bg-white/70 blur-3xl"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute right-1/4 bottom-0 h-72 w-72 translate-x-1/3 translate-y-1/3 rounded-full bg-blue-200/40 blur-3xl"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,.7)_0%,rgba(255,255,255,0)_70%)] blur-2xl"></div>
+
+        {{-- Soft fade into the section below --}}
+        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(to_bottom,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,.75),rgba(255,255,255,1))] sm:h-48 lg:h-56"></div>
+
+        <div class="relative mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-16 sm:px-6 md:flex-row md:justify-between md:gap-6 lg:gap-10 lg:px-8 lg:py-20">
+            <div class="shrink-0">
+                <img
+                    src="{{ asset('images/brand/ular.png') }}"
+                    alt="Ilustrasi ular tangga"
+                    loading="lazy"
+                    class="mx-auto h-auto w-36 object-contain drop-shadow-[0_10px_28px_rgba(255,255,255,0.7)] transition-transform duration-300 md:w-44 xl:w-64 xl:hover:scale-105"
+                >
             </div>
 
-            <div class="text-center lg:flex-1">
+            <div class="text-center md:flex-1">
                 <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Cara Bermain</h1>
                 <p class="mx-auto mt-4 max-w-xl text-lg text-slate-600">
                     Ikuti langkah-langkah berikut untuk mulai bermain dan jadi juara statistik!
                 </p>
             </div>
 
-            <div class="hidden shrink-0 lg:block">
-                <svg viewBox="0 0 280 200" class="h-40 w-52 select-none xl:h-48 xl:w-60" aria-hidden="true">
-                    <ellipse cx="150" cy="185" rx="120" ry="12" fill="#D1FAE5" opacity="0.6" />
-                    <g transform="translate(90 6) scale(0.85)">
-                        <rect x="0" y="60" width="180" height="110" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="3" />
-                        <rect x="-24" y="30" width="34" height="140" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="3" />
-                        <rect x="170" y="30" width="34" height="140" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="3" />
-                        <path d="M-24 30 -7 6l17 24Z" fill="#3E75D1" stroke="#0F4CBA" stroke-width="2.5" />
-                        <path d="M170 30l17-24 17 24Z" fill="#3E75D1" stroke="#0F4CBA" stroke-width="2.5" />
-                        <rect x="70" y="100" width="40" height="70" fill="#0F4CBA" fill-opacity="0.15" stroke="#0F4CBA" stroke-width="2.5" />
-                        <rect x="20" y="85" width="22" height="22" fill="#ffffff" stroke="#0F4CBA" stroke-width="2" />
-                        <rect x="138" y="85" width="22" height="22" fill="#ffffff" stroke="#0F4CBA" stroke-width="2" />
-                        <line x1="-7" y1="6" x2="-7" y2="-18" stroke="#0F4CBA" stroke-width="3" />
-                        <path d="M-7-18h20l-20 14Z" fill="#3E75D1" />
-                    </g>
-                    <g transform="translate(14 88) scale(0.7)">
-                        <path d="M-9 0h18v12a9 9 0 0 1-18 0V0Z" fill="#FCD34D" stroke="#F59E0B" stroke-width="2" />
-                        <path d="M-9 2h-7v3a7 7 0 0 0 7 7M9 2h7v3a7 7 0 0 1-7 7" stroke="#F59E0B" stroke-width="2.2" fill="none" />
-                        <rect x="-3.5" y="18" width="7" height="9" fill="#F59E0B" />
-                        <path d="M-8 27h16l-2.5 8h-11Z" fill="#F59E0B" />
-                    </g>
-                    <path d="M254 30l5 10 10 5-10 5-5 10-5-10-10-5 10-5Z" fill="#93C5FD" />
-                    <circle cx="22" cy="30" r="4" fill="#C4B5FD" />
-                </svg>
+            <div class="shrink-0">
+                <img
+                    src="{{ asset('images/brand/logo-gedung.png') }}"
+                    alt="Ilustrasi kastil"
+                    loading="lazy"
+                    class="mx-auto h-auto w-36 object-contain drop-shadow-[0_10px_28px_rgba(255,255,255,0.7)] transition-transform duration-300 md:w-44 xl:w-64 xl:hover:scale-105"
+                >
             </div>
         </div>
     </section>
@@ -141,20 +109,26 @@
 
     {{-- CTA --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="flex flex-col items-center gap-6 rounded-3xl bg-primary-50 p-6 text-center sm:p-8 lg:flex-row lg:justify-between lg:text-left">
-            <div class="flex flex-col items-center gap-4 sm:flex-row">
-                <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-500 text-white shadow-sm">
-                    <x-player.icon name="trophy" class="h-7 w-7" />
-                </span>
-                <div>
-                    <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Siap Menguji Pengetahuanmu?</h2>
-                    <p class="mt-1 text-slate-600">Belajar jadi lebih seru, statistik jadi lebih mudah dipahami!</p>
-                </div>
+        <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 p-6 text-center shadow-sm sm:gap-6 sm:p-8 md:flex-row md:justify-between md:gap-6 md:text-left lg:gap-10">
+            {{-- Decorative light --}}
+            <div aria-hidden="true" class="pointer-events-none absolute left-8 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-white/70 blur-3xl"></div>
+
+            <img
+                src="{{ asset('images/brand/logo-piala.png') }}"
+                alt=""
+                aria-hidden="true"
+                loading="lazy"
+                class="relative mx-auto h-auto w-16 shrink-0 object-contain drop-shadow-[0_8px_20px_rgba(255,255,255,0.8)] transition-transform duration-300 hover:scale-105 md:w-20 xl:w-28"
+            >
+
+            <div class="relative md:flex-1">
+                <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Siap Menguji Pengetahuanmu?</h2>
+                <p class="mt-1 text-slate-600">Belajar jadi lebih seru, statistik jadi lebih mudah dipahami!</p>
             </div>
 
             <a
                 href="{{ route('register') }}"
-                class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-primary-600 hover:to-primary-700 hover:shadow-soft"
+                class="relative inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-primary-600 hover:to-primary-700 hover:shadow-soft"
             >
                 Mulai Bermain Sekarang
                 <x-player.icon name="arrow-right" class="h-5 w-5" />

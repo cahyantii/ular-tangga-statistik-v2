@@ -36,9 +36,20 @@ class UserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
+        $totalPengguna = User::query()->count();
+        $totalAdmin = User::query()->where('role', UserRole::Admin)->count();
+        $totalPemain = User::query()->where('role', UserRole::Player)->count();
+        $adminBelumVerifikasi = User::query()->where('role', UserRole::Admin)->whereNull('email_verified_at')->count();
+
         return view('admin.management.users.index', [
             'users' => $users,
             'filter' => $filter,
+            'stats' => [
+                'total' => $totalPengguna,
+                'aktif' => $totalPengguna - $adminBelumVerifikasi,
+                'admin' => $totalAdmin,
+                'pemain' => $totalPemain,
+            ],
         ]);
     }
 
@@ -84,17 +95,27 @@ class UserController extends Controller
         $data = $request->validated();
         $wasPlayer = $user->role === UserRole::Player;
         $newRole = UserRole::from($data['role']);
+        $promotedToAdmin = $wasPlayer && $newRole === UserRole::Admin;
 
         $user->name = $data['name'];
         $user->email = $data['email'];
         $user->role = $newRole;
+
+        // Sama seperti ProfileController::update() di sisi player: email yang
+        // berubah selalu meng-unverified-kan akun, supaya status "terverifikasi"
+        // tidak pernah menempel pada email yang belum pernah dikonfirmasi
+        // pemiliknya — terlepas dari apakah perubahan ini juga promosi ke Admin.
+        if ($user->isDirty('email') || $promotedToAdmin) {
+            $user->email_verified_at = null;
+        }
+
         $user->save();
 
-        if ($wasPlayer && $newRole === UserRole::Admin) {
-            $user->email_verified_at = null;
-            $user->save();
+        if ($promotedToAdmin) {
             $user->sendEmailVerificationNotification();
         }
+
+        Cache::forget(AdminDashboardService::STATS_PLAYERS_CACHE_KEY);
 
         return redirect()->route('admin.management.users.index')
             ->with('status', "Pengguna \"{$user->name}\" berhasil diperbarui.");

@@ -3,10 +3,12 @@
 namespace Tests\Feature\Admin\Management;
 
 use App\Enums\UserRole;
+use App\Mail\VerifyEmailMail;
 use App\Models\User;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Services\Admin\AdminDashboardService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -31,7 +33,7 @@ class UserManagementTest extends TestCase
 
     public function test_creating_an_admin_user_triggers_email_verification(): void
     {
-        Notification::fake();
+        Mail::fake();
         $admin = User::factory()->admin()->create();
 
         $this->actingAs($admin)->post('/admin/management/users', [
@@ -44,12 +46,12 @@ class UserManagementTest extends TestCase
 
         $newAdmin = User::where('email', 'admin-baru@example.com')->firstOrFail();
         $this->assertNull($newAdmin->email_verified_at);
-        Notification::assertSentTo($newAdmin, VerifyEmail::class);
+        Mail::assertQueued(VerifyEmailMail::class, fn ($mail) => $mail->hasTo($newAdmin->email));
     }
 
     public function test_promoting_a_player_to_admin_triggers_email_verification(): void
     {
-        Notification::fake();
+        Mail::fake();
         $admin = User::factory()->admin()->create();
         $player = User::factory()->create();
 
@@ -62,7 +64,74 @@ class UserManagementTest extends TestCase
         $player->refresh();
         $this->assertSame(UserRole::Admin, $player->role);
         $this->assertNull($player->email_verified_at);
-        Notification::assertSentTo($player, VerifyEmail::class);
+        Mail::assertQueued(VerifyEmailMail::class, fn ($mail) => $mail->hasTo($player->email));
+    }
+
+    public function test_editing_a_users_email_resets_verification_status(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $player = User::factory()->create(['email' => 'lama@example.com']);
+        $this->assertNotNull($player->email_verified_at);
+
+        $this->actingAs($admin)->put("/admin/management/users/{$player->id}", [
+            'name' => $player->name,
+            'email' => 'baru@example.com',
+            'role' => 'player',
+        ])->assertRedirect(route('admin.management.users.index'));
+
+        $player->refresh();
+        $this->assertSame('baru@example.com', $player->email);
+        $this->assertNull($player->email_verified_at);
+    }
+
+    public function test_editing_an_admins_email_also_resets_verification_status(): void
+    {
+        $actor = User::factory()->admin()->create();
+        $otherAdmin = User::factory()->admin()->create(['email' => 'admin-lama@example.com']);
+        $this->assertNotNull($otherAdmin->email_verified_at);
+
+        $this->actingAs($actor)->put("/admin/management/users/{$otherAdmin->id}", [
+            'name' => $otherAdmin->name,
+            'email' => 'admin-baru@example.com',
+            'role' => 'admin',
+        ])->assertRedirect(route('admin.management.users.index'));
+
+        $otherAdmin->refresh();
+        $this->assertSame('admin-baru@example.com', $otherAdmin->email);
+        $this->assertNull($otherAdmin->email_verified_at);
+    }
+
+    public function test_editing_a_user_without_changing_email_keeps_verification_status(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $player = User::factory()->create();
+        $this->assertNotNull($player->email_verified_at);
+
+        $this->actingAs($admin)->put("/admin/management/users/{$player->id}", [
+            'name' => 'Nama Diperbarui',
+            'email' => $player->email,
+            'role' => 'player',
+        ])->assertRedirect(route('admin.management.users.index'));
+
+        $player->refresh();
+        $this->assertSame('Nama Diperbarui', $player->name);
+        $this->assertNotNull($player->email_verified_at);
+    }
+
+    public function test_updating_a_users_role_invalidates_admin_dashboard_player_stats_cache(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $player = User::factory()->create();
+
+        Cache::put(AdminDashboardService::STATS_PLAYERS_CACHE_KEY, ['stale' => true], now()->addMinutes(5));
+
+        $this->actingAs($admin)->put("/admin/management/users/{$player->id}", [
+            'name' => $player->name,
+            'email' => $player->email,
+            'role' => 'admin',
+        ])->assertRedirect(route('admin.management.users.index'));
+
+        $this->assertFalse(Cache::has(AdminDashboardService::STATS_PLAYERS_CACHE_KEY));
     }
 
     public function test_admin_cannot_delete_their_own_account(): void

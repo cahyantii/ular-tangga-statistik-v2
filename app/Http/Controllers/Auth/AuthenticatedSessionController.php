@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Enums\UserRole;
+use App\Enums\AuthProvider;
+use App\Events\Auth\UserLoggedIn;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -29,7 +30,9 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended($this->redirectPathFor($request->user()));
+        UserLoggedIn::dispatch($request->user(), AuthProvider::Email, $request->ip(), $request->userAgent(), now());
+
+        return redirect()->intended(route($request->user()->dashboardRouteName(), absolute: false));
     }
 
     /**
@@ -44,15 +47,5 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
-    }
-
-    /**
-     * Tentukan tujuan redirect setelah login berdasarkan role user (Tahap 13).
-     */
-    private function redirectPathFor(mixed $user): string
-    {
-        return $user->role === UserRole::Admin
-            ? route('admin.dashboard', absolute: false)
-            : route('dashboard', absolute: false);
     }
 }

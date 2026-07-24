@@ -19,6 +19,7 @@ class UpdatePapanPermainanRequest extends FormRequest
     {
         return [
             'nama' => ['required', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'],
             'jumlah_kolom' => ['required', 'integer', 'min:1', 'lte:jumlah_petak_saat_ini'],
             'thumbnail' => ['nullable', 'string', 'max:255'],
             '_version' => ['required', 'string'],

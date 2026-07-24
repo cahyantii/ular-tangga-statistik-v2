@@ -2,6 +2,7 @@
 
 namespace App\Services\Master;
 
+use App\Enums\ConnectorType;
 use App\Enums\TileType;
 use App\Models\PapanKonektor;
 use App\Models\PapanPermainan;
@@ -81,6 +82,16 @@ class PapanKonektorService
 
         if ($posisiAkhir <= 1 || $posisiAkhir >= $papan->jumlah_petak) {
             $errors[] = 'Posisi akhir tidak boleh di petak Start atau Finish.';
+        }
+
+        $jenis = (string) $data['jenis'];
+
+        if ($jenis === ConnectorType::Tangga->value && $posisiAkhir <= $posisiAwal) {
+            $errors[] = 'Tangga harus naik: posisi akhir harus lebih besar dari posisi awal.';
+        }
+
+        if ($jenis === ConnectorType::Ular->value && $posisiAkhir >= $posisiAwal) {
+            $errors[] = 'Ular harus turun: posisi akhir harus lebih kecil dari posisi awal.';
         }
 
         $konektorLain = $papan->papanKonektor()

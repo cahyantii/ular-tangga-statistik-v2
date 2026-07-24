@@ -8,10 +8,21 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\SocialiteController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
+    Route::get('auth/{provider}/redirect', [SocialiteController::class, 'redirect'])
+        ->whereIn('provider', ['google', 'github'])
+        ->middleware('throttle:10,1')
+        ->name('social.redirect');
+
+    Route::get('auth/{provider}/callback', [SocialiteController::class, 'callback'])
+        ->whereIn('provider', ['google', 'github'])
+        ->middleware('throttle:10,1')
+        ->name('social.callback');
+
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 
@@ -27,6 +38,7 @@ Route::middleware('guest')->group(function () {
         ->name('password.request');
 
     Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->middleware('throttle:6,1')
         ->name('password.email');
 
     Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])

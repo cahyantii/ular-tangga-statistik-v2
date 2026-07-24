@@ -1,104 +1,182 @@
 <x-admin-layout>
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 class="text-2xl font-bold text-slate-900">Kelola Soal</h1>
-        <div class="flex flex-wrap gap-2">
-            <a href="{{ route('admin.management.soal.export', ['format' => 'xlsx']) }}"
-               class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                Export .xlsx
-            </a>
-            <a href="{{ route('admin.management.soal.export', ['format' => 'csv']) }}"
-               class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                Export .csv
-            </a>
-            <a href="{{ route('admin.management.soal.import.create') }}"
-               class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                Import
-            </a>
-            <a href="{{ route('admin.management.soal.create') }}"
-               class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-                + Tambah Soal
-            </a>
+    {{-- Header card --}}
+    <div class="overflow-hidden rounded-[30px] p-8 shadow-[0_10px_40px_rgba(0,0,0,.06)]" style="background: linear-gradient(90deg, #ffffff 0%, #ECFDF5 50%, #ffffff 100%);">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-4">
+                <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-green-100 text-green-600">
+                    <x-player.icon name="help" class="h-8 w-8" />
+                </span>
+                <div>
+                    <h1 class="text-3xl font-bold leading-tight text-[#1E293B] sm:text-4xl">Kelola Soal</h1>
+                    <p class="mt-1 text-base text-slate-500 sm:text-lg">Kelola semua pertanyaan yang tersedia dalam sistem</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ route('admin.management.soal.export', ['format' => 'xlsx']) }}"
+                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-green-500 bg-white px-4 text-sm font-semibold text-green-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md">
+                    <x-player.icon name="download" class="h-4 w-4" />
+                    Export .xlsx
+                </a>
+                <a href="{{ route('admin.management.soal.export', ['format' => 'csv']) }}"
+                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-blue-500 bg-white px-4 text-sm font-semibold text-blue-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md">
+                    <x-player.icon name="download" class="h-4 w-4" />
+                    Export .csv
+                </a>
+                <a href="{{ route('admin.management.soal.import.create') }}"
+                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-violet-500 bg-white px-4 text-sm font-semibold text-violet-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md">
+                    <x-player.icon name="upload-cloud" class="h-4 w-4" />
+                    Import
+                </a>
+                <a href="{{ route('admin.management.soal.create') }}"
+                   class="admin-nav-active inline-flex h-12 items-center gap-2 rounded-2xl px-5 text-sm font-semibold text-white transition duration-300 ease-in-out hover:-translate-y-0.5">
+                    <x-player.icon name="plus" class="h-4 w-4" />
+                    Tambah Soal
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="mb-4 flex flex-wrap items-center gap-2 text-sm">
-        @foreach (['active' => 'Aktif', 'trashed' => 'Sampah', 'all' => 'Semua'] as $value => $label)
+    {{-- Filter pills --}}
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+        @foreach ([
+            'active' => ['label' => 'Aktif', 'icon' => 'check-circle'],
+            'trashed' => ['label' => 'Sampah', 'icon' => 'trash'],
+            'all' => ['label' => 'Semua', 'icon' => 'grid'],
+        ] as $value => $meta)
             <a href="{{ route('admin.management.soal.index', ['filter' => $value]) }}"
-               class="rounded-full px-3 py-1 font-medium {{ $filter === $value ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 border border-slate-200' }}">
-                {{ $label }}
+               class="inline-flex h-12 items-center gap-2 rounded-full border px-5 text-sm font-semibold shadow-sm transition duration-200 ease-in-out {{ $filter === $value ? 'border-green-200 bg-green-50 text-green-700 shadow-[0_6px_16px_rgba(34,197,94,.18)]' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50' }}">
+                <x-player.icon :name="$meta['icon']" class="h-4 w-4" />
+                {{ $meta['label'] }}
             </a>
         @endforeach
     </div>
 
-    <form method="GET" class="mb-4 flex flex-wrap gap-3">
+    {{-- Search + kategori + filter --}}
+    <form method="GET" class="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
         <input type="hidden" name="filter" value="{{ $filter }}">
-        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari pertanyaan..."
-               class="w-64 rounded-lg border-slate-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
-        <select name="kategori_id" class="rounded-lg border-slate-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500">
+        <div class="relative flex-1">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5 text-slate-400">
+                <x-player.icon name="search" class="h-5 w-5" />
+            </span>
+            <input
+                type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Cari pertanyaan..."
+                class="h-[58px] w-full rounded-2xl border-slate-200 pl-12 pr-4 text-sm text-slate-700 shadow-sm placeholder:text-slate-400 focus:border-green-500 focus:ring-green-500"
+            >
+        </div>
+
+        <select name="kategori_id"
+                class="h-[58px] rounded-2xl border-slate-200 pl-4 pr-9 text-sm font-medium text-slate-600 shadow-sm focus:border-green-500 focus:ring-green-500 lg:w-64">
             <option value="">Semua Kategori</option>
             @foreach ($kategoriOptions as $id => $nama)
                 <option value="{{ $id }}" @selected((string) request('kategori_id') === (string) $id)>{{ $nama }}</option>
             @endforeach
         </select>
-        <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
+
+        <button type="submit"
+                class="inline-flex h-[58px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#1E293B] px-6 text-sm font-semibold text-white shadow-sm transition duration-200 ease-in-out hover:bg-slate-800">
+            <x-player.icon name="filter" class="h-4 w-4" />
             Filter
         </button>
     </form>
 
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <table class="min-w-full divide-y divide-slate-100 text-sm">
-            <thead class="bg-slate-50">
-                <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                    <th class="px-4 py-3">Pertanyaan</th>
-                    <th class="px-4 py-3">Kategori</th>
-                    <th class="px-4 py-3">Kunci</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3 text-right">Aksi</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100">
-                @forelse ($soalList as $soal)
-                    <tr>
-                        <td class="max-w-md px-4 py-3 font-medium text-slate-800">{{ \Illuminate\Support\Str::limit($soal->pertanyaan, 80) }}</td>
-                        <td class="px-4 py-3 text-slate-500">{{ $soal->kategori->nama ?? '-' }}</td>
-                        <td class="px-4 py-3 text-slate-500">{{ $soal->kunci_jawaban }}</td>
-                        <td class="px-4 py-3">
-                            @if ($soal->trashed())
-                                <span class="text-red-500">Dihapus</span>
-                            @elseif ($soal->is_active)
-                                <span class="text-emerald-600">Aktif</span>
-                            @else
-                                <span class="text-slate-400">Nonaktif</span>
-                            @endif
-                        </td>
-                        <td class="px-4 py-3 text-right">
-                            @if ($soal->trashed())
-                                <form method="POST" action="{{ route('admin.management.soal.restore', $soal->id) }}" class="inline">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="text-emerald-600 hover:text-emerald-800">Pulihkan</button>
-                                </form>
-                            @else
-                                <a href="{{ route('admin.management.soal.edit', $soal) }}" class="text-slate-600 hover:text-slate-900">Edit</a>
-                                <form method="POST" action="{{ route('admin.management.soal.destroy', $soal) }}" class="inline"
-                                      onsubmit="return confirm('Hapus soal ini?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="ml-3 text-red-600 hover:text-red-800">Hapus</button>
-                                </form>
-                            @endif
-                        </td>
+    {{-- Table --}}
+    <div class="mt-6 overflow-hidden rounded-[26px] border border-slate-100 bg-white shadow-[0_10px_40px_rgba(0,0,0,.06)]">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-100 text-sm">
+                <thead>
+                    <tr class="h-16 text-left text-xs font-semibold uppercase tracking-wider text-slate-600" style="background: linear-gradient(90deg, #ECFDF5, #F0FDF4);">
+                        <th class="px-4 sm:px-6">#</th>
+                        <th class="px-4 sm:px-6">Pertanyaan</th>
+                        <th class="px-4 sm:px-6">Kategori</th>
+                        <th class="px-4 sm:px-6">Kunci</th>
+                        <th class="px-4 sm:px-6">Status</th>
+                        <th class="px-4 text-right sm:px-6">Aksi</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-slate-400">Tidak ada data soal.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @forelse ($soalList as $index => $soal)
+                        <tr class="h-[72px] transition-colors duration-200 hover:bg-green-50/40">
+                            <td class="px-4 text-slate-500 sm:px-6">{{ $soalList->firstItem() + $index }}</td>
+                            <td class="max-w-md px-4 sm:px-6">
+                                <p class="truncate font-medium text-slate-800">{{ $soal->pertanyaan }}</p>
+                            </td>
+                            <td class="px-4 sm:px-6">
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1.5 text-xs font-semibold text-violet-700">
+                                    <x-player.icon name="chart-bar" class="h-3.5 w-3.5" />
+                                    {{ $soal->kategori->nama ?? '-' }}
+                                </span>
+                            </td>
+                            <td class="px-4 sm:px-6">
+                                <span class="flex h-10 w-12 items-center justify-center rounded-lg bg-green-100 text-base font-bold text-green-700">
+                                    {{ $soal->kunci_jawaban }}
+                                </span>
+                            </td>
+                            <td class="px-4 sm:px-6">
+                                @if ($soal->trashed())
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                                        Dihapus
+                                    </span>
+                                @elseif ($soal->is_active)
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                        Aktif
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
+                                        Nonaktif
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-4 sm:px-6">
+                                <div class="flex items-center justify-end gap-2">
+                                    @if ($soal->trashed())
+                                        <form method="POST" action="{{ route('admin.management.soal.restore', $soal->id) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" aria-label="Pulihkan soal {{ $soal->id }}"
+                                                    class="flex h-10 w-10 items-center justify-center rounded-[14px] border border-green-200 text-green-600 transition duration-200 ease-in-out hover:-translate-y-0.5 hover:border-green-400 hover:bg-green-50 hover:shadow-md">
+                                                <x-player.icon name="refresh" class="h-4 w-4" />
+                                            </button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('admin.management.soal.edit', $soal) }}" aria-label="Edit soal {{ $soal->id }}"
+                                           class="flex h-10 w-10 items-center justify-center rounded-[14px] border border-slate-200 text-slate-500 transition duration-200 ease-in-out hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 hover:shadow-md">
+                                            <x-player.icon name="pencil" class="h-4 w-4" />
+                                        </a>
+                                        <form method="POST" action="{{ route('admin.management.soal.destroy', $soal) }}"
+                                              onsubmit="return confirm('Hapus soal ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" aria-label="Hapus soal {{ $soal->id }}"
+                                                    class="flex h-10 w-10 items-center justify-center rounded-[14px] border border-slate-200 text-slate-500 transition duration-200 ease-in-out hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-50 hover:text-red-600 hover:shadow-md">
+                                                <x-player.icon name="trash" class="h-4 w-4" />
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-10 text-center text-slate-400">Tidak ada data soal.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="mt-4">
-        {{ $soalList->links() }}
+    {{-- Count + Pagination --}}
+    <div class="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
+        <p class="text-sm text-slate-500">
+            Menampilkan {{ $soalList->firstItem() ?? 0 }} - {{ $soalList->lastItem() ?? 0 }} dari {{ $soalList->total() }} soal
+        </p>
+        {{ $soalList->links('vendor.pagination.admin-users') }}
     </div>
 </x-admin-layout>

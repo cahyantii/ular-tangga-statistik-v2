@@ -1,52 +1,67 @@
 <x-public-layout :title="config('app.name')">
     {{-- Hero --}}
     <section class="relative overflow-hidden bg-white">
-        <div class="relative mx-auto flex max-w-[1600px] flex-col items-center gap-10 px-6 pb-16 pt-8 sm:px-10 sm:pb-20 lg:px-20 lg:pt-10 min-[992px]:flex-row min-[992px]:items-center min-[992px]:justify-between min-[992px]:gap-8">
-            <div class="animate-fade-in-up w-full text-center min-[992px]:w-[45%] min-[992px]:text-left">
-                <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
-                    Belajar Statistik Jadi Seru
-                </span>
+        <div class="mx-auto max-w-[1600px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-14 lg:pt-8">
+            <div class="relative isolate min-h-[560px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-blue-100 shadow-xl md:min-h-[500px] lg:min-h-[620px]">
 
-                <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                    Ular Tangga
-                    <span class="block text-primary-600">Statistik Indonesia</span>
-                </h1>
+                {{-- Decorative light --}}
+                <div aria-hidden="true" class="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl lg:h-96 lg:w-96"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute right-1/3 top-10 hidden h-40 w-40 rounded-full bg-white/70 blur-2xl lg:block"></div>
 
-                <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 min-[992px]:mx-0">
-                    Mainkan ular tangga digital sambil belajar Statistika, mengenal Badan Pusat Statistik (BPS),
-                    dan memahami indikator penting bangsa &mdash; IPM, PDRB, kemiskinan, pengangguran, hingga inflasi.
-                </p>
+                <div class="relative flex h-full flex-col items-center gap-8 px-6 py-8 text-center sm:px-8 md:px-10 md:py-12 lg:items-start lg:gap-0 lg:px-0 lg:py-0 lg:text-left">
 
-                <div class="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row min-[992px]:justify-start">
-                    <a
-                        href="{{ route('register') }}"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:from-primary-600 hover:to-primary-700 hover:shadow-soft sm:w-auto"
-                    >
-                        <x-player.icon name="dice" class="h-5 w-5" />
-                        Mulai Bermain
-                    </a>
-                    <a
-                        href="{{ route('how-to-play') }}"
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-primary-500 bg-white px-6 py-3 text-base font-semibold text-primary-600 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-primary-50 sm:w-auto"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="h-5 w-5">
-                            <circle cx="12" cy="12" r="9.5" />
-                            <path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" />
-                        </svg>
-                        Lihat Cara Bermain
-                    </a>
+                    {{-- Image: in-flow on mobile/tablet, full-bleed blended on desktop --}}
+                    <div class="relative order-2 w-full lg:absolute lg:inset-0 lg:order-none lg:flex lg:items-end lg:justify-end">
+                        <img
+                            src="{{ asset('images/brand/logo-landigpage.png') }}"
+                            alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
+                            width="1672"
+                            height="941"
+                            loading="lazy"
+                            class="animate-fade-in mx-auto h-auto w-4/5 object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-[1.03] sm:w-3/4 md:w-3/5 lg:mx-0 lg:w-[95%] lg:origin-bottom-right"
+                        >
+                    </div>
+
+                    {{-- Blend overlay so the image melts into the text zone (desktop only) --}}
+                    <div aria-hidden="true" class="pointer-events-none absolute inset-0 hidden lg:block lg:bg-gradient-to-r lg:from-white lg:via-white/60 lg:to-transparent"></div>
+
+                    <div class="animate-fade-in-up relative order-1 z-10 w-full lg:max-w-[45%] lg:px-16 lg:pt-16">
+                        <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
+                            Belajar Statistik Jadi Seru
+                        </span>
+
+                        <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+                            Ular Tangga
+                            <span class="block text-primary-600">Statistik Indonesia</span>
+                        </h1>
+
+                        <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 lg:mx-0">
+                            Mainkan ular tangga digital sambil belajar Statistika, mengenal Badan Pusat Statistik (BPS),
+                            dan memahami indikator penting bangsa &mdash; IPM, PDRB, kemiskinan, pengangguran, hingga inflasi.
+                        </p>
+                    </div>
+
+                    <div class="relative order-3 z-10 flex w-full flex-col items-center justify-center gap-4 sm:flex-row lg:max-w-[45%] lg:justify-start lg:px-16 lg:pb-16">
+                        <a
+                            href="{{ route('register') }}"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:from-primary-600 hover:to-primary-700 hover:shadow-soft sm:w-auto"
+                        >
+                            <x-player.icon name="dice" class="h-5 w-5" />
+                            Mulai Bermain
+                        </a>
+                        <a
+                            href="{{ route('how-to-play') }}"
+                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-primary-500 bg-white px-6 py-3 text-base font-semibold text-primary-600 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-primary-50 sm:w-auto"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="h-5 w-5">
+                                <circle cx="12" cy="12" r="9.5" />
+                                <path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" />
+                            </svg>
+                            Lihat Cara Bermain
+                        </a>
+                    </div>
                 </div>
-            </div>
-
-            <div class="w-full min-[992px]:flex min-[992px]:w-[55%] min-[992px]:justify-end">
-                <img
-                    src="{{ asset('images/brand/logo-landingpage.png') }}"
-                    alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
-                    width="1831"
-                    height="859"
-                    loading="lazy"
-                    class="animate-fade-in block h-auto w-full object-contain min-[992px]:max-w-[600px] min-[992px]:translate-x-[90px] min-[992px]:-translate-y-[40px] min-[1200px]:max-w-[750px] min-[1400px]:max-w-[900px]"
-                >
             </div>
         </div>
     </section>
@@ -122,16 +137,20 @@
 
     {{-- CTA --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="flex flex-col items-center gap-8 rounded-3xl bg-white p-8 shadow-soft-lg sm:p-10 lg:flex-row lg:justify-between">
+        <div class="relative flex flex-col items-center gap-8 overflow-hidden rounded-3xl bg-white p-8 shadow-soft-lg sm:p-10 lg:flex-row lg:justify-between">
+            {{-- Decorative light --}}
+            <div aria-hidden="true" class="pointer-events-none absolute -left-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-primary-50 blur-3xl"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -right-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-blue-50 blur-3xl"></div>
+
             <img
                 src="{{ asset('images/brand/logo-rob.png') }}"
                 alt=""
                 aria-hidden="true"
-                class="h-24 w-auto shrink-0 select-none object-contain sm:h-32 lg:h-40 xl:h-44"
+                class="relative mx-auto h-auto w-28 shrink-0 select-none object-contain drop-shadow-[0_10px_28px_rgba(255,255,255,0.8)] transition-transform duration-300 sm:w-36 md:w-44 lg:w-60 lg:hover:scale-105"
                 loading="lazy"
             >
 
-            <div class="text-center lg:flex-1 lg:text-left">
+            <div class="relative text-center lg:flex-1 lg:text-left">
                 <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">
                     Siap Memulai Petualangan <span class="text-primary-600">Statistikmu?</span>
                 </h2>
@@ -149,7 +168,7 @@
                 src="{{ asset('images/brand/logo-berlian.png') }}"
                 alt=""
                 aria-hidden="true"
-                class="h-auto w-28 shrink-0 select-none object-contain sm:w-36 lg:w-44 xl:w-52"
+                class="relative mx-auto h-auto w-28 shrink-0 select-none object-contain drop-shadow-[0_10px_28px_rgba(255,255,255,0.8)] transition-transform duration-300 sm:w-36 md:w-44 lg:w-60 lg:hover:scale-105"
                 loading="lazy"
             >
         </div>

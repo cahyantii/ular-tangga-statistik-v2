@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Management;
 use App\Http\Controllers\Controller;
 use App\Services\Admin\AdminDashboardService;
 use App\Services\Master\SoalImportService;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -18,8 +19,10 @@ class SoalImportController extends Controller
 
     private const TEMP_DIRECTORY = 'imports/soal';
 
-    public function __construct(private readonly SoalImportService $importService)
-    {
+    public function __construct(
+        private readonly SoalImportService $importService,
+        private readonly NotificationService $notifications,
+    ) {
     }
 
     public function create(): View
@@ -68,6 +71,8 @@ class SoalImportController extends Controller
 
         Cache::forget(AdminDashboardService::STATS_QUESTIONS_CACHE_KEY);
         Cache::forget(AdminDashboardService::CHART_QUESTIONS_ACCURACY_CACHE_KEY);
+
+        $this->notifications->sendToAdmins($this->notifications->payloadImportSuccess('soal', $inserted));
 
         return redirect()->route('admin.management.soal.index')
             ->with('status', "{$inserted} soal berhasil diimpor.");

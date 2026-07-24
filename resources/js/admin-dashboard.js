@@ -1,8 +1,9 @@
 import Chart from 'chart.js/auto';
 
 const palette = {
-    primary: '#059669',
-    primaryLight: 'rgba(5, 150, 105, 0.15)',
+    primary: '#16A34A',
+    primaryLight: 'rgba(22, 163, 74, 0.12)',
+    blue: '#2563EB',
     amber: '#d97706',
     rose: '#e11d48',
     slate: '#64748b',
@@ -22,16 +23,23 @@ function renderLineChart(canvas, data) {
                 data: data.values,
                 borderColor: palette.primary,
                 backgroundColor: palette.primaryLight,
+                pointBackgroundColor: palette.primary,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
                 fill: true,
                 tension: 0.35,
-                pointRadius: 3,
+                pointRadius: 4,
+                pointHoverRadius: 5,
             }],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
-            scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#F1F5F9' } },
+                x: { grid: { display: false } },
+            },
         },
     });
 
@@ -49,13 +57,15 @@ function renderDoughnutChart(canvas, data) {
             labels: data.labels,
             datasets: [{
                 data: data.values,
-                backgroundColor: [palette.primary, palette.amber],
+                backgroundColor: [palette.primary, palette.blue],
+                borderWidth: 0,
             }],
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { position: 'bottom' } },
+            cutout: '72%',
+            plugins: { legend: { display: false } },
         },
     });
 

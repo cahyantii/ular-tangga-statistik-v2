@@ -74,6 +74,53 @@ class TileResolverServiceTest extends TestCase
         $this->assertSame(0, $player->fresh()->skor);
     }
 
+    public function test_inactive_bonus_tile_has_no_effect(): void
+    {
+        $session = GameSession::factory()->create();
+        $player = GamePlayer::factory()->create(['skor' => 0]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'bonus', 'is_active' => false]);
+
+        $result = $this->makeService()->resolve($session, $player, $petak);
+
+        $this->assertSame('none', $result['type']);
+        $this->assertSame(0, $player->fresh()->skor);
+    }
+
+    public function test_inactive_penalti_tile_has_no_effect(): void
+    {
+        $session = GameSession::factory()->create();
+        $player = GamePlayer::factory()->create(['skor' => 20]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'penalti', 'is_active' => false]);
+
+        $result = $this->makeService()->resolve($session, $player, $petak);
+
+        $this->assertSame('none', $result['type']);
+        $this->assertSame(20, $player->fresh()->skor);
+    }
+
+    public function test_inactive_soal_tile_does_not_trigger_question(): void
+    {
+        $session = GameSession::factory()->create();
+        $player = GamePlayer::factory()->create(['skor' => 0]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'soal', 'is_active' => false]);
+
+        $result = $this->makeService()->resolve($session, $player, $petak);
+
+        $this->assertSame('none', $result['type']);
+    }
+
+    public function test_inactive_mystery_tile_has_no_effect(): void
+    {
+        $session = GameSession::factory()->create();
+        $player = GamePlayer::factory()->create(['skor' => 0]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'mystery', 'is_active' => false]);
+
+        $result = $this->makeService()->resolve($session, $player, $petak);
+
+        $this->assertSame('none', $result['type']);
+        $this->assertSame(0, $player->fresh()->skor);
+    }
+
     public function test_mystery_tile_effect_is_deterministic_for_same_seed_and_turn(): void
     {
         $service = $this->makeService();

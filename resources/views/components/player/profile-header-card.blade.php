@@ -1,9 +1,36 @@
 @props(['user', 'summary'])
 
 <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+    <div
+        class="pointer-events-none absolute inset-0 select-none bg-cover bg-right"
+        style="background-image: url('{{ asset('images/brand/logo-back.png') }}');"
+        aria-hidden="true"
+    ></div>
+
+    {{-- Mobile: konten stack & center, jadi overlay memusat dari atas supaya teks tetap terbaca --}}
+    <div
+        class="pointer-events-none absolute inset-0 block sm:hidden"
+        style="background: linear-gradient(180deg, rgba(255,255,255,0.94) 0%, rgba(255,255,255,0.9) 55%, rgba(255,255,255,0.8) 100%);"
+        aria-hidden="true"
+    ></div>
+
+    {{-- Tablet & desktop: konten rata kiri, jadi overlay memudar dari kiri ke kanan --}}
+    <div
+        class="pointer-events-none absolute inset-0 hidden sm:block"
+        style="background: linear-gradient(90deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.78) 35%, rgba(255,255,255,0.35) 70%, rgba(255,255,255,0.10) 100%);"
+        aria-hidden="true"
+    ></div>
+
     <div class="relative z-10 flex flex-col items-center gap-5 sm:flex-row sm:items-center">
         <div class="relative shrink-0">
-            <x-player.avatar :user="$user" size="h-24 w-24" textSize="text-3xl" />
+            {{-- Soft blue glow behind the avatar frame --}}
+            <div aria-hidden="true" class="pointer-events-none absolute inset-0 -m-2 rounded-full bg-primary-400/10 blur-md"></div>
+
+            <div class="relative h-[110px] w-[110px] rounded-full bg-blue-50 p-1.5 shadow-md ring-1 ring-primary-400/20 transition-shadow duration-300 hover:shadow-lg md:h-[130px] md:w-[130px] lg:h-[140px] lg:w-[140px]">
+                <div class="h-full w-full overflow-hidden rounded-full border-4 border-white">
+                    <x-player.avatar :user="$user" size="h-full w-full" textSize="text-3xl" class="scale-125" />
+                </div>
+            </div>
             <a
                 href="#avatar-picker"
                 aria-label="Ubah avatar"
@@ -34,32 +61,5 @@
                 </span>
             </div>
         </div>
-    </div>
-
-    <div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[420px] select-none lg:block" aria-hidden="true">
-        <svg viewBox="0 0 420 160" class="h-full w-full" preserveAspectRatio="xMaxYMid slice">
-            <path d="M0 160V100c50-30 100-20 150-5s110 10 160-15 70-10 110 5V160Z" fill="#EAF1FC" />
-            <path d="M0 160V120c60-20 120-8 170 5s110 2 160-18 60-6 90 4V160Z" fill="#E5F8EE" />
-            <circle cx="130" cy="68" r="18" fill="#EAF1FC" />
-            <circle cx="155" cy="62" r="14" fill="#EAF1FC" />
-            <circle cx="60" cy="92" r="13" fill="#00A65A" fill-opacity="0.45" />
-            <circle cx="90" cy="102" r="9" fill="#00A65A" fill-opacity="0.35" />
-            <circle cx="352" cy="112" r="11" fill="#00A65A" fill-opacity="0.35" />
-            <g transform="translate(300 58)">
-                <rect x="0" y="20" width="40" height="42" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="-7" y="10" width="12" height="16" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="35" y="10" width="12" height="16" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="2" />
-                <path d="M0 20 20 4 40 20Z" fill="#F68B1F" />
-                <rect x="15" y="38" width="10" height="24" fill="#0F4CBA" fill-opacity="0.2" />
-                <line x1="0" y1="4" x2="0" y2="14" stroke="#0F4CBA" stroke-width="2" />
-                <path d="M0 4h8l-8 6Z" fill="#EF4444" />
-            </g>
-            <g transform="translate(216 66)">
-                <path d="M-8 0h16v8a8 8 0 0 1-16 0V0Z" fill="#FCD34D" stroke="#F68B1F" stroke-width="1.5" />
-                <path d="M-8 2h-6v2a6 6 0 0 0 6 6M8 2h6v2a6 6 0 0 1-6 6" stroke="#F68B1F" stroke-width="1.5" fill="none" />
-                <rect x="-3" y="16" width="6" height="6" fill="#F68B1F" />
-                <path d="M-7 26h14l-2 4h-10Z" fill="#F68B1F" />
-            </g>
-        </svg>
     </div>
 </div>

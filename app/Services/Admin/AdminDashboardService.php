@@ -3,6 +3,7 @@
 namespace App\Services\Admin;
 
 use App\Repositories\Admin\AdminStatsRepository;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -31,6 +32,8 @@ class AdminDashboardService
     public const CHART_GAMES_DAILY_CACHE_KEY = 'admin.chart.games.daily';
 
     public const CHART_QUESTIONS_ACCURACY_CACHE_KEY = 'admin.chart.questions.accuracy';
+
+    public const STATS_ACHIEVEMENTS_CACHE_KEY = 'admin.stats.achievements';
 
     private const TTL_MINUTES = 5;
 
@@ -74,12 +77,12 @@ class AdminDashboardService
         );
     }
 
-    public function chartPermainanHarian(int $hari = 7): array
+    public function chartPermainanHarian(int $hari, Carbon $sampai): array
     {
         return Cache::remember(
-            self::CHART_GAMES_DAILY_CACHE_KEY.".{$hari}",
+            self::CHART_GAMES_DAILY_CACHE_KEY.".{$hari}.{$sampai->toDateString()}",
             now()->addMinutes(self::TTL_MINUTES),
-            fn () => $this->repository->gamesPerHari($hari)->all()
+            fn () => $this->repository->gamesPerHari($hari, $sampai)->all()
         );
     }
 
@@ -92,6 +95,15 @@ class AdminDashboardService
                 'per_kategori' => $this->repository->akurasiPerKategori()->all(),
                 'soal_tersulit' => $this->repository->soalTersulit(10)->all(),
             ]
+        );
+    }
+
+    public function achievementTerbaru(int $hari, Carbon $sampai, int $limit = 5): array
+    {
+        return Cache::remember(
+            self::STATS_ACHIEVEMENTS_CACHE_KEY.".{$hari}.{$sampai->toDateString()}.{$limit}",
+            now()->addMinutes(self::TTL_MINUTES),
+            fn () => $this->repository->achievementTerbaru($hari, $sampai, $limit)->all()
         );
     }
 }

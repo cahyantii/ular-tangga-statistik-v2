@@ -1,34 +1,49 @@
 <x-public-layout title="Tentang - {{ config('app.name') }}">
     {{-- Hero --}}
     <section class="relative overflow-hidden bg-white">
-        <div class="relative mx-auto flex max-w-[1600px] flex-col items-center gap-10 px-6 pb-16 pt-8 sm:px-10 sm:pb-20 lg:px-20 lg:pt-10 min-[992px]:flex-row min-[992px]:items-center min-[992px]:justify-between min-[992px]:gap-8">
-            <div class="animate-fade-in-up w-full text-center min-[992px]:w-[45%] min-[992px]:text-left">
-                <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
-                    Tentang Kami
-                </span>
+        <div class="mx-auto max-w-[1600px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-14 lg:pt-8">
+            <div class="relative isolate min-h-[560px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-blue-100 shadow-xl md:min-h-[500px] lg:min-h-[620px]">
 
-                <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
-                    Tentang Ular Tangga
-                    <span class="block text-primary-600">Statistik Indonesia</span>
-                </h1>
+                {{-- Decorative light --}}
+                <div aria-hidden="true" class="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl lg:h-96 lg:w-96"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute right-1/3 top-10 hidden h-40 w-40 rounded-full bg-white/70 blur-2xl lg:block"></div>
 
-                <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 min-[992px]:mx-0">
-                    Ular Tangga Statistik Indonesia adalah game edukasi berbasis web yang menggabungkan permainan
-                    tradisional ular tangga dengan pembelajaran statistika dan pengenalan Badan Pusat Statistik (BPS).
-                    Kami percaya bahwa literasi statistik adalah keterampilan penting yang sebaiknya dikuasai sejak dini,
-                    dan cara terbaik untuk belajar adalah melalui pengalaman yang menyenangkan.
-                </p>
-            </div>
+                <div class="relative flex h-full flex-col items-center gap-8 px-6 py-8 text-center sm:px-8 md:px-10 md:py-12 lg:items-start lg:gap-0 lg:px-0 lg:py-0 lg:text-left">
 
-            <div class="w-full min-[992px]:flex min-[992px]:w-[55%] min-[992px]:justify-end">
-                <img
-                    src="{{ asset('images/brand/logo-landingpage.png') }}"
-                    alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
-                    width="1831"
-                    height="859"
-                    loading="lazy"
-                    class="animate-fade-in block h-auto w-full object-contain min-[992px]:max-w-[600px] min-[992px]:translate-x-[90px] min-[992px]:-translate-y-[40px] min-[1200px]:max-w-[750px] min-[1400px]:max-w-[900px]"
-                >
+                    {{-- Image: in-flow on mobile/tablet, full-bleed blended on desktop --}}
+                    <div class="relative order-2 w-full lg:absolute lg:inset-0 lg:order-none lg:flex lg:items-end lg:justify-end">
+                        <img
+                            src="{{ asset('images/brand/logo-landigpage.png') }}"
+                            alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
+                            width="1672"
+                            height="941"
+                            loading="lazy"
+                            class="animate-fade-in mx-auto h-auto w-4/5 object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-[1.03] sm:w-3/4 md:w-3/5 lg:mx-0 lg:w-[95%] lg:origin-bottom-right"
+                        >
+                    </div>
+
+                    {{-- Blend overlay so the image melts into the text zone (desktop only) --}}
+                    <div aria-hidden="true" class="pointer-events-none absolute inset-0 hidden lg:block lg:bg-gradient-to-r lg:from-white lg:via-white/60 lg:to-transparent"></div>
+
+                    <div class="animate-fade-in-up relative order-1 z-10 w-full lg:max-w-[45%] lg:px-16 lg:py-16">
+                        <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
+                            Tentang Kami
+                        </span>
+
+                        <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
+                            Tentang Ular Tangga
+                            <span class="block text-primary-600">Statistik Indonesia</span>
+                        </h1>
+
+                        <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 lg:mx-0">
+                            Ular Tangga Statistik Indonesia adalah game edukasi berbasis web yang menggabungkan permainan
+                            tradisional ular tangga dengan pembelajaran statistika dan pengenalan Badan Pusat Statistik (BPS).
+                            Kami percaya bahwa literasi statistik adalah keterampilan penting yang sebaiknya dikuasai sejak dini,
+                            dan cara terbaik untuk belajar adalah melalui pengalaman yang menyenangkan.
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -82,7 +97,7 @@
                 </svg>
             </div>
 
-            <div class="flex items-center gap-6 rounded-3xl bg-white p-8 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
+            <div class="flex flex-col-reverse items-center gap-6 rounded-3xl bg-white p-8 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft sm:gap-8 lg:flex-row">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-3">
                         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary-500 text-white shadow-sm">
@@ -112,39 +127,25 @@
                     </ul>
                 </div>
 
-                <svg viewBox="0 0 100 100" class="hidden h-28 w-28 shrink-0 select-none sm:block" aria-hidden="true">
-                    <circle cx="50" cy="50" r="46" fill="#E5F8EE" />
-                    <rect x="28" y="58" width="44" height="10" rx="2" fill="#16A34A" />
-                    <rect x="32" y="48" width="36" height="10" rx="2" fill="#22C55E" />
-                    <path d="M50 26 78 38 50 50 22 38Z" fill="#0A317A" />
-                    <path d="M50 50v10" stroke="#0A317A" stroke-width="3" stroke-linecap="round" />
-                    <circle cx="50" cy="62" r="2.4" fill="#0A317A" />
-                    <path d="M28 40v10c0 4 8 7 22 7s22-3 22-7V40" stroke="#0A317A" stroke-width="2.5" fill="none" stroke-linecap="round" />
-                </svg>
+                <img
+                    src="{{ asset('images/brand/book.png') }}"
+                    alt="Ilustrasi tumpukan buku"
+                    loading="lazy"
+                    class="mx-auto h-auto w-36 shrink-0 object-contain drop-shadow-[0_12px_28px_rgba(59,130,246,0.18)] transition-transform duration-300 hover:scale-105 md:w-44 lg:w-52"
+                >
             </div>
         </div>
     </section>
 
     {{-- Mengapa BPS --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="relative flex flex-col items-center gap-8 overflow-hidden rounded-3xl bg-primary-50/60 p-8 sm:p-10 lg:flex-row">
-            <svg viewBox="0 0 160 160" class="h-32 w-32 shrink-0 select-none sm:h-36 sm:w-36" aria-hidden="true">
-                <circle cx="18" cy="140" r="14" fill="#16A34A" />
-                <rect x="15" y="128" width="6" height="14" fill="#7C4A26" />
-                <circle cx="142" cy="140" r="12" fill="#22C55E" />
-                <rect x="139" y="130" width="6" height="14" fill="#7C4A26" />
-
-                <rect x="30" y="40" width="100" height="100" rx="4" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                <path d="M30 40 80 14 130 40Z" fill="#0F4CBA" />
-                <text x="80" y="32" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">BPS</text>
-
-                <rect x="42" y="55" width="16" height="16" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="72" y="55" width="16" height="16" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="102" y="55" width="16" height="16" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="42" y="80" width="16" height="16" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="102" y="80" width="16" height="16" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="2" />
-                <rect x="70" y="110" width="20" height="30" fill="#0F4CBA" fill-opacity="0.15" stroke="#0F4CBA" stroke-width="2.5" />
-            </svg>
+        <div class="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl bg-primary-50/60 p-6 shadow-soft sm:gap-8 sm:p-8 lg:flex-row lg:p-10">
+            <img
+                src="{{ asset('images/brand/gedung.png') }}"
+                alt="Ilustrasi gedung Badan Pusat Statistik"
+                loading="lazy"
+                class="mx-auto h-auto w-36 shrink-0 object-contain md:w-44 lg:w-52"
+            >
 
             <div class="text-center lg:flex-1 lg:text-left">
                 <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Mengapa Badan Pusat Statistik?</h2>

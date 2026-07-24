@@ -13,6 +13,7 @@ use App\Policies\RoomPolicy;
 use Illuminate\Auth\Middleware\RedirectIfAuthenticated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
 
@@ -49,5 +50,40 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Password::defaults(fn () => Password::min(8)->mixedCase()->numbers());
+
+        $this->warnIfAuthMailNotConfigured();
+    }
+
+    /**
+     * Peringatan sekali-lihat di log untuk developer (bukan untuk end user)
+     * kalau SMTP atau kredensial OAuth belum diisi - supaya kelupaan mengisi
+     * .env tidak berakhir sebagai "kenapa email/OAuth tidak jalan" tanpa
+     * petunjuk. Hanya dicek di lokal supaya tidak membanjiri log produksi
+     * (dan otomatis tidak aktif saat testing karena phpunit.xml override
+     * MAIL_MAILER ke "array").
+     */
+    private function warnIfAuthMailNotConfigured(): void
+    {
+        if (! $this->app->environment('local')) {
+            return;
+        }
+
+        if (config('mail.default') === 'smtp'
+            && (blank(config('mail.mailers.smtp.username')) || blank(config('mail.mailers.smtp.password')))
+        ) {
+            Log::warning('MAIL belum dikonfigurasi lengkap: MAIL_USERNAME/MAIL_PASSWORD kosong di .env. Email verifikasi & reset password tidak akan benar-benar terkirim sampai SMTP diisi (lihat contoh Gmail/Mailtrap/Brevo di .env).');
+        }
+
+        if (config('mail.default') === 'resend' && blank(config('services.resend.key'))) {
+            Log::warning('MAIL_MAILER=resend tapi RESEND_API_KEY kosong di .env. Email verifikasi & reset password tidak akan benar-benar terkirim sampai ini diisi.');
+        }
+
+        foreach (['google', 'github'] as $provider) {
+            if (blank(config("services.{$provider}.client_id")) || blank(config("services.{$provider}.client_secret"))) {
+                $envPrefix = strtoupper($provider);
+
+                Log::warning("OAuth \"{$provider}\" belum dikonfigurasi: {$envPrefix}_CLIENT_ID/{$envPrefix}_CLIENT_SECRET kosong di .env. Tombol login {$provider} akan menampilkan pesan error sampai ini diisi.");
+            }
+        }
     }
 }

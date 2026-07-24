@@ -6,6 +6,7 @@
             'id' => $p->id,
             'posisi' => $p->posisi,
             'jenis_petak' => $p->jenis_petak->value,
+            'is_active' => $p->is_active,
             'label' => $p->label,
         ])->values(),
         'konektor' => $papan->papanKonektor->map(fn ($k) => [

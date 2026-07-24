@@ -22,6 +22,8 @@ class PapanKonektorController extends Controller
 
     public function index(PapanPermainan $papanPermainan): View
     {
+        $papanPermainan->load('petak');
+
         return view('admin.management.papan-permainan.konektor.index', [
             'papan' => $papanPermainan,
             'konektorList' => $papanPermainan->papanKonektor()->orderBy('posisi_awal')->get(),

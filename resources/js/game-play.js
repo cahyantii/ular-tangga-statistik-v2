@@ -1,3 +1,5 @@
+import { CoordinateHelper } from './board/CoordinateHelper.js';
+
 /**
  * Kontroler gameplay Vs Robot & Multiplayer — presentasi visual (papan modern,
  * animasi dadu 3D, animasi pion berjalan, panel pemain/robot, log, dsb).
@@ -10,10 +12,14 @@
  * yang sama dengan refresh-recovery, bukan merender langsung dari payload
  * broadcast (yang sengaja minim).
  *
- * Catatan: fungsi layout grid (computeCellPosition) sengaja diduplikasi di
- * sini (bukan diimpor dari board-renderer.js) supaya modul ini tidak
- * tersambung ke Editor Board Admin — mengubah animasi gameplay tidak boleh
- * berisiko terhadap board-renderer.js yang dipakai admin.
+ * Catatan: matematika posisi kotak (dulu computeCellPosition duplikat di
+ * sini) sekarang dipakai bersama lewat CoordinateHelper (satu-satunya sumber,
+ * dipakai juga oleh sistem visual papan di resources/js/board/) — TAPI modul
+ * ini sengaja TIDAK mengimpor apa pun dari board-renderer.js (Editor Board
+ * Admin) maupun BoardRenderer.js (sistem visual ular/tangga): efek reaktif
+ * ular/tangga (lihat window.BoardVisuals?.reactSnake/reactLadder di bawah)
+ * dipanggil lewat optional chaining supaya kalau modul visual itu gagal
+ * muat, gameplay tetap jalan normal tanpa risiko.
  */
 document.addEventListener('DOMContentLoaded', () => {
     const root = document.getElementById('game-play-data');
@@ -34,6 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const pawnLayer = document.getElementById('pawn-layer');
     const jumlahKolom = parseInt(boardEl.dataset.jumlahKolom, 10);
     const totalRows = parseInt(boardEl.dataset.totalRows, 10);
+
+    // posisi_awal -> { posisi_akhir, jenis } — dipakai supaya animasi naik
+    // tangga/turun ular mengikuti jalur SVG asli (bezier untuk ular, garis
+    // lurus untuk tangga), bukan garis lurus sembarang atau teleport. Sumber
+    // data ini sama persis dengan yang dipakai resources/js/board/
+    // BoardRenderer.js menggambar ular/tangga — 100% dari database.
+    const konektorByStart = new Map(
+        JSON.parse(boardEl.dataset.konektor || '[]').map((k) => [k.posisi_awal, k])
+    );
 
     const rollButton = document.getElementById('roll-dice-button');
     const diceCube = document.getElementById('dice-3d');
@@ -84,26 +99,105 @@ document.addEventListener('DOMContentLoaded', () => {
         return (name || '?').trim().charAt(0).toUpperCase();
     }
 
-    function computeCellPosition(posisi) {
-        const rowIndexFromBottom = Math.floor((posisi - 1) / jumlahKolom);
-        const posInRow = (posisi - 1) % jumlahKolom;
-        const isEvenRowFromBottom = rowIndexFromBottom % 2 === 0;
-        const colIndex = isEvenRowFromBottom ? posInRow : jumlahKolom - 1 - posInRow;
+    const coordHelper = new CoordinateHelper(jumlahKolom, totalRows);
+
+    function cellCenterPercent(posisi) {
+        return coordHelper.cellCenterPercent(Math.max(1, Math.min(posisi, jumlahPetak)));
+    }
+
+    // ---------------------------------------------------------------
+    // Geometri jalur ular/tangga (dipakai animasi pion mengikuti jalur asli,
+    // bukan garis lurus/teleport) — rumus di bawah SENGAJA sama persis dengan
+    // resources/views/components/game/snake.blade.php & ladder.blade.php,
+    // hanya bekerja dalam satuan persen (%) alih-alih unit grid SVG, supaya
+    // titik yang dihasilkan pas menempel di kurva yang benar-benar dirender.
+    // ---------------------------------------------------------------
+    function snakeCubicPoints(fromPosisi, toPosisi) {
+        const from = cellCenterPercent(fromPosisi);
+        const to = cellCenterPercent(toPosisi);
+        const dx = to.left - from.left;
+        const dy = to.top - from.top;
+        const len = Math.max(Math.sqrt(dx * dx + dy * dy), 0.001);
+        const ux = dx / len;
+        const uy = dy / len;
+        const px = -uy;
+        const py = ux;
+        const wave = Math.min(len * 0.32, 11);
 
         return {
-            row: totalRows - rowIndexFromBottom,
-            col: colIndex + 1,
+            x0: from.left, y0: from.top,
+            x1: from.left + ux * len * 0.25 + px * wave, y1: from.top + uy * len * 0.25 + py * wave,
+            x2: from.left + ux * len * 0.75 - px * wave, y2: from.top + uy * len * 0.75 - py * wave,
+            x3: to.left, y3: to.top,
         };
     }
 
-    function cellCenterPercent(posisi) {
-        const clamped = Math.max(1, Math.min(posisi, jumlahPetak));
-        const { row, col } = computeCellPosition(clamped);
+    function cubicPointAt(curve, t) {
+        const mt = 1 - t;
+        return {
+            left: mt * mt * mt * curve.x0 + 3 * mt * mt * t * curve.x1 + 3 * mt * t * t * curve.x2 + t * t * t * curve.x3,
+            top: mt * mt * mt * curve.y0 + 3 * mt * mt * t * curve.y1 + 3 * mt * t * t * curve.y2 + t * t * t * curve.y3,
+        };
+    }
+
+    function linearPointAt(fromPosisi, toPosisi, t) {
+        const from = cellCenterPercent(fromPosisi);
+        const to = cellCenterPercent(toPosisi);
 
         return {
-            left: ((col - 0.5) / jumlahKolom) * 100,
-            top: ((row - 0.5) / totalRows) * 100,
+            left: from.left + (to.left - from.left) * t,
+            top: from.top + (to.top - from.top) * t,
         };
+    }
+
+    /**
+     * Menganimasikan pion mengikuti jalur konektor sesungguhnya (bezier untuk
+     * ular, garis lurus untuk tangga — sama seperti SVG-nya) lewat
+     * requestAnimationFrame, bukan CSS transition left/top biasa (yang akan
+     * memotong lurus antar dua titik, mengabaikan lekukan ular).
+     */
+    function animateAlongConnector(el, fromPosisi, toPosisi, jenis, durationMs) {
+        return new Promise((resolve) => {
+            const curve = jenis === 'ular' ? snakeCubicPoints(fromPosisi, toPosisi) : null;
+            const start = performance.now();
+            el.classList.add('pawn-path-follow');
+
+            function frame(now) {
+                const t = Math.min((now - start) / durationMs, 1);
+                const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // ease-in-out
+                const point = curve ? cubicPointAt(curve, eased) : linearPointAt(fromPosisi, toPosisi, eased);
+                el.style.left = `${point.left}%`;
+                el.style.top = `${point.top}%`;
+
+                if (t < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    el.classList.remove('pawn-path-follow');
+                    resolve();
+                }
+            }
+
+            requestAnimationFrame(frame);
+        });
+    }
+
+    function spawnParticles(el, kind, count) {
+        const layer = document.createElement('div');
+        layer.className = 'pawn-sparkle-layer';
+        el.appendChild(layer);
+
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('span');
+            p.className = kind === 'dust' ? 'pawn-dust' : 'pawn-sparkle';
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 14 + Math.random() * 16;
+            p.style.setProperty('--sx', `${Math.cos(angle) * distance}px`);
+            p.style.setProperty('--sy', `${Math.sin(angle) * distance}px`);
+            p.style.animationDelay = `${Math.random() * 120}ms`;
+            layer.appendChild(p);
+        }
+
+        setTimeout(() => layer.remove(), 900);
     }
 
     function showToast(message) {
@@ -302,12 +396,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (finalPosisi !== landingPosisi) {
-            // Konektor diterapkan: tangga (naik) atau ular (turun)
-            el.classList.add(finalPosisi > landingPosisi ? 'pawn-climb' : 'pawn-slide');
+            // Konektor diterapkan: tangga (naik) atau ular (turun). Ambil jenis
+            // konektor sesungguhnya dari data papan (bukan ditebak dari arah
+            // gerak) supaya jalur animasi (lurus/bezier) selalu tepat sesuai SVG.
+            const konektor = konektorByStart.get(landingPosisi);
+            const jenis = konektor?.jenis ?? (finalPosisi > landingPosisi ? 'tangga' : 'ular');
+            const isNaik = jenis === 'tangga';
+
             await delay(120);
+
+            if (isNaik) {
+                // Efek visual tangga (glow+sparkle) — best-effort, lihat catatan di atas file.
+                await window.BoardVisuals?.reactLadder?.(landingPosisi);
+                await animateAlongConnector(el, landingPosisi, finalPosisi, 'tangga', 900);
+                spawnParticles(el, 'sparkle', 10);
+                el.classList.add('pawn-climb');
+                setTimeout(() => el.classList.remove('pawn-climb'), 650);
+            } else {
+                // Efek "ular menggigit" (glow+lidah+kepala bergerak) SEBELUM pion
+                // meluncur turun — best-effort, lihat catatan di atas file.
+                await window.BoardVisuals?.reactSnake?.(landingPosisi);
+                boardEl.classList.add('board-shake');
+                await animateAlongConnector(el, landingPosisi, finalPosisi, 'ular', 900);
+                spawnParticles(el, 'dust', 8);
+                setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+            }
+
             placePawnAt(el, finalPosisi);
-            await delay(550);
-            el.classList.remove('pawn-climb', 'pawn-slide');
+            await delay(200);
         }
     }
 
@@ -576,11 +692,37 @@ document.addEventListener('DOMContentLoaded', () => {
                     await delay(180);
                 }
             } else {
-                el.classList.add(p.posisi_pion > prev ? 'pawn-climb' : 'pawn-slide');
+                // Lawan/robot melompat konektor lewat sinyal realtime (kita tidak
+                // tahu nilai dadu mereka) — cari konektor asli yang berakhir tepat
+                // di posisi baru supaya jalurnya tetap mengikuti kurva sesungguhnya,
+                // bukan cuma tebakan arah naik/turun.
+                const naik = p.posisi_pion > prev;
+                const konektor = Array.from(konektorByStart.values())
+                    .find((k) => k.posisi_akhir === p.posisi_pion && (naik ? k.jenis === 'tangga' : k.jenis === 'ular'));
+
                 await delay(100);
+
+                if (konektor) {
+                    if (naik) {
+                        await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
+                        await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
+                        spawnParticles(el, 'sparkle', 10);
+                        el.classList.add('pawn-climb');
+                        setTimeout(() => el.classList.remove('pawn-climb'), 650);
+                    } else {
+                        await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
+                        boardEl.classList.add('board-shake');
+                        await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
+                        spawnParticles(el, 'dust', 8);
+                        setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+                    }
+                } else {
+                    el.classList.add(naik ? 'pawn-climb' : 'pawn-slide');
+                    await delay(450);
+                    el.classList.remove('pawn-climb', 'pawn-slide');
+                }
+
                 placePawnAt(el, p.posisi_pion);
-                await delay(450);
-                el.classList.remove('pawn-climb', 'pawn-slide');
             }
         }
     }
@@ -607,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * (mis. giliran robot yang baru saja menyentuh Finish tidak boleh
      * memunculkan modal "selesai" sebelum pion robot terlihat berjalan).
      */
-    function finalizeOutcome(session) {
+    function finalizeOutcome(session, newlyUnlockedAchievements = []) {
         renderFinished(session);
 
         if (session.active_question) {
@@ -615,7 +757,112 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             hideQuestion();
         }
+
+        if (newlyUnlockedAchievements.length > 0) {
+            // Jeda singkat supaya modal Achievement muncul SETELAH modal hasil
+            // akhir (game-finished-modal) sempat terlihat, bukan tabrakan.
+            setTimeout(() => queueAchievementUnlocks(newlyUnlockedAchievements), session.status === 'finished' ? 700 : 0);
+        }
     }
+
+    // ---------------------------------------------------------------
+    // Popup Achievement Terbuka — konten 100% dari respons server
+    // (GameSessionService::attachNewlyUnlockedAchievements()), tidak ada
+    // achievement/warna/icon yang di-hardcode di sini. Beberapa achievement
+    // bisa terbuka dalam satu giliran sekaligus, jadi ditampilkan satu per
+    // satu lewat antrean sederhana.
+    // ---------------------------------------------------------------
+    const ACHIEVEMENT_BADGE_GRADIENT = {
+        green: 'linear-gradient(135deg, #4ade80, #16a34a)',
+        blue: 'linear-gradient(135deg, #60a5fa, #2563eb)',
+        orange: 'linear-gradient(135deg, #fb923c, #ea580c)',
+        purple: 'linear-gradient(135deg, #c084fc, #9333ea)',
+        pink: 'linear-gradient(135deg, #f472b6, #db2777)',
+        amber: 'linear-gradient(135deg, #fbbf24, #d97706)',
+        turquoise: 'linear-gradient(135deg, #2dd4bf, #0d9488)',
+    };
+    const ACHIEVEMENT_BADGE_CODE_COLOR = {
+        green: '#16a34a', blue: '#2563eb', orange: '#ea580c', purple: '#9333ea',
+        pink: '#db2777', amber: '#d97706', turquoise: '#0d9488',
+    };
+    const CONFETTI_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#a855f7', '#ec4899', '#f59e0b', '#14b8a6'];
+
+    let achievementQueue = [];
+
+    function queueAchievementUnlocks(list) {
+        achievementQueue.push(...list);
+        if (achievementQueue.length === list.length) {
+            showNextAchievementUnlock();
+        }
+    }
+
+    function showNextAchievementUnlock() {
+        const achievement = achievementQueue.shift();
+        if (!achievement) return;
+
+        const badgeEl = document.getElementById('achievement-unlock-badge');
+        const kodeEl = document.getElementById('achievement-unlock-kode');
+        const namaEl = document.getElementById('achievement-unlock-nama');
+        const deskripsiEl = document.getElementById('achievement-unlock-deskripsi');
+        const poinEl = document.getElementById('achievement-unlock-poin');
+
+        const gradient = ACHIEVEMENT_BADGE_GRADIENT[achievement.warna_badge] ?? ACHIEVEMENT_BADGE_GRADIENT.blue;
+        const codeColor = ACHIEVEMENT_BADGE_CODE_COLOR[achievement.warna_badge] ?? ACHIEVEMENT_BADGE_CODE_COLOR.blue;
+
+        badgeEl.style.background = gradient;
+        badgeEl.innerHTML = '';
+        badgeEl.classList.remove('achievement-badge-pop');
+        void badgeEl.offsetWidth; // restart animasi kalau achievement kedua muncul berturut-turut
+        badgeEl.classList.add('achievement-badge-pop');
+
+        const template = document.querySelector(`#achievement-icon-templates template[data-icon="${achievement.icon}"]`)
+            ?? document.querySelector('#achievement-icon-templates template[data-icon="trophy"]');
+        if (template) {
+            badgeEl.appendChild(template.content.cloneNode(true));
+        }
+
+        kodeEl.textContent = achievement.kode;
+        kodeEl.style.color = codeColor;
+        namaEl.textContent = achievement.nama;
+        deskripsiEl.textContent = achievement.deskripsi ?? '';
+        deskripsiEl.classList.toggle('hidden', !achievement.deskripsi);
+
+        if (achievement.reward_poin > 0) {
+            poinEl.textContent = `+${achievement.reward_poin} Poin`;
+            poinEl.classList.remove('hidden');
+        } else {
+            poinEl.classList.add('hidden');
+        }
+
+        spawnConfetti();
+        window.dispatchEvent(new CustomEvent('open-modal', { detail: 'achievement-unlock-modal' }));
+    }
+
+    function spawnConfetti() {
+        const layer = document.getElementById('achievement-confetti-layer');
+        if (!layer) return;
+        layer.innerHTML = '';
+
+        for (let i = 0; i < 24; i++) {
+            const piece = document.createElement('span');
+            piece.className = 'confetti-piece';
+            piece.style.left = `${Math.random() * 100}%`;
+            piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+            piece.style.setProperty('--confetti-spin', `${360 + Math.random() * 360}deg`);
+            piece.style.animationDelay = `${Math.random() * 300}ms`;
+            piece.style.borderRadius = Math.random() > 0.5 ? '9999px' : '2px';
+            layer.appendChild(piece);
+        }
+
+        setTimeout(() => { layer.innerHTML = ''; }, 2000);
+    }
+
+    document.getElementById('achievement-unlock-next')?.addEventListener('click', () => {
+        window.dispatchEvent(new CustomEvent('close-modal'));
+        if (achievementQueue.length > 0) {
+            setTimeout(() => showNextAchievementUnlock(), 250);
+        }
+    });
 
     function applySessionState(session, { pawnMode = 'diff', skipPawnIds = new Set(), deferOutcome = false } = {}) {
         latestSession = session;
@@ -702,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
 
             await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
-            finalizeOutcome(result.session);
+            finalizeOutcome(result.session, result.newly_unlocked_achievements ?? []);
         } catch (error) {
             showToast(error.message);
         } finally {
@@ -779,7 +1026,7 @@ document.addEventListener('DOMContentLoaded', () => {
             applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
 
             await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
-            finalizeOutcome(result.session);
+            finalizeOutcome(result.session, result.newly_unlocked_achievements ?? []);
         } catch (error) {
             showToast(error.message);
             hideQuestion();

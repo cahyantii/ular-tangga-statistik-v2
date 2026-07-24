@@ -38,6 +38,7 @@ class AchievementController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
+        $data['reward_poin'] = $request->integer('reward_poin', 0);
 
         $achievement = Achievement::create($data);
 
@@ -54,6 +55,7 @@ class AchievementController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
+        $data['reward_poin'] = $request->integer('reward_poin', 0);
 
         $achievement->update($data);
 

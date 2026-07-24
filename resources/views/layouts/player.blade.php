@@ -4,6 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+        <meta name="user-id" content="{{ auth()->id() }}">
 
         <title>{{ config('app.name') }}</title>
 
@@ -24,9 +25,13 @@
                 </x-player.topbar>
 
                 <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+                    <x-admin.flash />
                     {{ $slot }}
                 </main>
             </div>
+
+            <x-player.notification-icon-templates />
+            <x-player.feedback-modal />
         </div>
 
         @stack('scripts')

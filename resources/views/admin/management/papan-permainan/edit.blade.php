@@ -7,6 +7,7 @@
         <input type="hidden" name="_version" value="{{ $version }}">
 
         <x-admin.input label="Nama Papan" name="nama" :value="$papan->nama" required />
+        <x-admin.input label="Deskripsi (opsional)" name="deskripsi" type="textarea" rows="3" :value="$papan->deskripsi" />
 
         <div>
             <label class="mb-1 block text-sm font-medium text-slate-700">Jumlah Petak</label>

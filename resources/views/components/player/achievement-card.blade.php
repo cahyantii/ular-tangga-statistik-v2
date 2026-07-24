@@ -33,12 +33,28 @@
         {{ $earned ? "{$tone['bg']} {$tone['border']}" : 'border-slate-200 bg-white' }}"
 >
     <div class="flex items-start gap-4">
-        <span
-            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-105
-                {{ $isLocked ? 'bg-slate-200 text-slate-400' : "{$tone['icon']} text-white" }}"
-        >
-            <x-player.icon :name="$achievement->icon ?? 'trophy'" class="h-7 w-7" />
-        </span>
+        @if ($achievement->kode === 'WIN_10')
+            <img
+                src="{{ asset('images/brand/logo-master.png') }}"
+                alt=""
+                aria-hidden="true"
+                class="h-14 w-14 shrink-0 select-none self-center object-contain transition duration-[250ms] ease-out group-hover:scale-[1.06] drop-shadow-[0_6px_14px_rgba(255,193,7,0.22)] sm:h-16 sm:w-16 lg:h-[72px] lg:w-[72px]"
+            >
+        @elseif ($achievement->kode === 'FIRST_WIN')
+            <img
+                src="{{ asset('images/brand/logo-piala.png') }}"
+                alt=""
+                aria-hidden="true"
+                class="h-14 w-14 shrink-0 select-none self-center object-contain transition duration-[250ms] ease-out group-hover:scale-[1.06] drop-shadow-[0_8px_16px_rgba(255,193,7,0.28)] sm:h-16 sm:w-16 lg:h-[72px] lg:w-[72px]"
+            >
+        @else
+            <span
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-105
+                    {{ $isLocked ? 'bg-slate-200 text-slate-400' : "{$tone['icon']} text-white" }}"
+            >
+                <x-player.icon :name="$achievement->icon ?? 'trophy'" class="h-7 w-7" />
+            </span>
+        @endif
 
         <div class="min-w-0 flex-1">
             <p class="font-bold text-slate-800">{{ $achievement->nama }}</p>

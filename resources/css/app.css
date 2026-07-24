@@ -122,6 +122,12 @@
     transform: translate(-50%, -50%);
 }
 
+/* Dipasang sementara saat animasi mengikuti jalur ular/tangga (requestAnimationFrame
+   menggerakkan left/top setiap frame) supaya tidak "berkejaran" dengan transisi CSS di atas. */
+.game-pawn.pawn-path-follow {
+    transition: none;
+}
+
 .pawn-body {
     position: relative;
     width: 100%;
@@ -190,4 +196,556 @@
         transform: translate(-50%, -50%) scale(1) rotate(360deg);
         opacity: 1;
     }
+}
+
+/* Sparkle & partikel debu dipakai saat naik tangga / turun ular */
+.pawn-sparkle-layer {
+    position: absolute;
+    inset: -40%;
+    pointer-events: none;
+    z-index: 6;
+}
+
+.pawn-sparkle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, #fef9c3, #facc15 60%, transparent 70%);
+    animation: pawn-sparkle-kf 0.6s ease-out forwards;
+}
+
+@keyframes pawn-sparkle-kf {
+    0% {
+        transform: translate(-50%, -50%) scale(0.3);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) scale(1);
+        opacity: 0;
+    }
+}
+
+.pawn-dust {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(148, 163, 184, 0.9), rgba(148, 163, 184, 0));
+    animation: pawn-dust-kf 0.55s ease-out forwards;
+}
+
+@keyframes pawn-dust-kf {
+    0% {
+        transform: translate(-50%, -50%) scale(0.4);
+        opacity: 0.9;
+    }
+    100% {
+        transform: translate(calc(-50% + var(--sx, 0px)), calc(-50% + var(--sy, 0px))) scale(1.6);
+        opacity: 0;
+    }
+}
+
+.board-shake {
+    animation: board-shake-kf 0.4s ease-in-out;
+}
+
+@keyframes board-shake-kf {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px) rotate(-0.2deg); }
+    40% { transform: translateX(3px) rotate(0.2deg); }
+    60% { transform: translateX(-2px); }
+    80% { transform: translateX(1px); }
+}
+
+/* ------------------------------------------------------------------ */
+/* SISTEM VISUAL PAPAN v3 — ular & tangga 100% dirender client-side lewat  */
+/* resources/js/board/*.js. Setiap ular/tangga adalah OBJECT OVERLAY       */
+/* INDIVIDUAL (bounding box sendiri, dihitung dari cell-center kotak       */
+/* asal/tujuan) — BUKAN kanvas/background yang membentang seluruh papan.   */
+/* CSS di bawah HANYA styling & keyframes — posisi/ukuran/rotasi per-      */
+/* instance selalu dihitung & diisi lewat inline style dari JS.            */
+/* ------------------------------------------------------------------ */
+
+.board-object,
+.board-object-svg {
+    overflow: visible;
+}
+
+/* Ular v6: SATU path SVG utuh dengan profil lebar ANATOMI ular sungguhan
+   (moncong kecil -> rahang lebar -> leher menyempit -> badan -> ekor
+   meruncing — lihat SnakeRenderer buildWidthCurve()) — bukan tabung rata
+   ala belut, dan bukan potongan gambar terpisah yang "ditempel". */
+.snake-body-shape {
+    filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.24));
+}
+
+.snake-shadow-shape,
+.snake-belly-shape,
+.snake-scale-group {
+    pointer-events: none;
+}
+
+/* Gelombang SELURUH badan (kepala+badan+ekor bergerak sebagai SATU object)
+   — animasi diisi per-instance oleh SnakeRenderer._injectWaveKeyframes()
+   (nama keyframe unik per ular, "snake-wave-{uid}"), amplitudo PERSIS nol
+   di kedua ujung path jadi moncong & ekor tidak pernah bergeser dari
+   cell-center anchornya walau badan tengah berombak. Shadow & highlight
+   ikut animasi yang sama (keyframe terpisah, fase identik) supaya tetap
+   menempel pas di badan saat bergelombang. */
+
+/* Wajah (mata/mulut/lidah): bentuk SVG kecil, dihitung dari titik/tangent
+   path di area rahang — ikut rotasi & posisi kepala secara otomatis karena
+   berbagi ruang koordinat lokal yang sama dengan badan (lihat
+   SnakeRenderer._buildFace()), tidak mungkin "tidak sinkron". Wobble SANGAT
+   kecil ("kepala sedikit bergerak") supaya terasa hidup — TIDAK mengubah
+   bentuk/posisi path badan itu sendiri. */
+.snake-face-group {
+    pointer-events: none;
+    animation: snake-face-sway-kf 5s ease-in-out infinite;
+}
+
+@keyframes snake-face-sway-kf {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(0.8deg); }
+}
+
+/* Mata: DUA grup (terbuka/tertutup) ditumpuk di titik yang SAMA, ditukar
+   lewat display (sprite swap) — BUKAN scaleY, BUKAN opacity — lihat
+   SnakeRenderer._scheduleBlink(). Posisinya tidak pernah berubah karena
+   dihitung dari geometri kepala yang statis relatif terhadap dirinya sendiri. */
+.snake-eyes-open,
+.snake-eyes-closed {
+    pointer-events: none;
+}
+
+.snake-eye-shine {
+    pointer-events: none;
+}
+
+/* Mulut: normalnya tertutup rapat (scaleY kecil) — dipicu JS sebagai
+   one-shot pulse PERSIS 220ms (lihat SnakeRenderer._scheduleMouth()). */
+.snake-mouth-shape {
+    transform: scaleY(0.2);
+    opacity: 0.7;
+}
+
+.snake-mouth-open {
+    animation: snake-mouth-open-kf 220ms ease-in-out;
+}
+
+@keyframes snake-mouth-open-kf {
+    0% { transform: scaleY(0.2); opacity: 0.7; }
+    50% { transform: scaleY(1.6); opacity: 1; }
+    100% { transform: scaleY(0.2); opacity: 0.7; }
+}
+
+/* Lidah: normalnya tersembunyi (scale 0, di titik moncong) — dipicu JS
+   sebagai one-shot pulse PERSIS 50ms keluar + 80ms diam + 50ms masuk
+   (180ms total, lihat SnakeRenderer._scheduleTongue()). */
+.snake-tongue-shape {
+    opacity: 0;
+    transform: scale(0);
+}
+
+.snake-tongue-flick {
+    animation: snake-tongue-flick-kf 180ms linear;
+}
+
+@keyframes snake-tongue-flick-kf {
+    0% { opacity: 0; transform: scale(0); }
+    27.78% { opacity: 1; transform: scale(1); }
+    72.22% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0); }
+}
+
+/* Efek "ular aktif": pion mendarat di kepalanya — glow warna tema di
+   sekeliling badan (dipicu SnakeRenderer.reactToLanding(), lihat
+   game-play.js: dipanggil SEBELUM pion turun). */
+.snake-bite-glow {
+    filter: drop-shadow(0 0 0.05px var(--bite-glow)) drop-shadow(0 0 0.12px var(--bite-glow));
+}
+
+/* Tangga: SENGAJA statis (tidak ada gerakan idle sama sekali) sesuai
+   permintaan - dulu ada bob translateY sangat halus, sekarang dihapus.
+   Satu-satunya elemen "hidup" pada tangga adalah drop-shadow lembut di
+   bawah ini + efek reactToClimb() (ladder-climb-active) saat pion
+   sungguhan naik lewatnya. */
+.ladder-group {
+    filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.2));
+}
+
+.ladder-idle {
+    display: block;
+}
+
+.ladder-rail-line,
+.ladder-rung-line {
+    transition: filter 0.2s ease-out;
+}
+
+.ladder-climb-active {
+    animation: ladder-climb-kf 0.65s ease-out;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+.ladder-climb-active .ladder-rail-line,
+.ladder-climb-active .ladder-rung-line {
+    filter: drop-shadow(0 0 0.05px #fff) drop-shadow(0 0 0.12px #fde68a);
+}
+
+@keyframes ladder-climb-kf {
+    0% { transform: scale(1); }
+    35% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}
+
+/* Particle ringan (✨⭐🍃 / dust) — lihat ParticleController.js. Ukuran kecil
+   TETAP (px) sengaja — cuma dekorasi sesaat, bukan elemen layout. */
+.board-particle {
+    position: absolute;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: board-particle-kf 0.9s ease-out forwards;
+}
+
+.board-particle-emoji {
+    font-size: clamp(10px, 2.2vw, 16px);
+    line-height: 1;
+}
+
+.board-particle-dust {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(120, 53, 15, 0.55), rgba(120, 53, 15, 0) 70%);
+}
+
+@keyframes board-particle-kf {
+    0% { transform: translate(-50%, -50%) translate(0, 0) scale(0.5); opacity: 0; }
+    18% { opacity: 1; transform: translate(-50%, -50%) translate(calc(var(--px) * 0.35), calc(var(--py) * 0.35)) scale(1); }
+    100% { transform: translate(-50%, -50%) translate(var(--px), var(--py)) scale(0.6); opacity: 0; }
+}
+
+/* Papan berhenti "hidup" saat di luar viewport (lihat AnimationController.
+   observeVisibility()) — hemat kerja render tanpa perlu melepas elemen. */
+#game-board.board-anims-paused .snake-body-shape,
+#game-board.board-anims-paused .snake-shadow-shape,
+#game-board.board-anims-paused .snake-belly-shape,
+#game-board.board-anims-paused .snake-face-group {
+    animation-play-state: paused;
+}
+
+/* Glow lembut pada jenis petak tertentu (finish/bonus/mystery/ular/tangga) */
+.tile-glow-finish { box-shadow: 0 0 10px 1px rgba(217, 70, 239, 0.35); }
+.tile-glow-bonus { box-shadow: 0 0 8px 1px rgba(249, 115, 22, 0.3); }
+.tile-glow-mystery { box-shadow: 0 0 8px 1px rgba(139, 92, 246, 0.3); }
+.tile-glow-tangga { box-shadow: 0 0 7px 1px rgba(16, 185, 129, 0.28); }
+.tile-glow-ular { box-shadow: 0 0 7px 1px rgba(225, 29, 72, 0.28); }
+
+@media (prefers-reduced-motion: reduce) {
+    .snake-body-shape,
+    .snake-shadow-shape,
+    .snake-belly-shape,
+    .snake-face-group,
+    .snake-mouth-open,
+    .snake-tongue-flick,
+    .ladder-climb-active,
+    .board-particle {
+        animation: none !important;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Modal Achievement Terbuka: badge scale-in + confetti ringan          */
+/* ------------------------------------------------------------------ */
+.achievement-badge-pop {
+    animation: achievement-badge-pop-kf 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes achievement-badge-pop-kf {
+    0% { transform: scale(0.4) rotate(-8deg); opacity: 0; }
+    60% { transform: scale(1.12) rotate(4deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+.confetti-piece {
+    position: absolute;
+    top: -10%;
+    width: 8px;
+    height: 14px;
+    opacity: 0;
+    animation: confetti-fall-kf 1.5s ease-in forwards;
+}
+
+@keyframes confetti-fall-kf {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(220px) rotate(var(--confetti-spin, 480deg));
+        opacity: 0;
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Kartu halaman Sertifikat pemain                                    */
+/* ------------------------------------------------------------------ */
+.cert-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid rgba(37, 99, 235, 0.08);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+    transition: 0.3s ease;
+}
+
+.cert-card--white {
+    background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+}
+
+.cert-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 45px rgba(37, 99, 235, 0.12);
+}
+
+.cert-card::before {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -60px;
+    width: 180px;
+    height: 180px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.05), transparent 70%);
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.cert-card--cream {
+    background: linear-gradient(180deg, #fff7ed, #fffdf8);
+}
+
+.cert-card--progress {
+    background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+.cert-card--reward {
+    box-shadow: 0 15px 35px rgba(88, 80, 236, 0.28);
+}
+
+.cert-card--reward::before {
+    top: -40px;
+    right: -40px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.35), transparent 70%);
+}
+
+.cert-banner--motivation {
+    background: linear-gradient(180deg, #fff8f1, #fffdf8);
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+}
+
+.cert-timeline-line {
+    border-color: rgba(203, 213, 225, 0.6);
+}
+
+.cert-progress-bar {
+    position: relative;
+    overflow: hidden;
+}
+
+.cert-progress-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 55%);
+}
+
+/* ------------------------------------------------------------------ */
+/* Avatar picker (halaman Profil pemain)                              */
+/* ------------------------------------------------------------------ */
+.avatar-option {
+    background: #f8fafc;
+}
+
+.avatar-option:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.15);
+    border-color: #2563eb;
+}
+
+.avatar-option--active {
+    background: linear-gradient(180deg, #eff6ff, #dbeafe);
+}
+
+/* ------------------------------------------------------------------ */
+/* Sidebar Admin Panel                                                 */
+/* ------------------------------------------------------------------ */
+/*
+ * Dibungkus @layer components (bukan CSS polos) DENGAN SENGAJA: CSS polos
+ * yang ditulis setelah @tailwind utilities di file ini akan MENANG di atas
+ * utility class Tailwind apa pun untuk properti yang sama, walau
+ * specificity-nya sama-sama satu class - itulah sumber bug "layout
+ * sidebar bergeser ke bawah" sebelumnya (lihat penjelasan di .admin-sidebar
+ * di bawah). Dengan @layer components, utility class Tailwind (yang
+ * ditulis langsung di class="..." pada elemen, mis. `fixed`) DIJAMIN tetap
+ * menang atas properti yang sama di sini, sesuai cara kerja cascade layer
+ * bawaan Tailwind - class kustom di bawah ini jadi aman ditambahkan tanpa
+ * risiko diam-diam menimpa utility class yang sudah dipakai di HTML.
+ */
+@layer components {
+    .admin-nav-active {
+        background: linear-gradient(90deg, #22c55e, #34d399);
+        box-shadow: 0 10px 25px rgba(34, 197, 94, 0.28);
+    }
+
+    .admin-sidebar {
+        /*
+         * SEBELUMNYA ada `min-height: 100vh` di sini - kelihatannya aman di
+         * desktop (di mana <aside> memang persis top-0+bottom-0 = 100vh
+         * juga), tapi SALAH di mobile: <aside> di mobile pakai
+         * `top-[72px] bottom-0` (mulai di BAWAH navbar, lihat
+         * admin.blade.php), yang seharusnya menghasilkan tinggi
+         * `100vh - 72px`. min-height:100vh MEMAKSA <aside> tetap setinggi
+         * 100vh penuh di mobile juga, membuatnya "meluber" 72px ke bawah
+         * viewport (tak terlihat karena overflow-hidden) - <nav> yang
+         * flex-1 lalu ikut dialokasikan ruang 72px lebih banyak dari
+         * seharusnya, mendorong footer Feedback pas ke luar layar. Dihapus
+         * total: position:fixed dengan top+bottom (tanpa height eksplisit)
+         * SUDAH menghasilkan tinggi yang benar dengan sendirinya di kedua
+         * mode, min-height ini tidak pernah dibutuhkan.
+         */
+        background-color: #f0fdf4;
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-right: 1px solid rgba(255, 255, 255, 0.6);
+        /*
+         * PENTING - JANGAN tambahkan `position: relative` di sini.
+         * <aside id="admin-sidebar"> di admin.blade.php sudah punya utility
+         * class Tailwind `fixed` (position:fixed, dipakai supaya sidebar
+         * menempel ke viewport & TIDAK IKUT ALUR DOKUMEN NORMAL - lihat
+         * min-height:100vh di atas). `position:fixed` SAMA VALIDNYA dengan
+         * `position:relative` sebagai containing block untuk child
+         * `position:absolute` (.admin-sidebar::after di bawah) - jadi tidak
+         * pernah dibutuhkan tambahan position di sini.
+         *
+         * Riwayat bug: versi sebelumnya SEMPAT menambahkan
+         * `position: relative` langsung di CSS polos (di luar @layer),
+         * yang diam-diam MENIMPA `fixed` dari Tailwind (CSS polos vs
+         * utility Tailwind, prioritas ditentukan urutan source, bukan
+         * specificity) - akibatnya sidebar berubah dari fixed (keluar
+         * dari alur dokumen) jadi relative (IKUT alur dokumen normal),
+         * dan min-height:100vh miliknya jadi benar-benar mendorong seluruh
+         * konten setelahnya turun 100vh (persis gejala "ruang kosong putih
+         * besar di atas dashboard, navbar & konten ikut turun" yang
+         * dilaporkan). isolation:isolate TIDAK bermasalah (tidak
+         * memengaruhi posisi/alur dokumen sama sekali, cuma menjamin
+         * stacking-context) sehingga tetap dipakai.
+         */
+        isolation: isolate;
+    }
+
+    /*
+     * Dekorasi latar sidebar (mengisi ruang kosong di bagian bawah): satu
+     * pseudo-element yang menempel di seluruh kotak .admin-sidebar, gambar
+     * diposisikan mepet ke BAWAH saja - sengaja pseudo-element (bukan
+     * elemen <img>/<div> baru di blade), supaya TIDAK PERNAH ikut dihitung
+     * tinggi/alur layout apa pun: `position:absolute` mengeluarkannya total
+     * dari document flow (tidak menambah tinggi elemen induk sedikit pun,
+     * tidak butuh margin/padding/flex-item tambahan), dan otomatis
+     * mengikuti ukuran kotak .admin-sidebar yang sudah ada (responsive
+     * tanpa media query tambahan, termasuk kalau nanti ada mode
+     * collapse/minimize).
+     */
+    .admin-sidebar::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        /* --admin-sidebar-decoration diisi lewat inline style di admin.blade.php
+           memakai asset() Laravel, BUKAN url('/images/...') statis di sini -
+           lihat komentar di admin.blade.php untuk alasannya (patah di bawah
+           Vite dev server/npm run dev). */
+        background-image: var(--admin-sidebar-decoration);
+        background-repeat: no-repeat;
+        /* cover + center: gambar mengisi penuh kotak sidebar dari atas sampai
+           bawah tanpa terpotong/berubah posisi - karena pseudo-element ini
+           inset:0 relatif terhadap .admin-sidebar (yang position:fixed dan
+           tidak ikut bergerak saat halaman di-scroll), background ini juga
+           otomatis diam total saat konten utama di-scroll. */
+        background-position: center;
+        background-size: cover;
+        /* Opacity rendah rata di seluruh tinggi (tanpa mask fade) supaya teks
+           menu tetap terbaca di semua posisi, sekaligus gambar tetap terlihat
+           menerus dari atas ke bawah sesuai permintaan (tidak boleh terpotong
+           oleh fade/mask). */
+        opacity: 0.16;
+    }
+
+    .admin-sidebar-nav-active {
+        background: #22c55e;
+        box-shadow: 0 15px 35px rgba(34, 197, 94, 0.35);
+    }
+
+    .admin-header-glass {
+        background: rgba(255, 255, 255, 0.75);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/* Bell Notification (Tahap 19): shake saat notifikasi baru masuk +    */
+/* pulse pada badge unread + glassmorphism dropdown                   */
+/* ------------------------------------------------------------------ */
+.notif-bell-shake {
+    animation: notif-bell-shake-kf 0.5s ease-in-out;
+}
+
+@keyframes notif-bell-shake-kf {
+    0%, 100% { transform: rotate(0deg); }
+    15% { transform: rotate(14deg); }
+    30% { transform: rotate(-12deg); }
+    45% { transform: rotate(9deg); }
+    60% { transform: rotate(-7deg); }
+    75% { transform: rotate(4deg); }
+    90% { transform: rotate(-2deg); }
+}
+
+.notif-badge-pulse {
+    animation: notif-badge-pulse-kf 1.6s ease-in-out infinite;
+}
+
+@keyframes notif-badge-pulse-kf {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+    50% { box-shadow: 0 0 0 5px rgba(239, 68, 68, 0); }
+}
+
+.notif-dropdown-glass {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.notif-skeleton-line {
+    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
+    background-size: 400% 100%;
+    animation: notif-skeleton-kf 1.4s ease infinite;
+}
+
+@keyframes notif-skeleton-kf {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
 }

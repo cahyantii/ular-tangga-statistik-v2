@@ -18,7 +18,7 @@
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {{-- Perkembangan belajar --}}
-            <div class="rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6 lg:col-span-2">
+            <div class="group rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6 lg:col-span-2">
                 <h3 class="text-base font-bold text-slate-700">Perkembangan Belajar</h3>
 
                 <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-start">
@@ -28,19 +28,12 @@
                             <span class="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-primary-50" aria-hidden="true"></span>
                         </div>
 
-                        <svg viewBox="0 0 100 120" class="mt-3 h-24 w-24 animate-float select-none" aria-hidden="true">
-                            <line x1="50" y1="6" x2="50" y2="16" stroke="#0F4CBA" stroke-width="3" stroke-linecap="round" />
-                            <circle cx="50" cy="5" r="4" fill="#F68B1F" />
-                            <rect x="24" y="16" width="52" height="40" rx="16" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                            <circle cx="40" cy="36" r="4.5" fill="#0F4CBA" />
-                            <circle cx="60" cy="36" r="4.5" fill="#0F4CBA" />
-                            <path d="M40 45c3 3 9 3 12 0" stroke="#0F4CBA" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                            <rect x="20" y="58" width="60" height="46" rx="18" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="3" />
-                            <rect x="6" y="68" width="14" height="10" rx="5" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                            <rect x="80" y="68" width="14" height="10" rx="5" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                            <rect x="34" y="72" width="32" height="22" rx="4" fill="#FFFFFF" stroke="#00A65A" stroke-width="2.5" />
-                            <path d="M39 83h10M39 88h16" stroke="#00A65A" stroke-width="2" stroke-linecap="round" />
-                        </svg>
+                        <img
+                            src="{{ asset('images/brand/logo-robott.png') }}"
+                            alt=""
+                            aria-hidden="true"
+                            class="mt-3 h-[100px] w-[100px] select-none object-contain pointer-events-none animate-float transition-all duration-300 ease-out group-hover:scale-105 drop-shadow-[0_10px_20px_rgba(37,99,235,0.18)] sm:h-[120px] sm:w-[120px] lg:h-[140px] lg:w-[140px]"
+                        >
                     </div>
 
                     <div class="min-w-0 flex-1 space-y-5">
@@ -75,7 +68,7 @@
             <div class="space-y-6">
                 <x-player.level-card :level="$level" />
                 <x-player.streak-card :streak="$streak" />
-                <x-player.tips-card :tip="$tip" />
+                <x-player.tips-card :tip="$tip" :illustration="asset('images/brand/logo-buku.png')" illustration-position="right" />
             </div>
         </div>
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\MateriRequest;
 use App\Models\KategoriMateri;
 use App\Models\Materi;
+use App\Models\Soal;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -21,6 +22,12 @@ class MateriController extends Controller
             ->when($filter === 'all', fn ($query) => $query->withTrashed())
             ->with('kategori')
             ->when($request->filled('kategori_id'), fn ($query) => $query->where('kategori_id', $request->integer('kategori_id')))
+            ->when($request->filled('urutan'), fn ($query) => $query->where('urutan', $request->integer('urutan')))
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search')->toString();
+                $query->where('judul', 'like', "%{$search}%");
+            })
+            ->when($request->filled('status'), fn ($query) => $query->where('is_active', $request->string('status')->toString() === 'aktif'))
             ->orderBy('kategori_id')
             ->orderBy('urutan')
             ->paginate(15)
@@ -30,6 +37,13 @@ class MateriController extends Controller
             'materiList' => $materi,
             'filter' => $filter,
             'kategoriOptions' => KategoriMateri::query()->active()->orderBy('urutan')->pluck('nama', 'id'),
+            'urutanOptions' => Materi::query()->select('urutan')->distinct()->orderBy('urutan')->pluck('urutan'),
+            'stats' => [
+                'materi' => Materi::query()->count(),
+                'kategori' => KategoriMateri::query()->count(),
+                'soal' => Soal::query()->active()->count(),
+                'aktif' => Materi::query()->where('is_active', true)->count(),
+            ],
         ]);
     }
 

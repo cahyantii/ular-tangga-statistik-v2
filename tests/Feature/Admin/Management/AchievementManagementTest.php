@@ -27,6 +27,36 @@ class AchievementManagementTest extends TestCase
         $this->assertDatabaseHas('achievements', ['kode' => 'FIRST_WIN', 'nama' => 'Kemenangan Pertama']);
     }
 
+    public function test_admin_can_set_reward_poin_on_create_and_update(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->post('/admin/management/achievements', [
+            'kode' => 'REWARD_TEST',
+            'nama' => 'Uji Reward',
+            'syarat_type' => 'total_menang',
+            'syarat_value' => 1,
+            'reward_poin' => 75,
+            'urutan' => 1,
+            'is_active' => '1',
+        ])->assertRedirect(route('admin.management.achievements.index'));
+
+        $achievement = Achievement::where('kode', 'REWARD_TEST')->firstOrFail();
+        $this->assertSame(75, $achievement->reward_poin);
+
+        $this->actingAs($admin)->put("/admin/management/achievements/{$achievement->id}", [
+            'kode' => 'REWARD_TEST',
+            'nama' => 'Uji Reward',
+            'syarat_type' => 'total_menang',
+            'syarat_value' => 1,
+            'reward_poin' => 150,
+            'urutan' => 1,
+            'is_active' => '1',
+        ])->assertRedirect(route('admin.management.achievements.index'));
+
+        $this->assertSame(150, $achievement->fresh()->reward_poin);
+    }
+
     public function test_kode_must_be_unique(): void
     {
         $admin = User::factory()->admin()->create();

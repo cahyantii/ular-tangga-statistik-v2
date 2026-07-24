@@ -11,6 +11,8 @@ use App\Models\GameSession;
 use App\Models\KategoriMateri;
 use App\Models\Soal;
 use App\Models\User;
+use App\Models\UserAchievement;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -65,20 +67,28 @@ class AdminStatsRepository
         ];
     }
 
-    public function gamesPerHari(int $hari = 7): Collection
+    /**
+     * @param  Carbon  $sampai  Ujung akhir periode (dari date-range picker
+     *   dashboard) - WAJIB dipakai sebagai jangkar, bukan now(), supaya
+     *   grafik benar-benar menampilkan periode yang diminta admin ketika
+     *   dia memilih rentang tanggal historis, bukan selalu "N hari terakhir
+     *   sampai hari ini" (lihat DashboardController::resolvePeriode()).
+     */
+    public function gamesPerHari(int $hari, Carbon $sampai): Collection
     {
-        $mulai = now()->subDays($hari - 1)->startOfDay();
+        $akhir = $sampai->copy()->startOfDay();
+        $mulai = $akhir->copy()->subDays($hari - 1);
 
         $rows = GameSession::query()
             ->where('status', GameStatus::Finished->value)
-            ->where('finished_at', '>=', $mulai)
+            ->whereBetween('finished_at', [$mulai, $sampai->copy()->endOfDay()])
             ->select(DB::raw('DATE(finished_at) as tanggal'), DB::raw('COUNT(*) as total'))
             ->groupBy('tanggal')
             ->pluck('total', 'tanggal');
 
         $hasil = collect();
         for ($i = $hari - 1; $i >= 0; $i--) {
-            $tanggal = now()->subDays($i)->toDateString();
+            $tanggal = $akhir->copy()->subDays($i)->toDateString();
             $hasil->put($tanggal, (int) ($rows[$tanggal] ?? 0));
         }
 
@@ -189,6 +199,27 @@ class AdminStatsRepository
                     'total_menang' => (int) $row->total_menang,
                 ];
             });
+    }
+
+    /**
+     * @param  Carbon  $sampai  Sama seperti gamesPerHari() - ujung akhir
+     *   periode yang dipilih admin, bukan selalu now().
+     */
+    public function achievementTerbaru(int $hari, Carbon $sampai, int $limit = 5): Collection
+    {
+        $mulai = $sampai->copy()->subDays($hari - 1)->startOfDay();
+
+        return UserAchievement::query()
+            ->with(['user', 'achievement'])
+            ->whereBetween('earned_at', [$mulai, $sampai->copy()->endOfDay()])
+            ->orderByDesc('earned_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn (UserAchievement $entry) => [
+                'nama_pemain' => $entry->user?->name ?? '(pengguna dihapus)',
+                'nama_achievement' => $entry->achievement?->nama ?? '(achievement dihapus)',
+                'earned_at' => $entry->earned_at,
+            ]);
     }
 
     private function answerLogQuery()

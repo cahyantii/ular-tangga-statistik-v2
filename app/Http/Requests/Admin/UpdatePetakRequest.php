@@ -23,10 +23,12 @@ class UpdatePetakRequest extends FormRequest
     {
         return [
             'jenis_petak' => ['required', Rule::in(['biasa', 'soal', 'bonus', 'penalti', 'mystery'])],
+            'is_active' => ['boolean'],
             'kategori_id' => ['nullable', 'integer', 'exists:kategori_materi,id', 'required_if:jenis_petak,soal'],
             'label' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:255'],
             'warna' => ['nullable', 'string', 'max:255'],
+            'border_warna' => ['nullable', 'string', 'max:255'],
             'deskripsi' => ['nullable', 'string'],
             '_version' => ['required', 'string'],
         ];

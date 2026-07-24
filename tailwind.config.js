@@ -13,8 +13,15 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Poppins', ...defaultTheme.fontFamily.sans],
+                admin: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             colors: {
+                admin: {
+                    green: '#16A34A',
+                    navy: '#0F172A',
+                    bg: '#F8FAFC',
+                    border: '#E5E7EB',
+                },
                 primary: {
                     DEFAULT: '#0F4CBA',
                     50: '#EAF1FC',

@@ -403,6 +403,87 @@
         </svg>
         @break
 
+    @case('tag')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M11.5 3.5H6a2.5 2.5 0 0 0-2.5 2.5v5.5L13 21l7.5-7.5L11.5 3.5Z" />
+            <circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none" />
+        </svg>
+        @break
+
+    @case('settings')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 13.5a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.9 2.9l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.9-2.9l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1h-.2a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.9-2.9l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.6v-.2a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.9 2.9l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.6 1h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.6 1Z" />
+        </svg>
+        @break
+
+    @case('document')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M7 3.5h7l3.5 3.5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-15a1 1 0 0 1 1-1Z" />
+            <path d="M14 3.5v4h4M8.5 12h7M8.5 15.5h7M8.5 8.5h2" />
+        </svg>
+        @break
+
+    @case('search')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <circle cx="10.5" cy="10.5" r="6.5" />
+            <path d="m20 20-4.35-4.35" />
+        </svg>
+        @break
+
+    @case('plus')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M12 4.5v15M4.5 12h15" />
+        </svg>
+        @break
+
+    @case('filter')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M4 5h16l-6 7.5V19l-4 2v-8.5L4 5Z" />
+        </svg>
+        @break
+
+    @case('heartbeat')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M3 12h4l2-5 4 10 2-5h6" />
+        </svg>
+        @break
+
+    @case('hourglass')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M6.5 3.5h11M6.5 20.5h11" />
+            <path d="M7.5 3.5v2.3a5 5 0 0 0 2 4l2.5 1.9 2.5-1.9a5 5 0 0 0 2-4V3.5M7.5 20.5v-2.3a5 5 0 0 1 2-4l2.5-1.9 2.5 1.9a5 5 0 0 1 2 4v2.3" />
+        </svg>
+        @break
+
+    @case('info')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="{{ $classes }}">
+            <circle cx="12" cy="12" r="8.5" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 11v5.5" />
+            <circle cx="12" cy="8" r="0.4" fill="currentColor" />
+        </svg>
+        @break
+
+    @case('pencil')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="m16.5 4.5 3 3L8 19H5v-3L16.5 4.5Z" />
+        </svg>
+        @break
+
+    @case('trash')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M5 7h14M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2m-8 0 1 13a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2l1-13" />
+            <path d="M10 11v6M14 11v6" />
+        </svg>
+        @break
+
+    @case('refresh')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M20 11A8 8 0 1 0 18 16" />
+            <path d="M20 4v7h-7" />
+        </svg>
+        @break
+
     @default
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="{{ $classes }}">
             <circle cx="12" cy="12" r="8.5" />

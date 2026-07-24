@@ -18,6 +18,7 @@ class RoleBasedAuthTest extends TestCase
             'email' => 'pemain@example.com',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
+            'terms' => '1',
         ]);
 
         $user = User::where('email', 'pemain@example.com')->firstOrFail();

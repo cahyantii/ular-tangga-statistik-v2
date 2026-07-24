@@ -17,10 +17,12 @@ class Petak extends Model
         'papan_id',
         'posisi',
         'jenis_petak',
+        'is_active',
         'kategori_id',
         'label',
         'icon',
         'warna',
+        'border_warna',
         'deskripsi',
     ];
 
@@ -29,6 +31,7 @@ class Petak extends Model
         return [
             'posisi' => 'integer',
             'jenis_petak' => TileType::class,
+            'is_active' => 'boolean',
         ];
     }
 

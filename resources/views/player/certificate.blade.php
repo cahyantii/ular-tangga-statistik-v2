@@ -25,8 +25,8 @@
     @else
         <div class="space-y-6">
             {{-- Hero --}}
-            <div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm sm:p-8">
-                <div class="flex flex-col items-center gap-6 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left">
+            <div class="cert-card cert-card--white flex flex-col items-center gap-6 pl-4 pr-6 py-6 text-center sm:pl-6 sm:pr-10 sm:py-8 lg:flex-row lg:justify-between lg:text-left">
+                <div class="flex w-full items-center gap-4 lg:w-[72%]">
                     <svg viewBox="0 0 140 140" class="h-28 w-28 shrink-0 select-none sm:h-32 sm:w-32" aria-hidden="true">
                         <rect x="14" y="14" width="112" height="112" rx="28" fill="#0F4CBA" transform="rotate(-8 70 70)" />
                         <rect x="30" y="26" width="80" height="60" rx="8" fill="#FFFFFF" />
@@ -45,26 +45,19 @@
                         <p class="text-lg font-bold text-primary-600">Sertifikat Penguasaan Statistik Dasar.</p>
                         <p class="mt-2 text-sm text-slate-500">Tingkatkan kemampuanmu dan buktikan pencapaianmu!</p>
                     </div>
-
-                    <svg viewBox="0 0 120 130" class="h-28 w-28 shrink-0 select-none sm:h-32 sm:w-32" aria-hidden="true">
-                        <line x1="60" y1="6" x2="60" y2="16" stroke="#0F4CBA" stroke-width="3" stroke-linecap="round" />
-                        <circle cx="60" cy="5" r="4" fill="#F68B1F" />
-                        <rect x="34" y="16" width="52" height="40" rx="16" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                        <circle cx="50" cy="36" r="4.5" fill="#0F4CBA" />
-                        <circle cx="70" cy="36" r="4.5" fill="#0F4CBA" />
-                        <path d="M50 45c3 3 9 3 12 0" stroke="#0F4CBA" stroke-width="2.5" stroke-linecap="round" fill="none" />
-                        <rect x="30" y="58" width="60" height="46" rx="18" fill="#EAF1FC" stroke="#0F4CBA" stroke-width="3" />
-                        <rect x="16" y="66" width="14" height="10" rx="5" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                        <rect x="24" y="70" width="20" height="26" rx="3" fill="#FFFFFF" stroke="#00A65A" stroke-width="2.5" transform="rotate(-8 34 83)" />
-                        <path d="M90 70c8-2 14-10 14-18" stroke="#0F4CBA" stroke-width="6" stroke-linecap="round" fill="none" />
-                        <circle cx="104" cy="50" r="6" fill="#FFFFFF" stroke="#0F4CBA" stroke-width="3" />
-                    </svg>
                 </div>
+
+                <img
+                    src="{{ asset('images/brand/logo-robo.png') }}"
+                    alt=""
+                    aria-hidden="true"
+                    class="h-32 w-auto max-w-[200px] shrink-0 select-none object-contain sm:h-40 lg:h-48 lg:mr-[35px]"
+                >
             </div>
 
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {{-- Timeline syarat --}}
-                <div class="rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6 lg:col-span-2">
+                <div class="cert-card cert-card--progress p-5 sm:p-6 lg:col-span-2 lg:p-7">
                     <div>
                         @foreach ($checklist['steps'] as $step)
                             <x-player.certificate-step
@@ -81,33 +74,32 @@
                         @endforeach
                     </div>
 
-                    <div class="flex flex-col items-center gap-4 overflow-hidden rounded-2xl bg-accent-50 p-5 text-center sm:flex-row sm:justify-between sm:p-6 sm:text-left">
-                        <div class="flex items-center gap-3">
-                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-500 text-white">
-                                <x-player.icon name="trophy" class="h-5 w-5" />
-                            </span>
-                            <div>
-                                <p class="font-bold text-slate-800">Setiap langkah kecil adalah bagian dari pencapaian besar!</p>
-                                <p class="mt-0.5 text-sm text-slate-500">Terus belajar, terus bermain, dan raih sertifikatmu sekarang!</p>
-                            </div>
+                    <div class="cert-banner--motivation flex flex-row flex-nowrap items-center justify-between gap-5 overflow-hidden rounded-2xl p-5 sm:p-6">
+                        <img
+                            src="{{ asset('images/brand/logo-piala.png') }}"
+                            alt=""
+                            aria-hidden="true"
+                            class="mr-5 h-auto w-[70px] shrink-0 select-none object-contain transition duration-300 hover:scale-105 sm:w-[85px] lg:w-[100px]"
+                        >
+
+                        <div class="min-w-0 flex-1 text-center">
+                            <p class="font-bold text-slate-800">Setiap langkah kecil adalah bagian dari pencapaian besar!</p>
+                            <p class="mt-0.5 text-sm text-slate-500">Terus belajar, terus bermain, dan raih sertifikatmu sekarang!</p>
                         </div>
 
-                        <svg viewBox="0 0 100 90" class="h-20 w-24 shrink-0 select-none sm:h-24 sm:w-28" aria-hidden="true">
-                            <path d="M10 75c30-15 10-35 30-45s20 10 45-5" stroke="#00A65A" stroke-width="9" stroke-linecap="round" fill="none" />
-                            <circle cx="80" cy="20" r="9" fill="#00A65A" />
-                            <circle cx="83" cy="17" r="1.6" fill="#0A317A" />
-                            <path d="M76 24c2 2 6 2 8 0" stroke="#0A317A" stroke-width="1.6" stroke-linecap="round" fill="none" />
-                            <path d="M64 8 82 14 64 20 46 14Z" fill="#1E293B" />
-                            <rect x="62" y="18" width="4" height="8" fill="#1E293B" />
-                            <circle cx="64" cy="26" r="1.6" fill="#F68B1F" />
-                        </svg>
+                        <img
+                            src="{{ asset('images/brand/logo-ular.png') }}"
+                            alt=""
+                            aria-hidden="true"
+                            class="mr-3 h-auto w-[90px] shrink-0 select-none object-contain transition duration-300 hover:scale-105 sm:w-[120px] lg:w-[150px]"
+                        >
                     </div>
                 </div>
 
                 {{-- Hadiah & tips --}}
                 <div class="space-y-6">
                     <x-player.certificate-reward-card :rewardPoin="$checklist['reward_poin']" />
-                    <x-player.tips-card :tip="$tip" />
+                    <x-player.tips-card :tip="$tip" :illustration="asset('images/brand/logo-buku.png')" :premium="true" />
                 </div>
             </div>
         </div>

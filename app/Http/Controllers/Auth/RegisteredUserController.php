@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\AuthProvider;
+use App\Events\Auth\UserRegistered;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\User;
+use App\Services\Notification\NotificationService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +16,10 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
+
     /**
      * Display the registration view.
      */
@@ -40,6 +47,10 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
+
+        UserRegistered::dispatch($user, AuthProvider::Email, now());
+
+        $this->notifications->sendToAdmins($this->notifications->payloadUserRegistered($user));
 
         Auth::login($user);
 

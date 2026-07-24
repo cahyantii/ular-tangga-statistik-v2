@@ -120,6 +120,34 @@ class PapanPermainanManagementTest extends TestCase
         $this->assertSame($kategori->id, $petak->kategori_id);
     }
 
+    public function test_konektor_index_renders_with_existing_connectors_and_their_jenis(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 50]);
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => 'tangga',
+            'posisi_awal' => 6,
+            'posisi_akhir' => 20,
+        ]);
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => 'ular',
+            'posisi_awal' => 17,
+            'posisi_akhir' => 4,
+        ]);
+
+        $response = $this->actingAs($admin)->get("/admin/management/papan-permainan/{$papan->id}/konektor");
+
+        $response->assertOk();
+        // Editor visual (konektor/index.blade.php) menggambar konektor yang
+        // sudah ada sebagai overlay pudar di SVG (lihat renderExistingConnectors()
+        // di JS-nya) - butuh field "jenis" per konektor di JSON board data
+        // supaya tahu mana yang harus digambar sebagai tangga vs ular.
+        $response->assertSee('&quot;jenis&quot;:&quot;tangga&quot;', false);
+        $response->assertSee('&quot;jenis&quot;:&quot;ular&quot;', false);
+    }
+
     public function test_konektor_cannot_chain_into_another_konektors_start(): void
     {
         $admin = User::factory()->admin()->create();
@@ -157,6 +185,133 @@ class PapanPermainanManagementTest extends TestCase
 
         $petak->refresh();
         $this->assertSame('biasa', $petak->jenis_petak->value);
+    }
+
+    public function test_tangga_going_down_is_rejected(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 50]);
+
+        $response = $this->actingAs($admin)->post("/admin/management/papan-permainan/{$papan->id}/konektor", [
+            'jenis' => 'tangga',
+            'posisi_awal' => 30,
+            'posisi_akhir' => 10,
+        ]);
+
+        $response->assertSessionHasErrors('konektor');
+        $this->assertDatabaseMissing('papan_konektor', ['papan_id' => $papan->id, 'posisi_awal' => 30]);
+    }
+
+    public function test_ular_going_up_is_rejected(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 50]);
+
+        $response = $this->actingAs($admin)->post("/admin/management/papan-permainan/{$papan->id}/konektor", [
+            'jenis' => 'ular',
+            'posisi_awal' => 10,
+            'posisi_akhir' => 30,
+        ]);
+
+        $response->assertSessionHasErrors('konektor');
+        $this->assertDatabaseMissing('papan_konektor', ['papan_id' => $papan->id, 'posisi_awal' => 10]);
+    }
+
+    public function test_tangga_going_up_is_accepted(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 50]);
+
+        $this->actingAs($admin)->post("/admin/management/papan-permainan/{$papan->id}/konektor", [
+            'jenis' => 'tangga',
+            'posisi_awal' => 10,
+            'posisi_akhir' => 30,
+        ])->assertRedirect(route('admin.management.papan-permainan.konektor.index', $papan));
+
+        $this->assertDatabaseHas('papan_konektor', ['papan_id' => $papan->id, 'posisi_awal' => 10, 'posisi_akhir' => 30]);
+    }
+
+    public function test_ular_going_down_is_accepted(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 50]);
+
+        $this->actingAs($admin)->post("/admin/management/papan-permainan/{$papan->id}/konektor", [
+            'jenis' => 'ular',
+            'posisi_awal' => 30,
+            'posisi_akhir' => 10,
+        ])->assertRedirect(route('admin.management.papan-permainan.konektor.index', $papan));
+
+        $this->assertDatabaseHas('papan_konektor', ['papan_id' => $papan->id, 'posisi_awal' => 30, 'posisi_akhir' => 10]);
+    }
+
+    public function test_papan_deskripsi_persists_on_create_and_update(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->post('/admin/management/papan-permainan', [
+            'nama' => 'Papan Deskripsi',
+            'deskripsi' => 'Deskripsi awal papan.',
+            'jumlah_petak' => 20,
+            'jumlah_kolom' => 5,
+            'is_active' => '1',
+        ]);
+
+        $papan = PapanPermainan::where('nama', 'Papan Deskripsi')->firstOrFail();
+        $this->assertSame('Deskripsi awal papan.', $papan->deskripsi);
+
+        $version = (string) $papan->updated_at->timestamp;
+        $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}", [
+            '_version' => $version,
+            'nama' => $papan->nama,
+            'deskripsi' => 'Deskripsi setelah diperbarui.',
+            'jumlah_kolom' => $papan->jumlah_kolom,
+        ])->assertRedirect(route('admin.management.papan-permainan.index'));
+
+        $this->assertSame('Deskripsi setelah diperbarui.', $papan->fresh()->deskripsi);
+    }
+
+    public function test_petak_border_warna_persists_on_update(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 20]);
+        $petak = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'biasa']);
+        $version = (string) $petak->updated_at->timestamp;
+
+        $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}/petak/{$petak->id}", [
+            '_version' => $version,
+            'jenis_petak' => 'biasa',
+            'border_warna' => '3px solid #f59e0b',
+        ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
+
+        $this->assertSame('3px solid #f59e0b', $petak->fresh()->border_warna);
+    }
+
+    public function test_petak_can_be_toggled_inactive_and_active_again(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 20]);
+        $petak = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'bonus', 'is_active' => true]);
+        $version = (string) $petak->updated_at->timestamp;
+
+        $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}/petak/{$petak->id}", [
+            '_version' => $version,
+            'jenis_petak' => 'bonus',
+            'is_active' => '0',
+        ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
+
+        $petak->refresh();
+        $this->assertFalse($petak->is_active);
+        $this->assertSame('bonus', $petak->jenis_petak->value, 'jenis_petak tetap tersimpan meski nonaktif');
+
+        $version = (string) $petak->updated_at->timestamp;
+        $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}/petak/{$petak->id}", [
+            '_version' => $version,
+            'jenis_petak' => 'bonus',
+            'is_active' => '1',
+        ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
+
+        $this->assertTrue($petak->fresh()->is_active);
     }
 
     public function test_preview_page_renders(): void

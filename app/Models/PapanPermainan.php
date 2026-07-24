@@ -15,6 +15,7 @@ class PapanPermainan extends Model
 
     protected $fillable = [
         'nama',
+        'deskripsi',
         'jumlah_petak',
         'jumlah_kolom',
         'thumbnail',

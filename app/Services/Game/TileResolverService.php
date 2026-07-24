@@ -27,6 +27,13 @@ class TileResolverService
      */
     public function resolve(GameSession $gameSession, GamePlayer $gamePlayer, Petak $petak): array
     {
+        // Petak yang dinonaktifkan admin (is_active=false) diperlakukan seperti
+        // petak biasa — efeknya dimatikan sementara tanpa kehilangan jenis_petak
+        // aslinya di database (bisa diaktifkan kembali kapan saja dari Editor Petak).
+        if (! $petak->is_active) {
+            return ['type' => 'none'];
+        }
+
         return match ($petak->jenis_petak) {
             TileType::Bonus => [
                 'type' => 'bonus',

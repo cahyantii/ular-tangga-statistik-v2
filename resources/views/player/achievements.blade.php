@@ -58,14 +58,18 @@
             </div>
         @endif
 
-        <div class="flex items-center gap-3 rounded-2xl border border-primary-100 bg-primary-50 p-4 text-sm sm:p-5">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-white">
-                <x-player.icon name="help" class="h-5 w-5" />
-            </span>
-            <p class="text-primary-700">
+        <div class="flex flex-col gap-4 rounded-2xl border border-primary-100 bg-primary-50 p-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-5">
+            <p class="text-primary-700 sm:flex-1">
                 <span class="font-bold">Tips:</span>
                 Semakin banyak achievement yang kamu raih, semakin banyak poin yang bisa kamu kumpulkan!
             </p>
+
+            <img
+                src="{{ asset('images/brand/logo-buku.png') }}"
+                alt=""
+                aria-hidden="true"
+                class="h-auto w-[90px] shrink-0 select-none self-center object-contain transition duration-300 hover:-translate-y-1 hover:scale-[1.03] sm:w-[100px] sm:self-auto lg:w-[110px]"
+            >
         </div>
     </div>
 </x-player-layout>

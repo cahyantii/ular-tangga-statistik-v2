@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateSoalRequest;
 use App\Models\KategoriMateri;
 use App\Models\Soal;
 use App\Services\Admin\AdminDashboardService;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -20,6 +21,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class SoalController extends Controller
 {
     use HandlesOptimisticLocking;
+
+    public function __construct(private readonly NotificationService $notifications)
+    {
+    }
 
     public function index(Request $request): View
     {
@@ -105,6 +110,8 @@ class SoalController extends Controller
     {
         $format = $request->string('format', 'xlsx')->toString();
         $format = in_array($format, ['csv', 'xlsx'], true) ? $format : 'xlsx';
+
+        $this->notifications->sendToAdmins($this->notifications->payloadExportPerformed('soal'));
 
         return Excel::download(new SoalExport(), 'soal-'.now()->format('Y-m-d').'.'.$format);
     }

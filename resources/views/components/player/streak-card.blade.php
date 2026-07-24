@@ -14,14 +14,12 @@
             <p class="text-xs text-slate-400">berturut-turut</p>
         </div>
 
-        <svg viewBox="0 0 60 60" class="h-14 w-14 shrink-0 select-none" aria-hidden="true">
-            <path d="M8 44c40-25 8-32 20-40" stroke="#FDE4C8" stroke-width="4" stroke-linecap="round" fill="none" />
-            <g transform="translate(6 22)">
-                <path d="M0 22c0-12 20-12 20-24 0-6-6-8-11-5" stroke="#F68B1F" stroke-width="6" stroke-linecap="round" fill="none" />
-                <circle cx="10.5" cy="-7" r="3.5" fill="#F68B1F" />
-                <circle cx="9.5" cy="-8" r="0.7" fill="#0A317A" />
-            </g>
-        </svg>
+        <img
+            src="{{ asset('images/brand/logo-ularr.png') }}"
+            alt=""
+            aria-hidden="true"
+            class="h-[90px] w-[90px] shrink-0 select-none object-contain sm:h-[100px] sm:w-[100px] lg:h-[110px] lg:w-[110px]"
+        >
     </div>
 
     <p class="mt-3 text-xs font-medium text-slate-400">

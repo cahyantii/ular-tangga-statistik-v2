@@ -30,7 +30,15 @@ class AchievementPageTest extends TestCase
         $response->assertSee('Juara Bertahan');
         $response->assertSee('Master Statistik');
         $response->assertSee('Diraih');
-        $response->assertSee('1 dari 2 achievement');
+        // Dipecah jadi dua assertSee(), bukan satu string utuh "1 dari 2
+        // achievement" - markup aslinya (achievement-summary-card.blade.php)
+        // membungkus "1 dari 2" dalam <span> terpisah dari kata "achievement"
+        // sesudahnya, jadi satu assertSee() gabungan gagal mendeteksi teks
+        // yang justru tampil BENAR ke pengguna (cuma terpisah tag, bukan
+        // rusak). Dua assertSee() ini tetap memverifikasi kedua bagian teks
+        // benar-benar ada di halaman, tanpa terikat pada struktur tag persis.
+        $response->assertSee('1 dari 2');
+        $response->assertSee('achievement telah diraih');
     }
 
     public function test_inactive_achievements_are_not_shown(): void

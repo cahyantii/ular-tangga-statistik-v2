@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreKategoriMateriRequest;
 use App\Http\Requests\Admin\UpdateKategoriMateriRequest;
 use App\Models\KategoriMateri;
+use App\Models\Materi;
+use App\Models\Soal;
 use App\Services\Master\KategoriMateriService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +27,13 @@ class KategoriMateriController extends Controller
         $kategori = KategoriMateri::query()
             ->when($filter === 'trashed', fn ($query) => $query->onlyTrashed())
             ->when($filter === 'all', fn ($query) => $query->withTrashed())
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->string('search')->toString();
+                $query->where(function ($query) use ($search) {
+                    $query->where('nama', 'like', "%{$search}%")
+                        ->orWhere('slug', 'like', "%{$search}%");
+                });
+            })
             ->withCount(['materi', 'soal'])
             ->orderBy('urutan')
             ->paginate(15)
@@ -33,6 +42,12 @@ class KategoriMateriController extends Controller
         return view('admin.management.kategori-materi.index', [
             'kategoriList' => $kategori,
             'filter' => $filter,
+            'stats' => [
+                'kategori' => KategoriMateri::query()->count(),
+                'materi' => Materi::query()->count(),
+                'soal' => Soal::query()->active()->count(),
+                'aktif' => KategoriMateri::query()->where('is_active', true)->count(),
+            ],
         ]);
     }
 

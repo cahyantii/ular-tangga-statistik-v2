@@ -1,11 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\Management\AchievementController;
+use App\Http\Controllers\Admin\Management\FeedbackController;
 use App\Http\Controllers\Admin\Management\GameSettingController;
 use App\Http\Controllers\Admin\Management\KategoriMateriController;
 use App\Http\Controllers\Admin\Management\MateriController;
+use App\Http\Controllers\Admin\Management\NotificationController;
+use App\Http\Controllers\Admin\Management\PapanImportController;
 use App\Http\Controllers\Admin\Management\PapanKonektorController;
 use App\Http\Controllers\Admin\Management\PapanPermainanController;
+use App\Http\Controllers\Admin\Management\PapanPetakImportController;
 use App\Http\Controllers\Admin\Management\PapanPreviewController;
 use App\Http\Controllers\Admin\Management\PetakController;
 use App\Http\Controllers\Admin\Management\SoalController;
@@ -29,9 +33,19 @@ Route::get('soal/export', [SoalController::class, 'export'])->name('soal.export'
 Route::patch('soal/{soal}/restore', [SoalController::class, 'restore'])->name('soal.restore');
 Route::resource('soal', SoalController::class)->except(['show']);
 
+Route::get('papan-permainan/import', [PapanImportController::class, 'create'])->name('papan-permainan.import.create');
+Route::post('papan-permainan/import/preview', [PapanImportController::class, 'preview'])->name('papan-permainan.import.preview');
+Route::post('papan-permainan/import/confirm', [PapanImportController::class, 'confirm'])->name('papan-permainan.import.confirm');
+Route::get('papan-permainan/{papan_permainan}/export', [PapanPermainanController::class, 'export'])->name('papan-permainan.export');
+
 Route::patch('papan-permainan/{papan_permainan}/restore', [PapanPermainanController::class, 'restore'])->name('papan-permainan.restore');
 Route::patch('papan-permainan/{papan_permainan}/toggle-active', [PapanPermainanController::class, 'toggleActive'])->name('papan-permainan.toggle-active');
 Route::get('papan-permainan/{papan_permainan}/preview', [PapanPreviewController::class, 'show'])->name('papan-permainan.preview');
+
+Route::get('papan-permainan/{papan_permainan}/petak/export', [PetakController::class, 'export'])->name('papan-permainan.petak.export');
+Route::get('papan-permainan/{papan_permainan}/petak/import', [PapanPetakImportController::class, 'create'])->name('papan-permainan.petak.import.create');
+Route::post('papan-permainan/{papan_permainan}/petak/import/preview', [PapanPetakImportController::class, 'preview'])->name('papan-permainan.petak.import.preview');
+Route::post('papan-permainan/{papan_permainan}/petak/import/confirm', [PapanPetakImportController::class, 'confirm'])->name('papan-permainan.petak.import.confirm');
 
 Route::get('papan-permainan/{papan_permainan}/petak', [PetakController::class, 'index'])->name('papan-permainan.petak.index');
 Route::get('papan-permainan/{papan_permainan}/petak/{petak}/edit', [PetakController::class, 'edit'])->name('papan-permainan.petak.edit');
@@ -46,3 +60,10 @@ Route::resource('achievements', AchievementController::class)->except(['show']);
 
 Route::get('game-settings', [GameSettingController::class, 'index'])->name('game-settings.index');
 Route::put('game-settings', [GameSettingController::class, 'update'])->name('game-settings.update');
+
+Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+Route::get('notifications/export', [NotificationController::class, 'export'])->name('notifications.export');
+
+Route::get('feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+Route::patch('feedback/{feedback}/status', [FeedbackController::class, 'updateStatus'])->name('feedback.update-status');
+Route::delete('feedback/{feedback}', [FeedbackController::class, 'destroy'])->name('feedback.destroy');

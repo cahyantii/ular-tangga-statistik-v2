@@ -6,18 +6,28 @@ use App\Http\Concerns\HandlesOptimisticLocking;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePapanPermainanRequest;
 use App\Http\Requests\Admin\UpdatePapanPermainanRequest;
+use App\Exports\PapanPetakExport;
+use App\Models\PapanKonektor;
 use App\Models\PapanPermainan;
+use App\Services\Master\PapanExportService;
 use App\Services\Master\PapanPermainanService;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PapanPermainanController extends Controller
 {
     use HandlesOptimisticLocking;
 
-    public function __construct(private readonly PapanPermainanService $papanService)
-    {
+    public function __construct(
+        private readonly PapanPermainanService $papanService,
+        private readonly PapanExportService $exportService,
+        private readonly NotificationService $notifications,
+    ) {
     }
 
     public function index(Request $request): View
@@ -35,6 +45,12 @@ class PapanPermainanController extends Controller
         return view('admin.management.papan-permainan.index', [
             'papanList' => $papanList,
             'filter' => $filter,
+            'stats' => [
+                'papan' => PapanPermainan::query()->count(),
+                'petak' => (int) PapanPermainan::query()->sum('jumlah_petak'),
+                'konektor' => PapanKonektor::query()->whereHas('papan')->count(),
+                'aktif' => PapanPermainan::query()->active()->count(),
+            ],
         ]);
     }
 
@@ -68,6 +84,7 @@ class PapanPermainanController extends Controller
 
         $papanPermainan->update([
             'nama' => $request->string('nama')->toString(),
+            'deskripsi' => $request->string('deskripsi')->toString() ?: null,
             'jumlah_kolom' => $request->integer('jumlah_kolom'),
             'thumbnail' => $request->string('thumbnail')->toString() ?: null,
         ]);
@@ -105,5 +122,21 @@ class PapanPermainanController extends Controller
         }
 
         return redirect()->route('admin.management.papan-permainan.index')->with('status', $status);
+    }
+
+    public function export(Request $request, PapanPermainan $papanPermainan): StreamedResponse|BinaryFileResponse
+    {
+        $format = $request->string('format', 'json')->toString();
+        $format = in_array($format, ['json', 'xlsx', 'csv'], true) ? $format : 'json';
+
+        $this->notifications->sendToAdmins($this->notifications->payloadExportPerformed('papan permainan'));
+
+        if ($format === 'json') {
+            return $this->exportService->downloadJson($papanPermainan);
+        }
+
+        $filename = 'papan-'.$papanPermainan->id.'-petak-'.now()->format('Y-m-d').'.'.$format;
+
+        return Excel::download(new PapanPetakExport($papanPermainan), $filename);
     }
 }

@@ -1,6 +1,6 @@
 @props(['rewardPoin'])
 
-<div class="animate-fade-in-up overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 to-violet-700 p-5 text-white shadow-soft sm:p-6">
+<div class="cert-card cert-card--reward animate-fade-in-up bg-gradient-to-br from-primary-600 to-violet-700 p-5 text-white sm:p-6 lg:p-7">
     <h3 class="flex items-center gap-2 text-base font-bold">
         <x-player.icon name="trophy" class="h-5 w-5 text-accent-400" />
         Hadiah Sertifikat

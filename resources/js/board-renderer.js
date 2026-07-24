@@ -22,7 +22,7 @@ const TILE_COLORS = {
 
 const LIGHT_TEXT_TILES = new Set(['start', 'finish', 'soal', 'tangga', 'ular', 'bonus', 'penalti', 'mystery']);
 
-function computeCellPosition(posisi, jumlahKolom, totalRows) {
+export function computeCellPosition(posisi, jumlahKolom, totalRows) {
     const rowIndexFromBottom = Math.floor((posisi - 1) / jumlahKolom);
     const posInRow = (posisi - 1) % jumlahKolom;
     const isEvenRowFromBottom = rowIndexFromBottom % 2 === 0;
@@ -49,13 +49,16 @@ export function renderBoardGrid(container, { jumlahKolom, jumlahPetak, petak, ko
     container.style.gap = '4px';
 
     petak.forEach((tile) => {
+        const isActive = tile.is_active !== false;
+        const effectiveJenis = isActive ? tile.jenis_petak : 'biasa';
         const { gridRow, gridColumn } = computeCellPosition(tile.posisi, jumlahKolom, totalRows);
         const cell = document.createElement('div');
         cell.style.gridRow = String(gridRow);
         cell.style.gridColumn = String(gridColumn);
-        cell.style.backgroundColor = TILE_COLORS[tile.jenis_petak] ?? TILE_COLORS.biasa;
-        cell.style.color = LIGHT_TEXT_TILES.has(tile.jenis_petak) ? '#ffffff' : '#1e293b';
+        cell.style.backgroundColor = TILE_COLORS[effectiveJenis] ?? TILE_COLORS.biasa;
+        cell.style.color = LIGHT_TEXT_TILES.has(effectiveJenis) ? '#ffffff' : '#1e293b';
         cell.style.position = 'relative';
+        cell.style.opacity = isActive ? '1' : '0.45';
         cell.className = 'board-tile flex flex-col items-center justify-center rounded-md text-xs font-semibold p-1 min-h-[2.5rem]';
         cell.title = tile.label || tile.jenis_petak;
         cell.dataset.posisi = String(tile.posisi);
@@ -64,7 +67,12 @@ export function renderBoardGrid(container, { jumlahKolom, jumlahPetak, petak, ko
         posisiEl.textContent = tile.posisi;
         cell.appendChild(posisiEl);
 
-        if (tile.jenis_petak !== 'biasa') {
+        if (!isActive) {
+            const labelEl = document.createElement('span');
+            labelEl.className = 'text-[10px] font-normal opacity-90';
+            labelEl.textContent = 'nonaktif';
+            cell.appendChild(labelEl);
+        } else if (tile.jenis_petak !== 'biasa') {
             const labelEl = document.createElement('span');
             labelEl.className = 'text-[10px] font-normal opacity-90';
             labelEl.textContent = tile.jenis_petak;

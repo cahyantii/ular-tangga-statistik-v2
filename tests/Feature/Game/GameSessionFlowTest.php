@@ -278,6 +278,44 @@ class GameSessionFlowTest extends TestCase
         ]);
     }
 
+    public function test_reaching_finish_surfaces_newly_unlocked_achievements_in_the_roll_response(): void
+    {
+        $achievement = \App\Models\Achievement::factory()->create([
+            'kode' => 'PERTAMA_KALI',
+            'nama' => 'Pertama Kali',
+            'syarat_type' => \App\Enums\AchievementCriteriaType::TotalPermainan,
+            'syarat_value' => 1,
+            'reward_poin' => 42,
+        ]);
+
+        $nilai = $this->diceValueFor('seed-achievement-response', 0);
+        $papan = $this->makeBoardWithTile(50, 'finish');
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-achievement-response', 'total_turn' => 0]);
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 50 - $nilai]);
+        GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
+        $sesi->update(['current_turn_game_player_id' => $p1->id]);
+
+        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll")->assertOk();
+
+        $response->assertJsonPath('newly_unlocked_achievements.0.kode', 'PERTAMA_KALI');
+        $response->assertJsonPath('newly_unlocked_achievements.0.nama', 'Pertama Kali');
+        $response->assertJsonPath('newly_unlocked_achievements.0.reward_poin', 42);
+    }
+
+    public function test_a_turn_that_unlocks_no_achievement_returns_an_empty_list(): void
+    {
+        $nilai = $this->diceValueFor('seed-no-achievement', 0);
+        $papan = $this->makeBoardWithTile(50, 'biasa');
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-no-achievement', 'total_turn' => 0]);
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 0]);
+        GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
+        $sesi->update(['current_turn_game_player_id' => $p1->id]);
+
+        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll")->assertOk();
+
+        $response->assertJsonPath('newly_unlocked_achievements', []);
+    }
+
     public function test_reaching_finish_issues_a_certificate_when_the_player_is_already_eligible(): void
     {
         \Illuminate\Support\Facades\Storage::fake('local');

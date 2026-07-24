@@ -14,6 +14,7 @@ use App\Models\PapanPermainan;
 use App\Models\Room;
 use App\Models\User;
 use App\Repositories\Game\GameSettingsRepository;
+use App\Services\Notification\NotificationService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -32,6 +33,7 @@ class MatchmakingService
         private readonly GameSessionService $gameSessionService,
         private readonly GameSettingsRepository $settings,
         private readonly GenerateRoomCode $generateRoomCode,
+        private readonly NotificationService $notifications,
     ) {
     }
 
@@ -45,7 +47,7 @@ class MatchmakingService
         return Cache::lock('matchmaking-queue', 10)->block(5, function () use ($user) {
             $this->gameSessionService->assertNoActiveSession($user);
 
-            return DB::transaction(function () use ($user) {
+            $room = DB::transaction(function () use ($user) {
                 $room = Room::query()
                     ->where('tipe', RoomType::QuickMatch)
                     ->where('status', GameStatus::Waiting)
@@ -60,6 +62,10 @@ class MatchmakingService
 
                 return $this->createRoomWithFirstPlayer($user, RoomType::QuickMatch, null);
             });
+
+            $this->notifyRoomOutcome($room, $user);
+
+            return $room;
         });
     }
 
@@ -68,11 +74,15 @@ class MatchmakingService
         return Cache::lock("create-session-user-{$user->id}", 10)->block(5, function () use ($user) {
             $this->gameSessionService->assertNoActiveSession($user);
 
-            return DB::transaction(fn () => $this->createRoomWithFirstPlayer(
+            $room = DB::transaction(fn () => $this->createRoomWithFirstPlayer(
                 $user,
                 RoomType::Private,
                 ($this->generateRoomCode)()
             ));
+
+            $this->notifyRoomOutcome($room, $user);
+
+            return $room;
         });
     }
 
@@ -81,7 +91,7 @@ class MatchmakingService
         return Cache::lock("create-session-user-{$user->id}", 10)->block(5, function () use ($user, $kodeRoom) {
             $this->gameSessionService->assertNoActiveSession($user);
 
-            return DB::transaction(function () use ($user, $kodeRoom) {
+            $room = DB::transaction(function () use ($user, $kodeRoom) {
                 $room = Room::query()
                     ->where('kode_room', strtoupper($kodeRoom))
                     ->lockForUpdate()
@@ -93,7 +103,38 @@ class MatchmakingService
 
                 return $room->fresh();
             });
+
+            $this->notifyRoomOutcome($room, $user);
+
+            return $room;
         });
+    }
+
+    /**
+     * Notifikasi Bell (Tahap 19) dikirim SETELAH transaksi commit (disiplin
+     * yang sama dengan GameSessionService) — room baru terbentuk (fan-out
+     * admin) atau room terisi penuh (pembuat room diberi tahu lawan bergabung).
+     */
+    private function notifyRoomOutcome(Room $room, User $actingUser): void
+    {
+        $sudahPenuh = $room->gameSession?->players()->count() >= 2;
+
+        if ($sudahPenuh && $room->created_by !== $actingUser->id) {
+            $this->notifications->send($room->createdBy, $this->notifications->payloadOpponentJoined($room, $actingUser));
+            $this->notifications->sendToAdmins($this->notifications->payloadRoomActivityAdmin(
+                $room,
+                "{$actingUser->name} bergabung ke room {$room->kode_room}, permainan dimulai."
+            ));
+
+            return;
+        }
+
+        if (! $sudahPenuh) {
+            $this->notifications->sendToAdmins($this->notifications->payloadRoomActivityAdmin(
+                $room,
+                "{$actingUser->name} membuat room ({$room->tipe->label()}) dan menunggu lawan."
+            ));
+        }
     }
 
     /**

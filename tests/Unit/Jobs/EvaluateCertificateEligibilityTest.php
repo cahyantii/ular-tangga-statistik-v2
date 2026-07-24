@@ -13,6 +13,7 @@ use App\Models\LearningProgress;
 use App\Models\User;
 use App\Services\Game\PlayerStatsService;
 use App\Services\Progress\LearningProgressService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -150,5 +151,26 @@ class EvaluateCertificateEligibilityTest extends TestCase
 
         $this->assertDatabaseCount('certificates', 1);
         $this->assertSame($firstNumber, Certificate::first()->nomor_sertifikat);
+    }
+
+    /**
+     * Jaring pengaman utama untuk race condition (dua job untuk user yang
+     * sama lolos pengecekan exists() nyaris bersamaan) ada di level
+     * database, bukan di PHP - tidak bisa disimulasikan lewat dua proses
+     * sungguhan di PHPUnit (satu proses, sinkron). Tes ini memverifikasi
+     * DUA hal yang bersama-sama membuat perbaikannya benar: (1) constraint
+     * unique di migrasi add_unique_constraint_to_certificates_user_id
+     * benar-benar mencegah dua baris certificates dengan user_id sama, dan
+     * (2) exception yang dilempar persis UniqueConstraintViolationException
+     * (tipe yang ditangkap EvaluateCertificateEligibility::handle()).
+     */
+    public function test_database_rejects_a_second_certificate_row_for_the_same_user_id(): void
+    {
+        $user = User::factory()->create();
+        Certificate::factory()->create(['user_id' => $user->id]);
+
+        $this->expectException(UniqueConstraintViolationException::class);
+
+        Certificate::factory()->create(['user_id' => $user->id]);
     }
 }

@@ -32,10 +32,12 @@ use App\Models\Petak;
 use App\Models\Soal;
 use App\Models\User;
 use App\Repositories\Game\GameSettingsRepository;
+use App\Services\Achievement\AchievementEvaluationService;
 use App\Services\Game\TurnDecider\HumanTurnDecider;
 use App\Services\Game\TurnDecider\RobotTurnDecider;
 use App\Services\Game\TurnDecider\TurnDeciderInterface;
 use App\Services\Leaderboard\LeaderboardService;
+use App\Services\Notification\NotificationService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -63,7 +65,33 @@ class GameSessionService
         private readonly LeaderboardService $leaderboard,
         private readonly HumanTurnDecider $humanDecider,
         private readonly RobotTurnDecider $robotDecider,
+        private readonly AchievementEvaluationService $achievementEvaluation,
+        private readonly NotificationService $notifications,
     ) {
+    }
+
+    /**
+     * Notifikasi (database + broadcast) yang dikumpulkan selama satu transaksi
+     * lalu baru benar-benar dikirim lewat flushNotifications() SETELAH commit
+     * -- disiplin yang sama dengan $events/dispatchEvents() (Tahap 17): broadcast
+     * tidak boleh terjadi sebelum/kalau transaksinya batal.
+     *
+     * @var array<int, array{0: User, 1: array}>
+     */
+    private array $pendingNotifications = [];
+
+    private function queueNotification(User $user, array $payload): void
+    {
+        $this->pendingNotifications[] = [$user, $payload];
+    }
+
+    private function flushNotifications(): void
+    {
+        foreach ($this->pendingNotifications as [$user, $payload]) {
+            $this->notifications->send($user, $payload);
+        }
+
+        $this->pendingNotifications = [];
     }
 
     /**
@@ -128,7 +156,9 @@ class GameSessionService
 
             $events = [];
             $result = $this->executeRoll($gameSession, $gamePlayer, $events);
-            $result['robot_turns'] = $this->playRobotTurnsIfNeeded($gameSession, $events);
+            $robotOutcome = $this->playRobotTurnsIfNeeded($gameSession, $events);
+            $result['robot_turns'] = $robotOutcome['robot_turns'];
+            $result['_achievements_by_player'] = array_replace($result['_achievements_by_player'] ?? [], $robotOutcome['achievements_by_player']);
             $result['session'] = $gameSession->fresh();
             $result['player'] = $gamePlayer->fresh();
 
@@ -136,6 +166,8 @@ class GameSessionService
         });
 
         $this->dispatchEvents($events);
+        $this->flushNotifications();
+        $this->extractNewlyUnlockedAchievements($result, $gamePlayer);
 
         return $result;
     }
@@ -151,7 +183,9 @@ class GameSessionService
 
             $events = [];
             $result = $this->executeAnswer($gameSession, $gamePlayer, $soalId, $jawaban, $events);
-            $result['robot_turns'] = $this->playRobotTurnsIfNeeded($gameSession, $events);
+            $robotOutcome = $this->playRobotTurnsIfNeeded($gameSession, $events);
+            $result['robot_turns'] = $robotOutcome['robot_turns'];
+            $result['_achievements_by_player'] = array_replace($result['_achievements_by_player'] ?? [], $robotOutcome['achievements_by_player']);
             $result['session'] = $gameSession->fresh();
             $result['player'] = $gamePlayer->fresh();
 
@@ -159,8 +193,26 @@ class GameSessionService
         });
 
         $this->dispatchEvents($events);
+        $this->flushNotifications();
+        $this->extractNewlyUnlockedAchievements($result, $gamePlayer);
 
         return $result;
+    }
+
+    /**
+     * Achievement baru yang terbuka untuk SATU game_player tertentu dievaluasi
+     * synchronous di dalam finishSession() (bukan hanya lewat job terjadwal —
+     * lihat catatan di finishSession()) supaya bisa langsung disisipkan ke
+     * respons roll/answer yang memicu akhir permainan, untuk popup seketika di
+     * frontend alih-alih baru terlihat saat membuka halaman Achievement lain
+     * kali. Dipanggil di rollDice()/submitAnswer() setelah transaksi commit.
+     */
+    private function extractNewlyUnlockedAchievements(array &$result, GamePlayer $gamePlayer): void
+    {
+        $achievementsByPlayer = $result['_achievements_by_player'] ?? [];
+        unset($result['_achievements_by_player']);
+
+        $result['newly_unlocked_achievements'] = $achievementsByPlayer[$gamePlayer->id] ?? [];
     }
 
     /**
@@ -211,9 +263,15 @@ class GameSessionService
         }
 
         if ($this->winCondition->hasWon($gamePlayer, $papan)) {
-            $this->finishSession($gameSession, $gamePlayer, WinReason::Finish, $events);
+            $achievementsByPlayer = $this->finishSession($gameSession, $gamePlayer, WinReason::Finish, $events);
 
-            return ['type' => 'finished', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
+            return [
+                'type' => 'finished',
+                'session' => $gameSession->fresh(),
+                'player' => $gamePlayer->fresh(),
+                'nilai_dadu' => $nilaiDadu,
+                '_achievements_by_player' => $achievementsByPlayer,
+            ];
         }
 
         $petak = Petak::query()->where('papan_id', $papan->id)->where('posisi', $move['posisi_sesudah'])->firstOrFail();
@@ -321,9 +379,13 @@ class GameSessionService
      *
      * @return array<int, array{nilai_dadu: ?int, type: string, benar?: bool}>
      */
+    /**
+     * @return array{robot_turns: array, achievements_by_player: array}
+     */
     private function playRobotTurnsIfNeeded(GameSession $gameSession, array &$events): array
     {
         $robotTurns = [];
+        $achievementsByPlayer = [];
 
         while ($gameSession->status === GameStatus::Playing) {
             $current = GamePlayer::query()->find($gameSession->current_turn_game_player_id);
@@ -334,17 +396,23 @@ class GameSessionService
 
             $rollResult = $this->executeRoll($gameSession, $current, $events);
             $turnSummary = ['nilai_dadu' => $rollResult['nilai_dadu'], 'type' => $rollResult['type']];
+            // Giliran robot bisa juga yang menyelesaikan sesi (robot mencapai
+            // Finish) — kalau begitu, semua pemain (termasuk manusia) sudah
+            // dievaluasi achievement-nya di finishSession(); teruskan supaya
+            // rollDice()/submitAnswer() bisa menyertakannya di respons pemain.
+            $achievementsByPlayer = array_replace($achievementsByPlayer, $rollResult['_achievements_by_player'] ?? []);
 
             if ($rollResult['type'] === 'soal' && isset($rollResult['soal'])) {
                 $jawaban = $this->deciderFor($current)->decideAnswer($gameSession, $current, $rollResult['soal']);
                 $answerResult = $this->executeAnswer($gameSession, $current, $rollResult['soal']->id, $jawaban, $events);
                 $turnSummary['benar'] = $answerResult['benar'];
+                $achievementsByPlayer = array_replace($achievementsByPlayer, $answerResult['_achievements_by_player'] ?? []);
             }
 
             $robotTurns[] = $turnSummary;
         }
 
-        return $robotTurns;
+        return ['robot_turns' => $robotTurns, 'achievements_by_player' => $achievementsByPlayer];
     }
 
     private function deciderFor(GamePlayer $gamePlayer): TurnDeciderInterface
@@ -388,6 +456,7 @@ class GameSessionService
         });
 
         $this->dispatchEvents($events);
+        $this->flushNotifications();
     }
 
     /**
@@ -444,10 +513,16 @@ class GameSessionService
             ]);
             $events[] = new SessionPaused($gameSession, $disconnectedPlayer);
 
+            $opponent = $gameSession->players()->where('id', '!=', $disconnectedPlayer->id)->first();
+            if ($opponent?->user_id !== null) {
+                $this->queueNotification($opponent->user, $this->notifications->payloadOpponentDisconnected($disconnectedPlayer));
+            }
+
             return $events;
         });
 
         $this->dispatchEvents($events);
+        $this->flushNotifications();
     }
 
     /**
@@ -470,10 +545,16 @@ class GameSessionService
             $this->gameLog->log($gameSession, GameLogEventType::Resumed, $reconnectedPlayer->user_id, $gameSession->total_turn, []);
             $events[] = new SessionResumed($gameSession, $reconnectedPlayer);
 
+            $opponent = $gameSession->players()->where('id', '!=', $reconnectedPlayer->id)->first();
+            if ($opponent?->user_id !== null) {
+                $this->queueNotification($opponent->user, $this->notifications->payloadOpponentReconnected($reconnectedPlayer));
+            }
+
             return $events;
         });
 
         $this->dispatchEvents($events);
+        $this->flushNotifications();
     }
 
     /**
@@ -502,9 +583,14 @@ class GameSessionService
         });
 
         $this->dispatchEvents($events);
+        $this->flushNotifications();
     }
 
-    private function finishSession(GameSession $gameSession, GamePlayer $pemenang, WinReason $winReason, array &$events): void
+    /**
+     * @return array<int, array<int, array{kode: string, nama: string, deskripsi: ?string, icon: ?string, warna_badge: ?string, reward_poin: int}>>
+     *         achievement yang baru diraih pada pemanggilan ini, dikelompokkan per game_player_id.
+     */
+    private function finishSession(GameSession $gameSession, GamePlayer $pemenang, WinReason $winReason, array &$events): array
     {
         $winDelta = $this->score->apply($pemenang, ScoreEventType::Win);
         $events[] = new ScoreUpdated($gameSession, $pemenang, ScoreEventType::Win, $winDelta, $pemenang->fresh()->skor);
@@ -518,7 +604,12 @@ class GameSessionService
             'winner_game_player_id' => $pemenang->id,
             'win_reason' => $winReason,
             'finished_at' => now(),
-            'duration_seconds' => $gameSession->started_at ? now()->diffInSeconds($gameSession->started_at) : null,
+            // abs()+round(): Carbon 3 defaults diffInSeconds() to a SIGNED, possibly
+            // fractional result (breaking change vs Carbon 2's always-positive
+            // integer) — started_at is always in the past here, but relying on
+            // that sign convention crashes the unsignedInteger column the moment
+            // it doesn't hold, so normalize explicitly instead.
+            'duration_seconds' => $gameSession->started_at ? (int) round(abs(now()->diffInSeconds($gameSession->started_at))) : null,
         ]);
 
         $this->gameLog->log($gameSession, GameLogEventType::Finished, null, $gameSession->total_turn, [
@@ -530,11 +621,62 @@ class GameSessionService
         // Tahap 13c: leaderboard (global + per-mode) berubah setiap sesi selesai.
         $this->leaderboard->forgetAll();
 
+        $achievementsByPlayer = [];
+
         foreach ($gameSession->players as $player) {
             if ($player->user_id !== null) {
                 Cache::forget($this->playerStats->cacheKey($player->user));
-                // Tahap 13a: evaluasi achievement HARUS jalan untuk menang MAUPUN
-                // kalah (total_permainan tetap bertambah) — bukan hanya pemenang.
+
+                // Evaluasi achievement dijalankan SYNCHRONOUS di sini (bukan hanya
+                // lewat job terjadwal di bawah) supaya request roll/answer yang
+                // memicu akhir permainan bisa langsung tahu achievement apa yang
+                // baru terbuka dan menyertakannya di respons (untuk popup seketika
+                // di frontend — lihat rollDice()/submitAnswer()). evaluate() HARUS
+                // jalan untuk menang MAUPUN kalah (total_permainan tetap bertambah).
+                $granted = $this->achievementEvaluation->evaluate($player->user);
+                $achievementsByPlayer[$player->id] = $granted->map(fn ($achievement) => [
+                    'kode' => $achievement->kode,
+                    'nama' => $achievement->nama,
+                    'deskripsi' => $achievement->deskripsi,
+                    'icon' => $achievement->icon,
+                    'warna_badge' => $achievement->warna_badge,
+                    'reward_poin' => $achievement->reward_poin,
+                ])->values()->all();
+
+                // Notifikasi (Bell Notification, terintegrasi Tahap 19): permainan
+                // selesai (menang/kalah) + achievement baru + rekor skor pribadi baru,
+                // untuk pemain manusia yang bersangkutan dan fan-out ke seluruh admin.
+                // Dikumpulkan lewat queueNotification() -> dikirim setelah commit oleh
+                // flushNotifications() di rollDice()/submitAnswer()/leave()/dst.
+                $won = $player->id === $pemenang->id;
+                $this->queueNotification($player->user, $this->notifications->payloadGameFinished($player, $gameSession, $won));
+
+                foreach ($achievementsByPlayer[$player->id] as $achievement) {
+                    $this->queueNotification($player->user, $this->notifications->payloadAchievementUnlocked($achievement));
+                    foreach ($this->notifications->adminUsers() as $admin) {
+                        $this->queueNotification($admin, $this->notifications->payloadAchievementUnlockedAdmin($player->user, $achievement));
+                    }
+                }
+
+                $previousBest = GamePlayer::query()
+                    ->where('user_id', $player->user_id)
+                    ->where('id', '!=', $player->id)
+                    ->whereHas('gameSession', fn ($query) => $query
+                        ->where('mode', $gameSession->mode)
+                        ->where('status', GameStatus::Finished))
+                    ->max('skor');
+
+                if ($previousBest !== null && $player->skor > $previousBest) {
+                    $this->queueNotification($player->user, $this->notifications->payloadPersonalBest($gameSession, $player->skor));
+                    foreach ($this->notifications->adminUsers() as $admin) {
+                        $this->queueNotification($admin, $this->notifications->payloadPersonalBestAdmin($player->user, $player->skor));
+                    }
+                }
+
+                // Dipertahankan sebagai jaring pengaman eventual-consistency (mis.
+                // andai evaluate() di atas gagal karena alasan tak terduga) — sudah
+                // idempoten, jadi aman dipanggil lagi walau achievement yang sama
+                // sudah diberikan barusan (whereNotIn achievement_id yang sudah ada).
                 EvaluateAchievements::dispatch($player->user)->afterCommit();
                 // Tahap 13b: sertifikat juga dievaluasi setiap sesi selesai (menang
                 // atau kalah) — kelayakannya murni dari progres kumulatif pemain,
@@ -542,6 +684,14 @@ class GameSessionService
                 EvaluateCertificateEligibility::dispatch($player->user)->afterCommit();
             }
         }
+
+        // Satu notifikasi admin per sesi selesai (bukan per pemain) supaya feed
+        // admin tidak duplikat pada mode Multiplayer (2 pemain manusia).
+        foreach ($this->notifications->adminUsers() as $admin) {
+            $this->queueNotification($admin, $this->notifications->payloadGameFinishedAdmin($pemenang, $gameSession));
+        }
+
+        return $achievementsByPlayer;
     }
 
     private function computeAccuracy(GameSession $gameSession, GamePlayer $player): ?float

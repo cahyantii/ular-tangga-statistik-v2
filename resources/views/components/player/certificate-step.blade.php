@@ -22,7 +22,7 @@
 
 <div class="flex items-stretch gap-4">
     <div class="flex shrink-0 flex-col items-center">
-        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full {{ $tonePalette['circle'] }} text-white shadow-sm">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full {{ $tonePalette['circle'] }} text-white shadow-md">
             @if ($done)
                 <x-player.icon name="check" class="h-5 w-5" />
             @else
@@ -31,7 +31,7 @@
         </span>
 
         @unless ($isLast)
-            <span class="my-1 w-0.5 flex-1 border-l-2 border-dashed border-slate-200" aria-hidden="true"></span>
+            <span class="cert-timeline-line my-1 w-0.5 flex-1 border-l-2 border-dashed" aria-hidden="true"></span>
         @endunless
     </div>
 
@@ -41,7 +41,7 @@
             <div class="mt-2 flex items-center gap-3">
                 <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
                     <div
-                        class="h-2.5 rounded-full {{ $tonePalette['bar'] }} transition-all duration-700 ease-out"
+                        class="cert-progress-bar h-2.5 rounded-full {{ $tonePalette['bar'] }} transition-all duration-700 ease-out"
                         style="width: {{ $percent }}%"
                     ></div>
                 </div>

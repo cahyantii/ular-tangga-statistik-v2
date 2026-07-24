@@ -23,6 +23,7 @@ class StoreAchievementRequest extends FormRequest
             'warna_badge' => ['nullable', 'string', 'max:255'],
             'syarat_type' => ['required', Rule::enum(AchievementCriteriaType::class)],
             'syarat_value' => ['required', 'integer', 'min:1'],
+            'reward_poin' => ['nullable', 'integer', 'min:0'],
             'urutan' => ['required', 'integer', 'min:0'],
             'is_active' => ['boolean'],
         ];

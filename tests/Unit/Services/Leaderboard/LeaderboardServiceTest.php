@@ -20,6 +20,10 @@ class LeaderboardServiceTest extends TestCase
     {
         $tinggi = User::factory()->create();
         $rendah = User::factory()->create();
+        // Viewer terpisah dari kedua pemain di atas - board() butuh user yang
+        // sedang melihat papan (dipakai untuk highlight baris "current" &
+        // dikecualikan dari "table"), tidak relevan untuk urutan top3 di sini.
+        $viewer = User::factory()->create();
 
         $sesi1 = GameSession::factory()->finished()->create();
         GamePlayer::factory()->create(['game_session_id' => $sesi1->id, 'user_id' => $tinggi->id, 'skor' => 100]);
@@ -27,30 +31,34 @@ class LeaderboardServiceTest extends TestCase
         $sesi2 = GameSession::factory()->finished()->create();
         GamePlayer::factory()->create(['game_session_id' => $sesi2->id, 'user_id' => $rendah->id, 'skor' => 10]);
 
-        $peringkat = (new LeaderboardService())->top();
+        $board = (new LeaderboardService())->board(null, $viewer);
 
-        $this->assertSame($tinggi->id, $peringkat->first()['user_id']);
-        $this->assertSame(100, $peringkat->first()['total_skor']);
-        $this->assertSame($rendah->id, $peringkat->last()['user_id']);
+        $this->assertSame($tinggi->id, $board['top3']->first()['user_id']);
+        $this->assertSame(100, $board['top3']->first()['total_skor']);
+        $this->assertSame($rendah->id, $board['top3']->last()['user_id']);
     }
 
     public function test_excludes_robot_players_and_unfinished_sessions(): void
     {
+        $viewer = User::factory()->create();
+
         $sesiBelumSelesai = GameSession::factory()->create(['status' => GameStatus::Playing]);
         GamePlayer::factory()->create(['game_session_id' => $sesiBelumSelesai->id, 'skor' => 999]);
 
         $sesiSelesai = GameSession::factory()->finished()->create();
         GamePlayer::factory()->robot()->create(['game_session_id' => $sesiSelesai->id, 'skor' => 500]);
 
-        $peringkat = (new LeaderboardService())->top();
+        $board = (new LeaderboardService())->board(null, $viewer);
 
-        $this->assertCount(0, $peringkat);
+        $this->assertSame(0, $board['total_pemain']);
+        $this->assertCount(0, $board['top3']);
     }
 
     public function test_filters_by_mode(): void
     {
         $vsRobotUser = User::factory()->create();
         $multiplayerUser = User::factory()->create();
+        $viewer = User::factory()->create();
 
         $sesiRobot = GameSession::factory()->finished()->create(['mode' => GameMode::VsRobot]);
         GamePlayer::factory()->create(['game_session_id' => $sesiRobot->id, 'user_id' => $vsRobotUser->id, 'skor' => 50]);
@@ -60,14 +68,14 @@ class LeaderboardServiceTest extends TestCase
 
         $service = new LeaderboardService();
 
-        $peringkatRobot = $service->top(GameMode::VsRobot);
-        $peringkatMulti = $service->top(GameMode::Multiplayer);
+        $boardRobot = $service->board(GameMode::VsRobot, $viewer);
+        $boardMulti = $service->board(GameMode::Multiplayer, $viewer);
 
-        $this->assertCount(1, $peringkatRobot);
-        $this->assertSame($vsRobotUser->id, $peringkatRobot->first()['user_id']);
+        $this->assertSame(1, $boardRobot['total_pemain']);
+        $this->assertSame($vsRobotUser->id, $boardRobot['top3']->first()['user_id']);
 
-        $this->assertCount(1, $peringkatMulti);
-        $this->assertSame($multiplayerUser->id, $peringkatMulti->first()['user_id']);
+        $this->assertSame(1, $boardMulti['total_pemain']);
+        $this->assertSame($multiplayerUser->id, $boardMulti['top3']->first()['user_id']);
     }
 
     public function test_forget_all_clears_the_global_and_per_mode_cache(): void

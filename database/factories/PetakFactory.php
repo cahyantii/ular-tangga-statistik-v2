@@ -17,10 +17,12 @@ class PetakFactory extends Factory
             'papan_id' => PapanPermainan::factory(),
             'posisi' => fake()->unique()->numberBetween(1, 1000),
             'jenis_petak' => TileType::Biasa,
+            'is_active' => true,
             'kategori_id' => null,
             'label' => null,
             'icon' => null,
             'warna' => null,
+            'border_warna' => null,
             'deskripsi' => null,
         ];
     }

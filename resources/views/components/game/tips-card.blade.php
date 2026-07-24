@@ -17,7 +17,7 @@
     $fallback = 'Jawab soal dengan benar untuk mendapatkan poin ekstra dan naik ke papan lebih cepat!';
 @endphp
 
-<div class="animate-fade-in-up flex items-center gap-4 rounded-2xl bg-gradient-to-r from-accent-50 to-amber-50 p-4 shadow-sm sm:p-5">
+<div {{ $attributes->merge(['class' => 'animate-fade-in-up flex items-center gap-4 rounded-2xl bg-gradient-to-r from-accent-50 to-amber-50 p-4 shadow-sm sm:p-5']) }}>
     <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-500 text-white shadow-sm">
         <x-player.icon name="help" class="h-5 w-5" />
     </span>

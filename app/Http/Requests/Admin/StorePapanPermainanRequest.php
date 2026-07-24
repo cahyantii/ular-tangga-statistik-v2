@@ -15,6 +15,7 @@ class StorePapanPermainanRequest extends FormRequest
     {
         return [
             'nama' => ['required', 'string', 'max:255'],
+            'deskripsi' => ['nullable', 'string'],
             'jumlah_petak' => ['required', 'integer', 'min:10', 'max:200'],
             'jumlah_kolom' => ['required', 'integer', 'min:1', 'lte:jumlah_petak'],
             'thumbnail' => ['nullable', 'string', 'max:255'],
