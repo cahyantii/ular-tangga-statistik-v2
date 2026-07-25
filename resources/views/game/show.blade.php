@@ -53,7 +53,7 @@
     <div class="grid grid-cols-1 gap-5 md:gap-6 xl:grid-cols-3">
         {{-- Kolom kiri/tengah: giliran, dadu, papan, tips --}}
         <div class="max-md:contents md:space-y-5 xl:col-span-2">
-            <div class="animate-fade-in-up rounded-3xl bg-white p-4 shadow-sm sm:p-6">
+            <div id="turn-dice-card" class="animate-fade-in-up rounded-3xl bg-white p-4 shadow-sm sm:p-6">
                 <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
                     <div class="flex items-center gap-3">
                         <span id="turn-avatar" class="flex h-11 w-11 items-center justify-center rounded-full bg-primary-500 text-sm font-bold text-white"></span>
@@ -81,6 +81,22 @@
             </div>
 
             <div class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm sm:p-5">
+                {{--
+                    Toggle tema visual ular/perosotan - PURE client-side
+                    (localStorage, lihat board-visuals.js initBoardThemeToggle()
+                    & BoardRenderer.getBoardTheme()/setBoardTheme()). Data
+                    konektor & animasi gerak pion TIDAK berubah sama sekali,
+                    cuma renderer visual mana yang dipakai untuk jenis=ular.
+                --}}
+                <div id="board-theme-toggle" class="mb-3 flex justify-center gap-2">
+                    <button type="button" data-board-theme="ular" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150">
+                        🐍 Ular
+                    </button>
+                    <button type="button" data-board-theme="perosotan" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150">
+                        🛝 Perosotan
+                    </button>
+                </div>
+
                 <x-game.board :papan="$papan" />
             </div>
 
@@ -103,6 +119,26 @@
                 Keluar dari Permainan
             </button>
         </div>
+    </div>
+
+    {{--
+        Tombol lempar dadu mengambang khusus mobile — muncul HANYA saat kartu
+        giliran+dadu asli (#turn-dice-card) sudah discroll keluar layar (lihat
+        IntersectionObserver di game-play.js), supaya pemain tidak perlu
+        scroll balik ke atas tiap giliran saat papan sedang panjang. Bukan
+        dadu kedua yang berdiri sendiri — tombol ini cuma meneruskan klik ke
+        #roll-dice-button asli (satu-satunya sumber state disabled/hidden),
+        jadi tidak ada logic roll yang diduplikasi.
+    --}}
+    <div id="roll-dice-fab-wrap" class="fixed inset-x-4 bottom-4 z-40 hidden md:hidden">
+        <button
+            id="roll-dice-fab"
+            type="button"
+            class="flex w-full items-center justify-center gap-2 rounded-2xl bg-secondary-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-secondary-900/25 transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+            <x-player.icon name="dice" class="h-5 w-5" />
+            Lempar Dadu
+        </button>
     </div>
 
     {{-- Template kartu (di-clone JS, lihat komentar di masing-masing file komponen) --}}

@@ -15,6 +15,10 @@
             <p class="mt-1 text-sm text-slate-500">Dipasangkan otomatis dengan pemain lain yang juga sedang mencari lawan.</p>
             <form method="POST" action="{{ route('game.multiplayer.quick-match') }}" class="mt-4">
                 @csrf
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Warna pion kamu</p>
+                <div class="mb-4">
+                    <x-player.pawn-color-picker :dark="false" />
+                </div>
                 <button type="submit" class="w-full rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
                     Cari Lawan
                 </button>
@@ -27,19 +31,35 @@
 
             <form method="POST" action="{{ route('game.multiplayer.room.store') }}" class="mt-4">
                 @csrf
+                <label for="jumlah_pemain" class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-400">Jumlah pemain</label>
+                <select name="jumlah_pemain" id="jumlah_pemain" class="mb-4 w-full rounded-lg border-slate-300 text-sm focus:border-emerald-500 focus:ring-emerald-500">
+                    @foreach (range(2, 6) as $n)
+                        <option value="{{ $n }}" {{ old('jumlah_pemain', 2) == $n ? 'selected' : '' }}>{{ $n }} pemain</option>
+                    @endforeach
+                </select>
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Warna pion kamu</p>
+                <div class="mb-4">
+                    <x-player.pawn-color-picker :dark="false" />
+                </div>
                 <button type="submit" class="w-full rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">
                     Buat Room
                 </button>
             </form>
 
-            <form method="POST" action="{{ route('game.multiplayer.room.join') }}" class="mt-3 flex gap-2">
+            <form method="POST" action="{{ route('game.multiplayer.room.join') }}" class="mt-5 border-t border-slate-100 pt-4">
                 @csrf
-                <input type="text" name="kode_room" maxlength="6" placeholder="KODE ROOM"
-                       value="{{ old('kode_room') }}"
-                       class="w-full rounded-lg border-slate-300 text-sm uppercase tracking-widest focus:border-emerald-500 focus:ring-emerald-500">
-                <button type="submit" class="shrink-0 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-                    Gabung
-                </button>
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Warna pion kamu</p>
+                <div class="mb-3">
+                    <x-player.pawn-color-picker :dark="false" />
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" name="kode_room" maxlength="6" placeholder="KODE ROOM"
+                           value="{{ old('kode_room') }}"
+                           class="w-full rounded-lg border-slate-300 text-sm uppercase tracking-widest focus:border-emerald-500 focus:ring-emerald-500">
+                    <button type="submit" class="shrink-0 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        Gabung
+                    </button>
+                </div>
             </form>
             @error('kode_room')
                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>

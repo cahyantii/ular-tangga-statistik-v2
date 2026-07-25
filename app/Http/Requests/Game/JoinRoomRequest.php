@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Game;
 
+use App\Enums\PawnColor;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class JoinRoomRequest extends FormRequest
 {
@@ -15,6 +17,7 @@ class JoinRoomRequest extends FormRequest
     {
         return [
             'kode_room' => ['required', 'string', 'size:6'],
+            'pawn_color' => ['nullable', Rule::enum(PawnColor::class)],
         ];
     }
 }

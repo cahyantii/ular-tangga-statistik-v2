@@ -1,6 +1,8 @@
 @php
     $isCreator = auth()->id() === $room->created_by;
     $pemain = $room->gameSession?->players ?? collect();
+    $jumlahPemain = $room->jumlah_pemain;
+    $sisaSlot = max(0, $jumlahPemain - $pemain->count());
 @endphp
 
 <x-player-layout>
@@ -26,7 +28,14 @@
             <p class="text-sm text-slate-500">Quick Match</p>
         @endif
 
-        <p class="mt-6 text-lg font-semibold text-emerald-700">Menunggu lawan bergabung&hellip;</p>
+        <p class="mt-6 text-lg font-semibold text-emerald-700">
+            {{ $pemain->count() }}/{{ $jumlahPemain }} pemain &mdash;
+            @if ($sisaSlot > 0)
+                menunggu {{ $sisaSlot }} pemain lagi&hellip;
+            @else
+                penuh, memulai permainan&hellip;
+            @endif
+        </p>
 
         <div class="mt-4 space-y-2 text-left">
             @foreach ($pemain as $p)
@@ -34,6 +43,11 @@
                     {{ $p->user?->name ?? 'Pemain' }}
                 </div>
             @endforeach
+            @for ($i = 0; $i < $sisaSlot; $i++)
+                <div class="rounded-lg border border-dashed border-slate-200 px-4 py-2 text-sm text-slate-400">
+                    Menunggu pemain&hellip;
+                </div>
+            @endfor
         </div>
 
         <a href="{{ route('game.room.show', $room) }}"

@@ -5,6 +5,7 @@ namespace App\Services\Game;
 use App\Enums\GameLogEventType;
 use App\Enums\GameMode;
 use App\Enums\GameStatus;
+use App\Enums\PawnColor;
 use App\Enums\PlayerStatus;
 use App\Enums\ScoreEventType;
 use App\Enums\WinReason;
@@ -98,12 +99,12 @@ class GameSessionService
      * Sesi Vs Robot (Tahap 15, keputusan final): dibungkus Cache::lock() untuk
      * mencegah race condition double-klik/multi-tab membuat dua sesi sekaligus.
      */
-    public function createVsRobotSession(User $user): GameSession
+    public function createVsRobotSession(User $user, ?string $pawnColor = null): GameSession
     {
-        return Cache::lock("create-session-user-{$user->id}", 10)->block(5, function () use ($user) {
+        return Cache::lock("create-session-user-{$user->id}", 10)->block(5, function () use ($user, $pawnColor) {
             $this->assertNoActiveSession($user);
 
-            return DB::transaction(function () use ($user) {
+            return DB::transaction(function () use ($user, $pawnColor) {
                 $papan = PapanPermainan::query()->active()->inRandomOrder()->firstOrFail();
 
                 $gameSession = GameSession::create([
@@ -120,7 +121,7 @@ class GameSessionService
                     'user_id' => $user->id,
                     'is_robot' => false,
                     'turn_order' => 1,
-                    'pawn_color' => 'blue',
+                    'pawn_color' => $pawnColor ?? PawnColor::Biru->value,
                     'posisi_pion' => 0,
                     'skor' => 0,
                     'status' => PlayerStatus::Active,
@@ -442,8 +443,18 @@ class GameSessionService
             ]);
 
             if ($gameSession->mode === GameMode::Multiplayer) {
-                $opponent = $gameSession->players()->where('id', '!=', $gamePlayer->id)->firstOrFail();
-                $this->finishSession($gameSession, $opponent, WinReason::Forfeit, $events);
+                $giliranDia = $gameSession->current_turn_game_player_id === $gamePlayer->id;
+                $gamePlayer->update(['status' => PlayerStatus::Forfeited]);
+
+                $aktifLainnya = $this->activePlayersExcept($gameSession, $gamePlayer->id);
+
+                if ($aktifLainnya->count() <= 1) {
+                    $pemenang = $aktifLainnya->first() ?? $gameSession->players()->where('id', '!=', $gamePlayer->id)->firstOrFail();
+                    $this->finishSession($gameSession, $pemenang, WinReason::Forfeit, $events);
+                } elseif ($giliranDia) {
+                    // 2+ pemain lain masih aktif - sesi lanjut tanpa dia (keputusan final Tahap N-pemain), cuma majukan giliran kalau kebetulan gilirannya dia.
+                    $this->turn->advance($gameSession);
+                }
             } else {
                 $gameSession->update(['status' => GameStatus::Abandoned, 'finished_at' => now()]);
             }
@@ -457,6 +468,15 @@ class GameSessionService
 
         $this->dispatchEvents($events);
         $this->flushNotifications();
+    }
+
+    /** Pemain berstatus Active di sesi ini, tidak termasuk $excludeId — dipakai leave()/pauseForDisconnect()/forfeitDueToDisconnect() untuk generalisasi N pemain. */
+    private function activePlayersExcept(GameSession $gameSession, int $excludeId)
+    {
+        return $gameSession->players()
+            ->where('id', '!=', $excludeId)
+            ->where('status', PlayerStatus::Active)
+            ->get();
     }
 
     /**
@@ -477,11 +497,18 @@ class GameSessionService
             $events = [];
             $gamePlayer->update(['last_heartbeat_at' => now()]);
 
-            if ($gamePlayer->status === PlayerStatus::Disconnected && $gameSession->status === GameStatus::Paused) {
+            if ($gamePlayer->status === PlayerStatus::Disconnected) {
                 $gamePlayer->update(['status' => PlayerStatus::Active]);
-                $gameSession->update(['status' => GameStatus::Playing]);
-                $this->gameLog->log($gameSession, GameLogEventType::Resumed, $gamePlayer->user_id, $gameSession->total_turn, []);
-                $events[] = new SessionResumed($gameSession, $gamePlayer);
+
+                // Sesi cuma perlu di-resume kalau memang sempat di-pause total
+                // (kasus <2 pemain aktif) - untuk game 3+ pemain yang sesinya
+                // TETAP Playing selama dia terputus, tidak ada yang perlu diubah
+                // di level sesi, cukup status pemainnya kembali Active.
+                if ($gameSession->status === GameStatus::Paused) {
+                    $gameSession->update(['status' => GameStatus::Playing]);
+                    $this->gameLog->log($gameSession, GameLogEventType::Resumed, $gamePlayer->user_id, $gameSession->total_turn, []);
+                    $events[] = new SessionResumed($gameSession, $gamePlayer);
+                }
             }
 
             return $events;
@@ -506,16 +533,31 @@ class GameSessionService
             }
 
             $events = [];
+            $giliranDia = $gameSession->current_turn_game_player_id === $disconnectedPlayer->id;
             $disconnectedPlayer->update(['status' => PlayerStatus::Disconnected]);
-            $gameSession->update(['status' => GameStatus::Paused]);
             $this->gameLog->log($gameSession, GameLogEventType::Paused, $disconnectedPlayer->user_id, $gameSession->total_turn, [
                 'reason' => 'heartbeat_timeout',
             ]);
-            $events[] = new SessionPaused($gameSession, $disconnectedPlayer);
 
-            $opponent = $gameSession->players()->where('id', '!=', $disconnectedPlayer->id)->first();
-            if ($opponent?->user_id !== null) {
-                $this->queueNotification($opponent->user, $this->notifications->payloadOpponentDisconnected($disconnectedPlayer));
+            $aktifLainnya = $this->activePlayersExcept($gameSession, $disconnectedPlayer->id);
+
+            if ($aktifLainnya->count() >= 2) {
+                // 2+ pemain lain masih aktif - sesi TETAP Playing (bukan pause
+                // total), cukup lewati giliran pemain yang terputus (keputusan
+                // final: "lanjut tanpa dia" untuk game 3-6 pemain).
+                if ($giliranDia) {
+                    $this->turn->advance($gameSession);
+                }
+            } else {
+                // <2 pemain aktif tersisa - game tidak bisa lanjut, pause total (perilaku 2-pemain yang sudah ada).
+                $gameSession->update(['status' => GameStatus::Paused]);
+                $events[] = new SessionPaused($gameSession, $disconnectedPlayer);
+            }
+
+            foreach ($aktifLainnya as $lain) {
+                if ($lain->user_id !== null) {
+                    $this->queueNotification($lain->user, $this->notifications->payloadOpponentDisconnected($disconnectedPlayer));
+                }
             }
 
             return $events;
@@ -535,19 +577,24 @@ class GameSessionService
         $events = DB::transaction(function () use ($gameSession, $reconnectedPlayer) {
             $gameSession = GameSession::query()->lockForUpdate()->findOrFail($gameSession->id);
 
-            if ($gameSession->status !== GameStatus::Paused) {
+            if (! in_array($gameSession->status, [GameStatus::Playing, GameStatus::Paused], true)) {
                 return [];
             }
 
             $events = [];
+            $wasPaused = $gameSession->status === GameStatus::Paused;
             $reconnectedPlayer->update(['status' => PlayerStatus::Active]);
-            $gameSession->update(['status' => GameStatus::Playing]);
-            $this->gameLog->log($gameSession, GameLogEventType::Resumed, $reconnectedPlayer->user_id, $gameSession->total_turn, []);
-            $events[] = new SessionResumed($gameSession, $reconnectedPlayer);
 
-            $opponent = $gameSession->players()->where('id', '!=', $reconnectedPlayer->id)->first();
-            if ($opponent?->user_id !== null) {
-                $this->queueNotification($opponent->user, $this->notifications->payloadOpponentReconnected($reconnectedPlayer));
+            if ($wasPaused) {
+                $gameSession->update(['status' => GameStatus::Playing]);
+                $this->gameLog->log($gameSession, GameLogEventType::Resumed, $reconnectedPlayer->user_id, $gameSession->total_turn, []);
+                $events[] = new SessionResumed($gameSession, $reconnectedPlayer);
+            }
+
+            foreach ($this->activePlayersExcept($gameSession, $reconnectedPlayer->id) as $lain) {
+                if ($lain->user_id !== null) {
+                    $this->queueNotification($lain->user, $this->notifications->payloadOpponentReconnected($reconnectedPlayer));
+                }
             }
 
             return $events;
@@ -567,17 +614,34 @@ class GameSessionService
         $events = DB::transaction(function () use ($gameSession, $disconnectedPlayer) {
             $gameSession = GameSession::query()->lockForUpdate()->findOrFail($gameSession->id);
 
-            if ($gameSession->status !== GameStatus::Paused) {
+            if (! in_array($gameSession->status, [GameStatus::Playing, GameStatus::Paused], true)) {
                 return [];
             }
 
             $events = [];
-            $opponent = $gameSession->players()->where('id', '!=', $disconnectedPlayer->id)->firstOrFail();
+            $giliranDia = $gameSession->current_turn_game_player_id === $disconnectedPlayer->id;
+            $disconnectedPlayer->update(['status' => PlayerStatus::Forfeited]);
 
             $this->gameLog->log($gameSession, GameLogEventType::Forfeited, $disconnectedPlayer->user_id, $gameSession->total_turn, [
                 'reason' => 'disconnect_timeout',
             ]);
-            $this->finishSession($gameSession, $opponent, WinReason::Forfeit, $events);
+
+            $aktifLainnya = $this->activePlayersExcept($gameSession, $disconnectedPlayer->id);
+
+            if ($aktifLainnya->count() <= 1) {
+                $pemenang = $aktifLainnya->first() ?? $gameSession->players()->where('id', '!=', $disconnectedPlayer->id)->firstOrFail();
+                $this->finishSession($gameSession, $pemenang, WinReason::Forfeit, $events);
+            } else {
+                // 2+ pemain lain masih aktif - sesi lanjut normal, cukup pastikan
+                // status Playing (kalau kebetulan sempat Paused) & lewati giliran
+                // pemain yang baru di-forfeit kalau kebetulan gilirannya dia.
+                if ($gameSession->status === GameStatus::Paused) {
+                    $gameSession->update(['status' => GameStatus::Playing]);
+                }
+                if ($giliranDia) {
+                    $this->turn->advance($gameSession);
+                }
+            }
 
             return $events;
         });

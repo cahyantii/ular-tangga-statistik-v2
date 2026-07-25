@@ -1,9 +1,35 @@
 import { CoordinateHelper } from './CoordinateHelper.js';
 import { BoardGeometry } from './BoardGeometry.js';
 import { SnakeRenderer } from './SnakeRenderer.js';
+import { SlideRenderer } from './SlideRenderer.js';
 import { LadderRenderer } from './LadderRenderer.js';
 import { ParticleController } from './ParticleController.js';
 import { AnimationController } from './AnimationController.js';
+
+/**
+ * Tema visual untuk konektor `jenis=ular`: 'ular' (SnakeRenderer, default)
+ * atau 'perosotan' (SlideRenderer) - preferensi PURE CLIENT-SIDE (localStorage),
+ * TIDAK ada kolom database/enum baru. `jenis` konektor di data tetap 'ular'
+ * apa adanya untuk animasi gerak pion (lihat game-play.js) - cuma renderer
+ * VISUAL yang berganti.
+ */
+const BOARD_THEME_KEY = 'ular-tangga-board-theme';
+
+export function getBoardTheme() {
+    try {
+        return localStorage.getItem(BOARD_THEME_KEY) === 'perosotan' ? 'perosotan' : 'ular';
+    } catch {
+        return 'ular';
+    }
+}
+
+export function setBoardTheme(theme) {
+    try {
+        localStorage.setItem(BOARD_THEME_KEY, theme === 'perosotan' ? 'perosotan' : 'ular');
+    } catch {
+        // localStorage tidak tersedia (mode privat dsb) - abaikan, fallback ke default 'ular'.
+    }
+}
 
 /**
  * Titik masuk sistem visual papan v3 — orkestrator satu-satunya yang tahu
@@ -82,10 +108,12 @@ export class BoardRenderer {
     _buildConnectors() {
         let snakeIndex = 0;
         let ladderIndex = 0;
+        const theme = getBoardTheme();
 
         this.konektor.forEach((k) => {
             if (k.jenis === 'ular') {
-                const renderer = new SnakeRenderer(this.snakeLayer, this.geometry, {
+                const RendererClass = theme === 'perosotan' ? SlideRenderer : SnakeRenderer;
+                const renderer = new RendererClass(this.snakeLayer, this.geometry, {
                     start: k.posisi_awal,
                     end: k.posisi_akhir,
                     themeIndex: snakeIndex++,

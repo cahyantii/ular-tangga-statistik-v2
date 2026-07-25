@@ -9,7 +9,8 @@ use App\Models\User;
 class RoomPolicy
 {
     /**
-     * User boleh join room jika room masih menunggu (Waiting) dan belum penuh (maks 2 pemain).
+     * User boleh join room jika room masih menunggu (Waiting) dan belum penuh
+     * (kapasitas per-room dari `jumlah_pemain`, 2-6, bukan hardcode 2).
      */
     public function join(User $user, Room $room): bool
     {
@@ -17,9 +18,9 @@ class RoomPolicy
             return false;
         }
 
-        $jumlahPemain = $room->gameSession?->players()->count() ?? 0;
+        $jumlahBergabung = $room->gameSession?->players()->count() ?? 0;
 
-        return $jumlahPemain < 2;
+        return $jumlahBergabung < $room->jumlah_pemain;
     }
 
     /**

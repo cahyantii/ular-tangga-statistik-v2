@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Game;
 
 use App\Enums\GameStatus;
+use App\Enums\PawnColor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Game\JoinRoomRequest;
 use App\Models\Room;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /**
@@ -36,14 +38,25 @@ class MatchmakingController extends Controller
 
     public function quickMatch(Request $request): RedirectResponse
     {
-        $room = $this->matchmaking->quickMatch($request->user());
+        $validated = $request->validate(['pawn_color' => ['nullable', Rule::enum(PawnColor::class)]]);
+
+        $room = $this->matchmaking->quickMatch($request->user(), $validated['pawn_color'] ?? null);
 
         return redirect()->route('game.room.show', $room);
     }
 
     public function createRoom(Request $request): RedirectResponse
     {
-        $room = $this->matchmaking->createPrivateRoom($request->user());
+        $validated = $request->validate([
+            'pawn_color' => ['nullable', Rule::enum(PawnColor::class)],
+            'jumlah_pemain' => ['nullable', 'integer', 'between:2,6'],
+        ]);
+
+        $room = $this->matchmaking->createPrivateRoom(
+            $request->user(),
+            $validated['pawn_color'] ?? null,
+            $validated['jumlah_pemain'] ?? 2,
+        );
 
         return redirect()->route('game.room.show', $room);
     }
@@ -51,7 +64,11 @@ class MatchmakingController extends Controller
     public function joinRoom(JoinRoomRequest $request): RedirectResponse
     {
         try {
-            $room = $this->matchmaking->joinPrivateRoom($request->user(), $request->string('kode_room')->toString());
+            $room = $this->matchmaking->joinPrivateRoom(
+                $request->user(),
+                $request->string('kode_room')->toString(),
+                $request->validated('pawn_color'),
+            );
         } catch (ModelNotFoundException) {
             return back()->withInput()->with('error', 'Kode room tidak ditemukan.');
         }

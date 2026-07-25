@@ -359,6 +359,23 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.top = `calc(${top}% - ${nudge}px)`;
     }
 
+    /**
+     * Index pion di antara pion LAIN yang kebetulan berdiri di kotak yang
+     * sama (`posisi`) — dipakai `placePawnAt(..., stackIndex)` supaya pion
+     * yang menumpuk digeser sedikit (nudge), bukan tumpang tindih sempurna.
+     * Makin sering terjadi dengan game 3-6 pemain dibanding 2 pemain, jadi
+     * digeneralisasi di sini alih-alih dihitung manual tiap call site.
+     * Urutan diambil dari `turn_order` (stabil, sama di semua klien) supaya
+     * offset-nya konsisten walau urutan array `players` di payload beda-beda.
+     */
+    function stackIndexAt(posisi, playerId, players = latestSession?.players ?? []) {
+        const sameTile = players
+            .filter((p) => p.posisi_pion === posisi)
+            .sort((a, b) => (a.turn_order ?? 0) - (b.turn_order ?? 0));
+        const idx = sameTile.findIndex((p) => p.id === playerId);
+        return idx === -1 ? 0 : idx;
+    }
+
     function setTileGlow(posisi) {
         boardEl.querySelectorAll('.tile-active-ring').forEach((ring) => ring.classList.remove('opacity-100'));
         if (!posisi) return;
@@ -390,7 +407,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const landingPosisi = Math.min(fromPosisi + nilaiDadu, jumlahPetak);
 
         for (let step = fromPosisi + 1; step <= landingPosisi; step++) {
-            placePawnAt(el, step);
+            // Langkah terakhir = posisi mendarat sungguhan (kalau tidak ada
+            // konektor, ini JUGA posisi akhir) - beri stackIndex yang benar di
+            // situ; langkah transit sebelumnya cukup stackIndex 0 (lewat saja).
+            const stackIndex = step === landingPosisi ? stackIndexAt(step, player.id, result.session?.players) : 0;
+            placePawnAt(el, step, stackIndex);
             // eslint-disable-next-line no-await-in-loop
             await delay(220);
         }
@@ -422,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 setTimeout(() => boardEl.classList.remove('board-shake'), 400);
             }
 
-            placePawnAt(el, finalPosisi);
+            placePawnAt(el, finalPosisi, stackIndexAt(finalPosisi, player.id, result.session?.players));
             await delay(200);
         }
     }
@@ -520,7 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : 'Permainan selesai';
             document.getElementById('finished-subtitle').textContent = isMeWinner
                 ? 'Anda berhasil mencapai garis Finish lebih dulu.'
-                : `${winner?.is_robot ? 'Robot' : (winner?.nama ?? 'Lawan')} mencapai Finish lebih dulu.`;
+                : `${winner?.is_robot ? 'Robot' : (winner?.nama ?? 'Pemain lain')} mencapai Finish lebih dulu.`;
 
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'game-finished-modal' }));
             rollButton.classList.add('hidden');
@@ -603,17 +624,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------------------------------------------------------------
     // Realtime (Multiplayer)
     // ---------------------------------------------------------------
+    /**
+     * Dulu berupa string statis pakai "Lawan" (masuk akal untuk 2 pemain,
+     * ambigu untuk 3-6 pemain — tidak jelas siapa "lawan" yang dimaksud).
+     * Sekarang fungsi yang menerima NAMA pemain sungguhan (diambil dari
+     * `payload.game_player_id`, lihat resolveActorName() di bawah).
+     */
     const REALTIME_EVENT_LABELS = {
-        'dice-rolled': 'Lawan melempar dadu.',
-        'pawn-moved': 'Lawan menggerakkan pion.',
-        'movement-blocked': 'Langkah lawan terlalu jauh, giliran dilewati.',
-        'connector-applied': 'Lawan menginjak tangga/ular.',
-        'question-presented': 'Lawan sedang menjawab soal.',
-        'score-updated': 'Skor lawan berubah.',
-        'game-finished': 'Permainan telah selesai.',
-        'session-paused': 'Lawan terputus koneksi. Menunggu reconnect...',
-        'session-resumed': 'Lawan telah kembali terhubung.',
+        'dice-rolled': (nama) => `${nama} melempar dadu.`,
+        'pawn-moved': (nama) => `${nama} menggerakkan pion.`,
+        'movement-blocked': (nama) => `Langkah ${nama} terlalu jauh, giliran dilewati.`,
+        'connector-applied': (nama) => `${nama} menginjak tangga/ular.`,
+        'question-presented': (nama) => `${nama} sedang menjawab soal.`,
+        'score-updated': (nama) => `Skor ${nama} berubah.`,
+        'game-finished': () => 'Permainan telah selesai.',
+        'session-paused': (nama) => `${nama} terputus koneksi. Menunggu reconnect...`,
+        'session-resumed': (nama) => `${nama} telah kembali terhubung.`,
     };
+
+    function resolveActorName(actorId) {
+        const actor = latestSession?.players.find((p) => p.id === actorId);
+        if (!actor) return 'Pemain lain';
+        return actor.is_robot ? 'Robot' : (actor.nama ?? 'Pemain lain');
+    }
 
     function joinRealtimeChannel(session) {
         if (session.mode !== 'multiplayer' || !session.room_id || presenceChannel || !window.Echo) {
@@ -629,8 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     return;
                 }
 
-                showToast(REALTIME_EVENT_LABELS[eventName]);
-                pushLog('info', REALTIME_EVENT_LABELS[eventName]);
+                const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
+                showToast(label);
+                pushLog('info', label);
                 loadState();
             });
         });
@@ -676,7 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const prev = knownPositions.get(p.id);
 
             if (prev === undefined) {
-                placePawnAt(el, p.posisi_pion);
+                placePawnAt(el, p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
                 continue;
             }
 
@@ -687,7 +721,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (p.posisi_pion > prev && p.posisi_pion - prev <= 6) {
                 // eslint-disable-next-line no-await-in-loop
                 for (let step = prev + 1; step <= p.posisi_pion; step++) {
-                    placePawnAt(el, step);
+                    const stackIndex = step === p.posisi_pion ? stackIndexAt(step, p.id, session.players) : 0;
+                    placePawnAt(el, step, stackIndex);
                     // eslint-disable-next-line no-await-in-loop
                     await delay(180);
                 }
@@ -722,7 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.classList.remove('pawn-climb', 'pawn-slide');
                 }
 
-                placePawnAt(el, p.posisi_pion);
+                placePawnAt(el, p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
             }
         }
     }
@@ -868,12 +903,12 @@ document.addEventListener('DOMContentLoaded', () => {
         latestSession = session;
 
         if (pawnMode === 'instant') {
-            session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion));
+            session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players)));
             syncKnownPositions(session);
         } else if (pawnMode === 'skip') {
             session.players.forEach((p) => {
                 if (!skipPawnIds.has(p.id)) {
-                    placePawnAt(getOrCreatePawnEl(p), p.posisi_pion);
+                    placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
                 }
             });
             syncKnownPositions(session);
@@ -1054,10 +1089,49 @@ document.addEventListener('DOMContentLoaded', () => {
     rollButton?.addEventListener('click', rollDice);
     window.addEventListener('resize', initDiceSize);
 
+    /**
+     * Tombol dadu mengambang (mobile): muncul cuma saat #turn-dice-card asli
+     * sudah discroll keluar layar DAN sedang giliran pemain (rollButton tidak
+     * hidden) - forward klik ke rollButton asli (satu-satunya sumber state),
+     * tidak menduplikasi logic roll sama sekali. Lihat komentar di
+     * show.blade.php untuk alasan UX-nya.
+     */
+    (function setupRollDiceFab() {
+        const turnCard = document.getElementById('turn-dice-card');
+        const fabWrap = document.getElementById('roll-dice-fab-wrap');
+        const fab = document.getElementById('roll-dice-fab');
+        if (!turnCard || !fabWrap || !fab || !rollButton || typeof IntersectionObserver === 'undefined') {
+            return;
+        }
+
+        let cardVisible = true;
+
+        const syncFab = () => {
+            fab.disabled = rollButton.disabled;
+            const isMobile = window.matchMedia('(max-width: 767px)').matches;
+            const myTurn = !rollButton.classList.contains('hidden');
+            fabWrap.classList.toggle('hidden', !(isMobile && myTurn && !cardVisible));
+        };
+
+        new IntersectionObserver(([entry]) => {
+            cardVisible = entry.isIntersecting;
+            syncFab();
+        }, { threshold: 0.1 }).observe(turnCard);
+
+        new MutationObserver(syncFab).observe(rollButton, { attributes: true, attributeFilter: ['disabled', 'class'] });
+        window.addEventListener('resize', syncFab);
+        fab.addEventListener('click', () => rollButton.click());
+
+        syncFab();
+    })();
+
     document.getElementById('leave-game-button')?.addEventListener('click', async () => {
         const isMultiplayer = latestSession?.mode === 'multiplayer';
+        // Pesan digeneralisasi untuk game 2-6 pemain: kalau cuma tersisa 1
+        // pemain aktif lain, dia otomatis menang (WO) - kalau masih ada 2+,
+        // permainan lanjut tanpamu (lihat GameSessionService::leave()).
         const confirmMessage = isMultiplayer
-            ? 'Yakin ingin keluar? Anda akan dinyatakan kalah WO dan lawan otomatis menang.'
+            ? 'Yakin ingin keluar? Anda akan dinyatakan kalah WO. Kalau masih ada pemain lain, permainan lanjut tanpa Anda; kalau tersisa satu, dia otomatis menang.'
             : 'Yakin ingin keluar dari permainan ini? Permainan akan dihentikan.';
 
         if (!confirm(confirmMessage)) {

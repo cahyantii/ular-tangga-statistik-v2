@@ -34,6 +34,10 @@
             @if (strtolower($method) === 'post')
                 <form method="POST" action="{{ $href }}">
                     @csrf
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-white/70">Warna pion kamu</p>
+                    <div class="mb-4">
+                        <x-player.pawn-color-picker />
+                    </div>
                     <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-secondary-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-secondary-600 hover:shadow-soft hover:gap-3">
                         Mulai Bermain
                         <x-player.icon name="arrow-right" class="h-4 w-4" />

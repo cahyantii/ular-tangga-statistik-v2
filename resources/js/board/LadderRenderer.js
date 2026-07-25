@@ -7,20 +7,18 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  * Jarak antar 2 rel (satuan kotak) & jarak antar anak tangga — tetap,
  * panjang keseluruhan otomatis mengikuti jarak asal->tujuan.
  *
- * Percobaan sebelumnya (RUNG_THICKNESS 0.13, sama tebal dengan rel, dengan
- * RUNG_SPACING lebar 0.46) membuat anak tangganya sedikit & tebal seperti
- * batang, sehingga tangganya terlihat seperti bentuk "H"/kursi, bukan
- * tangga sungguhan. Rel tetap tebal (RAIL_THICKNESS) untuk kesan kokoh,
- * tapi anak tangga dibuat LEBIH TIPIS dari rel dan LEBIH RAPAT (banyak
- * anak tangga kecil) - itulah yang membuat sebuah tangga "terbaca" sebagai
- * tangga, bukan cuma dua batang dengan sedikit palang.
+ * Gaya v8 "flat/playful": rel & anak tangga tebal & jelas TANPA end-cap
+ * bulat di ujung (percobaan v7 dengan end-cap terlihat terlalu blocky/kaku
+ * dibanding referensi — cukup `stroke-linecap: round` pada garis rel/rung
+ * sendiri untuk ujung yang membulat natural) — guratan serat kayu v6 tetap
+ * dihapus (terlalu halus untuk gaya flat, banyak node tanpa payoff visual).
  */
 const RAIL_GAP = 0.46;
 const RUNG_SPACING = 0.26;
-const RAIL_THICKNESS = 0.13;
-const RUNG_THICKNESS = 0.07;
+const RAIL_THICKNESS = 0.15;
+const RUNG_THICKNESS = 0.085;
 /** Outline tipis di bawah tiap rel/anak tangga — supaya tetap terbaca kontras di kotak putih/terang (bukan cuma drop-shadow). */
-const OUTLINE_EXTRA = 0.05;
+const OUTLINE_EXTRA = 0.055;
 
 function svgEl(tag, attrs = {}) {
     const el = document.createElementNS(SVG_NS, tag);
@@ -103,10 +101,8 @@ export class LadderRenderer {
         this.wrap.style.pointerEvents = 'none';
         this.wrap.style.zIndex = '20';
 
-        // Tangga sengaja statis (lihat .ladder-idle di app.css - tidak ada
-        // lagi animasi bob di sana) - this.idleEl dipertahankan sebagai
-        // wrapper struktural saja (dibutuhkan _buildSvg() untuk menyisipkan
-        // <svg>-nya), tanpa delay/animasi apa pun.
+        // Tangga statis (tidak ada gerakan idle) - this.idleEl dipertahankan
+        // sebagai wrapper struktural saja untuk _buildSvg().
         this.idleEl = document.createElement('div');
         this.idleEl.className = 'ladder-idle';
         this.idleEl.style.width = '100%';
@@ -157,45 +153,24 @@ export class LadderRenderer {
         this.group.appendChild(railA);
         this.group.appendChild(railB);
 
-        // Efek 3D tipis: garis highlight sempit di satu sisi tiap rel (kayu
-        // membulat, sisi yang menghadap cahaya lebih terang) + guratan serat
-        // kayu horizontal renggang di sepanjang rel - keduanya dekoratif
-        // murni, tidak mengubah geometri/posisi rel sama sekali.
-        this.group.appendChild(this._buildRailBevel(railX, distance));
-        this.group.appendChild(this._buildRailBevel(-railX, distance));
-        this.group.appendChild(this._buildGrain(railX, distance));
-        this.group.appendChild(this._buildGrain(-railX, distance));
+        // Highlight glossy tipis di satu sisi tiap rel — kesan dowel kayu
+        // bulat memantulkan cahaya, bukan pipih.
+        this.group.appendChild(this._buildRailHighlight(railX, distance));
+        this.group.appendChild(this._buildRailHighlight(-railX, distance));
 
         svg.appendChild(this.group);
         this.wrap.querySelector('.ladder-idle').appendChild(svg);
     }
 
-    /** Highlight tipis di sisi kiri tiap rel — kesan dowel kayu bulat, bukan pipih. */
-    _buildRailBevel(railX, distance) {
-        const offset = RAIL_THICKNESS * 0.22;
+    /** Highlight glossy tipis di sisi kiri tiap rel — kesan dowel bulat memantulkan cahaya. */
+    _buildRailHighlight(railX, distance) {
+        const offset = RAIL_THICKNESS * 0.24;
         return svgEl('line', {
-            x1: fmt(railX - offset), y1: fmt(distance * 0.04),
-            x2: fmt(railX - offset), y2: fmt(distance * 0.96),
-            stroke: this.theme.rail[0], 'stroke-width': fmt(RAIL_THICKNESS * 0.22),
-            'stroke-linecap': 'round', opacity: 0.55,
+            x1: fmt(railX - offset), y1: fmt(distance * 0.05),
+            x2: fmt(railX - offset), y2: fmt(distance * 0.95),
+            stroke: '#ffffff', 'stroke-width': fmt(RAIL_THICKNESS * 0.2),
+            'stroke-linecap': 'round', opacity: 0.5,
         });
-    }
-
-    /** Guratan serat kayu — tanda pendek melintang rel, renggang & redup. */
-    _buildGrain(railX, distance) {
-        const group = svgEl('g', { opacity: 0.4 });
-        const spacing = 0.24;
-        const count = Math.max(3, Math.round(distance / spacing));
-        for (let i = 0; i < count; i++) {
-            const cy = distance * ((i + 0.5) / count);
-            const w = RAIL_THICKNESS * 0.6;
-            group.appendChild(svgEl('line', {
-                x1: fmt(railX - w / 2), y1: fmt(cy),
-                x2: fmt(railX + w / 2), y2: fmt(cy + RAIL_THICKNESS * 0.18),
-                stroke: this.theme.grain, 'stroke-width': 0.012, 'stroke-linecap': 'round',
-            }));
-        }
-        return group;
     }
 
     /**

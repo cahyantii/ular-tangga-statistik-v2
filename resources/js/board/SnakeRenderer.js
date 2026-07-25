@@ -3,28 +3,16 @@ import { AnimationController } from './AnimationController.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-/**
- * Ketebalan badan (satuan kotak) — KONSTAN dari leher sampai pangkal ekor.
- * 0.42 (percobaan sebelumnya) terlalu tebal - dikombinasikan dengan pola
- * diamond besar di _buildScaleTexture() membuat badannya terlihat
- * menggembung/berbenjol-benjol seperti balon berkerut, bukan ular yang
- * ramping. 0.32 adalah titik tengah: jelas lebih tebal dari 0.26 (terlalu
- * kurus/seperti belut) tapi tidak segemuk 0.42.
- */
-const BODY_THICK = 0.32;
-/** Profil lebar KEPALA (anatomi ular sungguhan, bukan tabung rata): moncong kecil -> rahang LEBAR -> leher MENGECIL (lebih sempit dari badan) -> badan. */
+/** Ketebalan badan (satuan kotak) — KONSTAN dari leher sampai pangkal ekor. */
+const BODY_THICK = 0.34;
+/** Profil lebar KEPALA (anatomi ular, bukan tabung rata): moncong kecil -> rahang LEBAR -> leher MENGECIL (lebih sempit dari badan) -> badan. */
 const NOSE_W = BODY_THICK * 0.9;
-const JAW_W = BODY_THICK * 1.7;
-const NECK_W = BODY_THICK * 0.72;
+const JAW_W = BODY_THICK * 1.75;
+const NECK_W = BODY_THICK * 0.74;
 /** Panjang tiap fase kepala dalam satuan kotak ABSOLUT (bukan fraksi jarak) — diskalakan mengikuti BODY_THICK supaya ukuran kepala konsisten berapa pun panjang ularnya. */
 const HEAD_LENS = [0, 0.06, 0.11, 0.2, 0.27];
-const TAIL_T = 0.80;
-const SEGMENTS = 34;
-
-/** Amplitudo gelombang badan (satuan kotak, ~setara 2-3px) — NOL persis di t=0 & t=1 (kepala & ekor tidak pernah bergeser dari anchor). */
-const WAVE_AMPLITUDE = 0.045;
-const WAVE_FREQ = 1.6;
-const WAVE_STEPS = 8;
+const TAIL_T = 0.82;
+const SEGMENTS = 30;
 
 function smoothstep(edge0, edge1, x) {
     if (edge1 <= edge0) return x >= edge1 ? 1 : 0;
@@ -40,13 +28,13 @@ function buildWidthCurve(distance) {
     const tailStart = Math.max(lens[4] + distance * 0.1, distance * TAIL_T);
 
     return [
-        { t: 0, w: NOSE_W }, // ujung moncong, bulat kecil
-        { t: lens[1] / distance, w: JAW_W }, // rahang melebar cepat
-        { t: lens[2] / distance, w: JAW_W }, // pipi — bertahan lebar sebentar
-        { t: lens[3] / distance, w: NECK_W }, // leher menyempit (LEBIH SEMPIT dari badan)
-        { t: lens[4] / distance, w: BODY_THICK }, // menyatu ke ketebalan badan
-        { t: Math.min(tailStart / distance, 0.96), w: BODY_THICK }, // badan konstan
-        { t: 1, w: 0 }, // ekor meruncing jadi titik
+        { t: 0, w: NOSE_W },
+        { t: lens[1] / distance, w: JAW_W },
+        { t: lens[2] / distance, w: JAW_W },
+        { t: lens[3] / distance, w: NECK_W },
+        { t: lens[4] / distance, w: BODY_THICK },
+        { t: Math.min(tailStart / distance, 0.96), w: BODY_THICK },
+        { t: 1, w: 0.015 },
     ];
 }
 
@@ -95,18 +83,24 @@ function randRange(min, max) {
 let uidCounter = 0;
 
 /**
- * Satu ular = SATU PATH SVG UTUH, langsung dikenali sebagai ULAR (bukan
- * belut/cacing/selang) lewat profil lebar ANATOMI sungguhan sepanjang satu
- * kurva cubic bezier: moncong kecil -> RAHANG melebar (lebih lebar dari
- * leher) -> LEHER menyempit (lebih sempit dari badan) -> badan tebal
- * konstan -> ekor meruncing. Semua bagian adalah titik-titik dari SATU
- * fungsi lebar kontinu di sepanjang SATU kurva — bukan head.png/body.png/
- * tail.png yang ditempel — jadi sambungannya taken otomatis mulus.
+ * Satu ular = SATU SILUET MULUS (dua path yang berbagi tepi persis sama di
+ * `neckEndT`, bukan rantai ellipse/ruas terpisah — versi "chunky bersegmen"
+ * sebelumnya justru terbaca sebagai cacing/lipan karena tiap ruas punya
+ * pinggiran sendiri yang sedikit bergelombang). Path pertama (moncong sampai
+ * leher, `neckEndT`) diisi warna KEPALA yang beda dari path kedua (leher
+ * sampai ujung ekor, warna BADAN) — dua-duanya disampel dari kurva lebar
+ * anatomi yang SAMA (moncong kecil -> rahang lebar -> leher menyempit ->
+ * badan tebal konstan -> ekor meruncing) di titik `neckEndT` yang sama
+ * persis, jadi tepinya menyatu tanpa jahitan/patahan, sekaligus kepala tetap
+ * terbaca jelas lewat batas warna (bukan gradient/pinch).
+ *
+ * Statis (TIDAK ada animasi gelombang tubuh sama sekali) — inilah yang
+ * menjamin nol biaya render idle (beda dari v6 yang menganimasikan atribut
+ * `d` SVG tiap frame, mahal & jadi sumber lag). "Hidup"-nya ular cukup dari
+ * kedip mata/lidah/mulut (one-shot pulse, murah) + goyang wajah halus.
  *
  * Wajah (mata/mulut/lidah) dihitung dari titik & tangent path di area
- * rahang (bukan pas di ujung moncong) — anatomis lebih benar (mata ular
- * ada di sisi kepala, bukan di ujung hidung) dan otomatis ikut rotasi/
- * posisi kepala.
+ * rahang — anatomis lebih benar dan otomatis ikut rotasi/posisi kepala.
  */
 export class SnakeRenderer {
     /**
@@ -138,24 +132,18 @@ export class SnakeRenderer {
         this.widthCurve = buildWidthCurve(distance);
 
         // Kurva LOKAL (0,0)=moncong -> (0,distance)=ujung ekor, cubic bezier
-        // sungguhan. p1/p2 SENGAJA dibengkokkan ke arah BERLAWANAN (bukan
-        // searah seperti sebelumnya) supaya terbentuk lekukan S sungguhan
-        // (meliuk seperti ular berjalan), bukan cuma satu lengkungan tunggal
-        // yang landai - lengkungan searah tadi nyaris tidak terlihat pada
-        // konektor pendek/nyaris vertikal (banyak terjadi setelah tata-ulang
-        // posisi konektor supaya tidak saling menyilang di papan), sehingga
-        // ularnya tampak seperti pipa/belut lurus alih-alih meliuk.
+        // sungguhan dengan lekukan S (p1/p2 dibengkokkan berlawanan arah)
+        // supaya ular terlihat meliuk, bukan lurus seperti pipa.
         const bendSign = px + py >= 0 ? 1 : -1;
-        const bend = Math.min(distance * 0.3, 0.7);
+        const bend = Math.min(distance * 0.32, 0.85);
         this.p0 = { x: 0, y: 0 };
         this.p1 = { x: bendSign * bend, y: distance * 0.33 };
         this.p2 = { x: -bendSign * bend, y: distance * 0.67 };
         this.p3 = { x: 0, y: distance };
 
-        // Wrapper dilebarkan mengikuti titik TERLEBAR ular (rahang, bukan
-        // moncong) + sedikit margin aman (highlight/tekstur sisik sedikit
-        // melebihi outline utama).
-        this.wrapWidth = JAW_W * 1.25;
+        // Wrapper dilebarkan mengikuti titik terlebar (rahang) + margin aman
+        // untuk lekukan S & pola totol di badan.
+        this.wrapWidth = JAW_W * 1.3 + Math.abs(bend) * 1.6;
 
         this.wrap = document.createElement('div');
         this.wrap.className = 'board-object snake-object';
@@ -181,19 +169,21 @@ export class SnakeRenderer {
         return { point, tangent, normal, width: widthAtCurve(this.widthCurve, t) };
     }
 
-    /** Poligon meruncing sepanjang kurva pada widthFrac tertentu (1=outline utama, <1=stripe aksen), dengan offset tegak lurus opsional & fase gelombang. */
-    _buildOutline(wavePhase, widthFrac = 1, centerOffsetFrac = 0) {
+    /**
+     * Poligon mulus dari `tStart` ke `tEnd` pada `widthFrac` tertentu
+     * (1=siluet utuh, <1=pita aksen seperti perut/bayangan), dengan offset
+     * tegak lurus opsional. `roundStartCap`: tutup moncong bulat di tStart
+     * (dipakai HANYA untuk potongan kepala, tStart=0) — ujung `tEnd` selalu
+     * potongan lurus (supaya menyatu presisi dengan potongan berikutnya yang
+     * disampel dari titik `tEnd` yang SAMA).
+     */
+    _polygonPath(tStart, tEnd, widthFrac = 1, centerOffsetFrac = 0, roundStartCap = false) {
         const left = [];
         const right = [];
         const samples = [];
         for (let i = 0; i <= SEGMENTS; i++) {
-            const t = i / SEGMENTS;
+            const t = tStart + (tEnd - tStart) * (i / SEGMENTS);
             const s = this._sampleAt(t);
-            if (wavePhase !== null) {
-                const envelope = Math.sin(Math.PI * t);
-                const wave = WAVE_AMPLITUDE * envelope * Math.sin(2 * Math.PI * (WAVE_FREQ * t - wavePhase));
-                s.point = { x: s.point.x + s.normal.x * wave, y: s.point.y + s.normal.y * wave };
-            }
             samples.push(s);
             const halfW = (s.width * widthFrac) / 2;
             const centerX = s.point.x + s.normal.x * (s.width * centerOffsetFrac);
@@ -202,16 +192,11 @@ export class SnakeRenderer {
             right.push({ x: centerX - s.normal.x * halfW, y: centerY - s.normal.y * halfW });
         }
 
-        if (widthFrac < 1) {
-            // Stripe aksen (highlight/shadow) — TIDAK butuh tutup kepala bulat,
-            // cukup poligon pita tipis mengikuti kurva.
+        if (!roundStartCap) {
             const outline = [...left, ...right.reverse()];
             return `M ${outline.map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' L ')} Z`;
         }
 
-        // Tutup moncong bulat: setengah lingkaran di depan t=0 (arah -tangent)
-        // supaya moncong jadi ujung BULAT KECIL dari bentuk yang sama — bukan
-        // lingkaran/gambar terpisah yang ditempel.
         const head = samples[0];
         const r = head.width / 2;
         const angleNormal = Math.atan2(head.normal.y, head.normal.x);
@@ -221,7 +206,6 @@ export class SnakeRenderer {
             const angle = angleNormal + Math.PI * (k / capSteps);
             cap.push({ x: head.point.x + r * Math.cos(angle), y: head.point.y + r * Math.sin(angle) });
         }
-
         const outline = [...cap, ...right.slice(1), ...left.slice(1).reverse()];
         return `M ${outline.map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' L ')} Z`;
     }
@@ -242,109 +226,92 @@ export class SnakeRenderer {
         svg.style.overflow = 'visible';
 
         const defs = svgEl('defs');
-        const gradId = `snake-grad-${this.uid}`;
-        const gradient = svgEl('linearGradient', { id: gradId, x1: '0%', y1: '0%', x2: '0%', y2: '100%' });
-        gradient.appendChild(svgEl('stop', { offset: '0%', 'stop-color': this.theme.body[0] }));
-        gradient.appendChild(svgEl('stop', { offset: '45%', 'stop-color': this.theme.body[1] }));
-        gradient.appendChild(svgEl('stop', { offset: '100%', 'stop-color': this.theme.body[2] }));
-        defs.appendChild(gradient);
         svg.appendChild(defs);
 
-        // SATU path utuh — isi & outline ular seluruhnya (moncong+rahang+leher+badan+ekor).
-        // Outline SENGAJA dibuat TEBAL (0.024 -> 0.065, ~x2.7) - inilah yang
-        // membuat ilustrasi ular papan klasik terbaca sebagai "makhluk
-        // bergambar dengan siluet tegas", bukan pipa gradient lembut yang
-        // menyatu dengan latar (itulah kenapa versi sebelumnya masih terlihat
-        // seperti belut/cacing meski badannya sudah tidak kurus).
-        this.bodyPath = svgEl('path', {
-            d: this._buildOutline(0),
-            fill: `url(#${gradId})`,
+        this.bodyGroup = svgEl('g', { class: 'snake-body-group' });
+        svg.appendChild(this.bodyGroup);
+
+        // Titik rahang (plateau terlebar kepala) — dipakai oleh wajah. Titik
+        // leher (widthCurve[4], lebar badan sudah stabil di BODY_THICK) =
+        // batas kepala/badan, dipakai bersama oleh kedua potongan siluet
+        // supaya tepinya persis menyatu (sampel dari fungsi lebar yang sama).
+        const jawT = ((this.widthCurve[1].t + this.widthCurve[2].t) / 2) || 0.03;
+        const jaw = this._sampleAt(Math.max(jawT, 0.001));
+        const neckEndT = this.widthCurve[4].t;
+
+        // Kepala: satu potongan siluet mulus (moncong bulat -> rahang lebar
+        // -> leher menyempit), warna KEPALA berbeda dari badan supaya kepala
+        // tetap terbaca tegas TANPA bentuk terpisah (tidak ada lagi "balon").
+        this.headPath = svgEl('path', {
+            d: this._polygonPath(0, neckEndT, 1, 0, true),
+            fill: this.theme.head,
             stroke: this.theme.outline,
-            'stroke-width': 0.065,
+            'stroke-width': 0.032,
             'stroke-linejoin': 'round',
-            class: `snake-body-shape snake-wave-${this.uid}`,
         });
-        svg.appendChild(this.bodyPath);
+        this.bodyGroup.appendChild(this.headPath);
 
-        // Bayangan halus (sisi gelap, dari body[2] - warna tergelap gradient
-        // yang sama) supaya badan terasa punya volume/bulat, bukan pita
-        // gepeng rata - TIDAK pakai field tema terpisah, langsung diturunkan
-        // dari gradient badan sendiri supaya selalu senada.
-        this.shadowPath = svgEl('path', {
-            d: this._buildOutline(0, 0.4, -0.22),
-            fill: this.theme.body[2],
-            opacity: 0.22,
-            class: `snake-shadow-shape snake-wave-${this.uid}`,
+        // Badan: potongan siluet mulus dari leher sampai ujung ekor, warna
+        // BADAN (beda dari kepala) — mulai TEPAT di neckEndT (titik & lebar
+        // sama persis dengan ujung potongan kepala) sehingga tidak ada celah.
+        this.mainBodyPath = svgEl('path', {
+            d: this._polygonPath(neckEndT, 1, 1, 0, false),
+            fill: this.theme.body,
+            stroke: this.theme.outline,
+            'stroke-width': 0.032,
+            'stroke-linejoin': 'round',
         });
-        svg.appendChild(this.shadowPath);
+        this.bodyGroup.appendChild(this.mainBodyPath);
 
-        // Perut (belly) — pita LEBAR & jelas berwarna terang di satu sisi
-        // memanjang badan, ciri khas ilustrasi ular papan (perut selalu
-        // lebih terang dari punggung). Digambar SEBELUM rantai sisik supaya
-        // rantai tetap tampil di atasnya.
+        // Perut: pita terang di satu sisi memanjang badan (ciri ilustrasi
+        // ular papan klasik) — statis, murni dekoratif.
         this.bellyPath = svgEl('path', {
-            d: this._buildOutline(0, 0.46, 0.27),
+            d: this._polygonPath(neckEndT + 0.02, TAIL_T, 0.44, 0.26),
             fill: this.theme.belly,
-            opacity: 0.8,
-            class: `snake-belly-shape snake-wave-${this.uid}`,
+            opacity: 0.75,
         });
-        svg.appendChild(this.bellyPath);
+        this.bodyGroup.appendChild(this.bellyPath);
 
-        this._buildSpineChain(svg, distance);
-        this._buildFace(svg);
-        this._injectWaveKeyframes();
+        this._buildPatternSpots(distance, neckEndT);
+        this._buildFace(defs, jaw);
 
         this.wrap.appendChild(svg);
     }
 
     /**
-     * Rantai belah-ketupat MENYAMBUNG di sepanjang TULANG PUNGGUNG (garis
-     * tengah badan) - ini ciri visual utama papan ular tangga bergambar
-     * klasik (lihat referensi desain) yang sebelumnya HILANG: percobaan-
-     * percobaan sebelumnya menaruh diamond terpisah/tersebar di berbagai
-     * titik badan, bukan satu motif menyambung dari leher sampai ekor.
-     * Dibangun sebagai satu polyline zigzag (bolak-balik kiri-kanan dari
-     * garis tengah) yang di-stroke tebal - jauh lebih mirip rantai diamond
-     * sungguhan dibanding kumpulan bentuk diamond terpisah.
+     * Pola totol statis di sepanjang badan (bukan pita berselang-seling
+     * perpendikular seperti percobaan sebelumnya — itulah yang bikin badan
+     * terbaca "beruas" ala cacing/lipan). Totol kecil selang-seling kiri-
+     * kanan garis tengah, ukuran & posisi deterministik dari start/end
+     * konektor (stabil antar render, bukan Math.random di lokasi).
      */
-    _buildSpineChain(svg, distance) {
-        const startT = 0.15;
-        const endT = TAIL_T - 0.02;
-        const stepLen = 0.19; // satuan kotak per zig - rapat supaya menyambung jadi rantai
-        const steps = Math.max(4, Math.round(((endT - startT) * distance) / stepLen));
+    _buildPatternSpots(distance, neckEndT) {
+        const startT = neckEndT + 0.05;
+        const spacing = 0.34;
+        const count = Math.max(3, Math.round(((TAIL_T - startT) * distance) / spacing));
 
-        const pts = [];
-        for (let i = 0; i <= steps; i++) {
-            const t = startT + ((endT - startT) * i) / steps;
+        for (let i = 0; i < count; i++) {
+            const t = startT + ((TAIL_T - startT) * (i + 0.5)) / count;
             const s = this._sampleAt(t);
             const side = i % 2 === 0 ? 1 : -1;
-            const amp = s.width * 0.3;
-            pts.push({ x: s.point.x + s.normal.x * amp * side, y: s.point.y + s.normal.y * amp * side });
-        }
+            const offset = s.width * 0.22;
+            const cx = s.point.x + s.normal.x * offset * side;
+            const cy = s.point.y + s.normal.y * offset * side;
+            const r = s.width * 0.24;
 
-        const d = `M ${pts.map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' L ')}`;
-        const chain = svgEl('path', {
-            d,
-            fill: 'none',
-            stroke: this.theme.scale,
-            'stroke-width': BODY_THICK * 0.42,
-            'stroke-linejoin': 'round',
-            'stroke-linecap': 'round',
-            opacity: 0.85,
-        });
-        svg.appendChild(chain);
+            this.bodyGroup.appendChild(svgEl('ellipse', {
+                cx: fmt(cx), cy: fmt(cy), rx: fmt(r), ry: fmt(r * 1.15),
+                fill: this.theme.pattern, opacity: 0.55,
+            }));
+        }
     }
 
     /**
      * Wajah (mata/mulut/lidah) dihitung dari titik/tangent/normal di area
-     * RAHANG (titik terlebar kepala, bukan ujung moncong — anatomis lebih
-     * benar) — koordinatnya bagian dari SVG LOKAL YANG SAMA dengan badan,
-     * jadi otomatis ikut rotasi & posisi kepala.
+     * RAHANG (titik terlebar kepala) — koordinatnya di ruang SVG LOKAL yang
+     * sama dengan badan, jadi otomatis ikut rotasi & posisi kepala.
      */
-    _buildFace(svg) {
-        // Cari t di titik tengah plateau rahang (antara HEAD_LENS[1] & [2]).
-        const jawT = ((this.widthCurve[1].t + this.widthCurve[2].t) / 2) || 0.03;
-        const jaw = this._sampleAt(Math.max(jawT, 0.001));
+    _buildFace(defs, jaw) {
         const r = jaw.width / 2;
         const fwd = { x: -jaw.tangent.x, y: -jaw.tangent.y }; // arah "depan" (menuju moncong)
         const at = (fwdFrac, sideFrac) => ({
@@ -352,14 +319,10 @@ export class SnakeRenderer {
             y: jaw.point.y + fwd.y * r * fwdFrac + jaw.normal.y * r * sideFrac,
         });
 
-        const eyeL = at(0.05, 0.52);
-        const eyeR = at(0.05, -0.52);
-        const eyeR_ = r * 0.34; // mata lebih besar
+        const eyeL = at(0.12, 0.56);
+        const eyeR = at(0.12, -0.56);
+        const eyeR_ = r * 0.4; // mata besar & lucu
 
-        // Kepala "sedikit bergerak" — wobble SANGAT kecil pada grup wajah saja
-        // (mata/mulut/lidah bergerak bersama sebagai satu kesatuan, sinkron),
-        // TIDAK mengubah bentuk/posisi path badan itu sendiri (anchor kepala
-        // di cell-center tetap presisi).
         const seed = this.config.start + this.config.end * 0.5;
         const swayDuration = randRange(4.5, 5.5).toFixed(2);
         const swayDelay = AnimationController.seeded(seed, 0.31, 0.5, 3).toFixed(2);
@@ -369,53 +332,31 @@ export class SnakeRenderer {
         this.faceGroup.style.animationDuration = `${swayDuration}s`;
         this.faceGroup.style.animationDelay = `${swayDelay}s`;
 
-        // Ekspresi berbeda per ular (supaya tidak terlihat copy-paste walau
-        // satu tema warna dipakai berkali-kali) - deterministik dari posisi
-        // asal/tujuan konektornya sendiri (bukan Math.random, supaya sama
-        // setiap kali halaman dimuat ulang): 0=netral, 1=ramah/penasaran
-        // (alis terangkat), 2=tenang-percaya diri (alis sedikit turun).
-        //
-        // PENTING: AnimationController.seeded(seed, a, b, range) menghitung
-        // sin(seed*a + b)*range - koefisien `a` WAJIB tidak nol, kalau tidak
-        // `seed` sama sekali tidak berpengaruh ke hasil (seed*0 selalu 0
-        // untuk semua ular) sehingga SEMUA ular diam-diam dapat expr yang
-        // SAMA persis. Dipakai koefisien (0.47, 1.1) yang beda dari
-        // pemanggilan seeded() lain di file ini (dipakai untuk swayDelay/
-        // waveDelay) supaya ekspresi tidak ikut berkorelasi dengan timing
-        // animasi tersebut.
+        // Ekspresi berbeda per ular, deterministik dari posisi asal/tujuan
+        // (bukan Math.random, supaya sama setiap kali halaman dimuat ulang).
         const expr = Math.min(2, Math.floor(AnimationController.seeded(seed, 0.47, 1.1, 3)));
         const browTilt = expr === 1 ? -0.16 : expr === 2 ? 0.1 : 0;
 
-        // Mata "tajam tapi ramah": sklera putih + iris berwarna (bukan
-        // hitam pekat polos) + pupil bulat (bulat = ramah, beda dari pupil
-        // celah vertikal yang kesannya predator/menyeramkan) + kilau putih,
-        // ditambah garis alis tipis di atas mata untuk kesan "tajam"/hidup.
         const eyeGradId = `snake-eye-grad-${this.uid}`;
         const eyeGrad = svgEl('radialGradient', { id: eyeGradId, cx: '38%', cy: '32%', r: '75%' });
-        eyeGrad.appendChild(svgEl('stop', { offset: '0%', 'stop-color': this.theme.iris }));
-        eyeGrad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': this.theme.outline }));
-        const defs = svg.querySelector('defs');
+        eyeGrad.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#ffffff' }));
+        eyeGrad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#e2e8f0' }));
         defs.appendChild(eyeGrad);
 
         this.eyesOpen = svgEl('g', { class: 'snake-eyes-open' });
         [eyeL, eyeR].forEach((e, idx) => {
             const side = idx === 0 ? 1 : -1;
-            // Sklera
-            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_), fill: '#ffffff' }));
-            // Iris (gradient warna tema, bukan hitam polos)
-            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.72), fill: `url(#${eyeGradId})` }));
-            // Pupil bulat kecil (bulat = ramah)
-            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.34), fill: '#0b0b0f' }));
-            // Kilau
+            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_), fill: `url(#${eyeGradId})`, stroke: this.theme.outline, 'stroke-width': 0.018 }));
+            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.5), fill: this.theme.iris }));
+            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.22), fill: '#0b0b0f' }));
             this.eyesOpen.appendChild(svgEl('circle', {
-                cx: fmt(e.x + eyeR_ * 0.32), cy: fmt(e.y - eyeR_ * 0.35), r: fmt(eyeR_ * 0.32),
+                cx: fmt(e.x + eyeR_ * 0.32), cy: fmt(e.y - eyeR_ * 0.35), r: fmt(eyeR_ * 0.28),
                 fill: '#ffffff', opacity: 0.95, class: 'snake-eye-shine',
             }));
-            // Alis tipis di atas mata — sumber utama "ekspresi" per ular.
-            const browY = e.y - eyeR_ * 1.15;
+            const browY = e.y - eyeR_ * 1.25;
             this.eyesOpen.appendChild(svgEl('path', {
                 d: `M ${fmt(e.x - eyeR_ * 0.9)},${fmt(browY + eyeR_ * browTilt * side)} Q ${fmt(e.x)},${fmt(browY - eyeR_ * 0.35)} ${fmt(e.x + eyeR_ * 0.9)},${fmt(browY - eyeR_ * browTilt * side)}`,
-                stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.18), fill: 'none', 'stroke-linecap': 'round',
+                stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.2), fill: 'none', 'stroke-linecap': 'round',
             }));
         });
 
@@ -430,23 +371,18 @@ export class SnakeRenderer {
         this.faceGroup.appendChild(this.eyesOpen);
         this.faceGroup.appendChild(this.eyesClosed);
 
-        // Mulut: garis tipis di sisi bawah rahang, dekat moncong - sedikit
-        // lebih melengkung ke depan untuk expr=1 (ramah/penasaran, kesan
-        // senyum tipis), lebih lurus untuk expr=2 (tenang), supaya ikut
-        // menyumbang variasi ekspresi antar ular.
         const mouthBulge = expr === 1 ? 1.0 : expr === 2 ? 0.65 : 0.85;
-        const mouthA = at(0.65, 0.5);
-        const mouthB = at(0.65, -0.5);
+        const mouthA = at(0.7, 0.5);
+        const mouthB = at(0.7, -0.5);
         this.mouthEl = svgEl('path', {
             d: `M ${fmt(mouthA.x)},${fmt(mouthA.y)} Q ${fmt(jaw.point.x + fwd.x * r * mouthBulge)},${fmt(jaw.point.y + fwd.y * r * mouthBulge)} ${fmt(mouthB.x)},${fmt(mouthB.y)}`,
-            stroke: this.theme.outline, 'stroke-width': fmt(r * 0.09), fill: 'none', 'stroke-linecap': 'round',
+            stroke: this.theme.outline, 'stroke-width': fmt(r * 0.1), fill: 'none', 'stroke-linecap': 'round',
             class: 'snake-mouth-shape',
         });
         this.mouthEl.style.transformOrigin = `${fmt(jaw.point.x)}px ${fmt(jaw.point.y)}px`;
         this.faceGroup.appendChild(this.mouthEl);
 
-        // Lidah: bercabang, merah tua, menjulur searah moncong dari ujung mulut.
-        const tongueBase = at(0.85, 0);
+        const tongueBase = at(0.92, 0);
         const tongueLen = r * 1.1;
         const tongueHalf = r * 0.1;
         const tip = { x: tongueBase.x + fwd.x * tongueLen, y: tongueBase.y + fwd.y * tongueLen };
@@ -465,43 +401,7 @@ export class SnakeRenderer {
         this.tongueEl.style.transformOrigin = `${fmt(tongueBase.x)}px ${fmt(tongueBase.y)}px`;
         this.faceGroup.appendChild(this.tongueEl);
 
-        svg.appendChild(this.faceGroup);
-    }
-
-    /**
-     * Gelombang badan: SELURUH ular (bukan cuma kepala) bergerak sebagai
-     * SATU object lewat animasi CSS pada properti `d` — dibangun dari
-     * beberapa outline pada fase berbeda (moncong/ekor selalu identik di
-     * semua fase karena amplitudo nol di t=0/t=1), jadi browser
-     * menginterpolasi antar-fase secara mulus. Progressive enhancement:
-     * browser yang belum dukung animasi `d` cukup menampilkan bentuk
-     * statis, tetap presisi & menyatu, cuma tanpa gelombang.
-     */
-    _injectWaveKeyframes() {
-        const bodyFrames = [];
-        const shadowFrames = [];
-        const bellyFrames = [];
-        for (let i = 0; i <= WAVE_STEPS; i++) {
-            const phase = i / WAVE_STEPS;
-            const pct = fmt((i / WAVE_STEPS) * 100).replace(/\.000$/, '');
-            bodyFrames.push(`${pct}% { d: path("${this._buildOutline(phase)}"); }`);
-            shadowFrames.push(`${pct}% { d: path("${this._buildOutline(phase, 0.4, -0.22)}"); }`);
-            bellyFrames.push(`${pct}% { d: path("${this._buildOutline(phase, 0.46, 0.27)}"); }`);
-        }
-
-        const duration = randRange(4.5, 5.5).toFixed(2);
-        const delay = AnimationController.seeded(this.config.start + this.config.end * 0.5, 0.23, 0.4, 3).toFixed(2);
-
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes snake-wave-${this.uid} { ${bodyFrames.join(' ')} }
-            @keyframes snake-wave-shadow-${this.uid} { ${shadowFrames.join(' ')} }
-            @keyframes snake-wave-belly-${this.uid} { ${bellyFrames.join(' ')} }
-            .snake-body-shape.snake-wave-${this.uid} { animation: snake-wave-${this.uid} ${duration}s ease-in-out ${delay}s infinite; }
-            .snake-shadow-shape.snake-wave-${this.uid} { animation: snake-wave-shadow-${this.uid} ${duration}s ease-in-out ${delay}s infinite; }
-            .snake-belly-shape.snake-wave-${this.uid} { animation: snake-wave-belly-${this.uid} ${duration}s ease-in-out ${delay}s infinite; }
-        `;
-        this.wrap.appendChild(style);
+        this.bodyGroup.appendChild(this.faceGroup);
     }
 
     _clearTimer(id) {
@@ -548,14 +448,14 @@ export class SnakeRenderer {
     }
 
     /**
-     * Efek "ular aktif" saat pion mendarat di kepalanya — glow warna tema +
-     * lidah menjulur. Best-effort, tidak pernah error.
+     * Efek "ular aktif" saat pion mendarat di kepalanya — glow warna tema
+     * pada seluruh grup badan + lidah menjulur. Best-effort, tidak pernah error.
      */
     async reactToLanding() {
-        if (!this.bodyPath) return;
-        this.bodyPath.style.setProperty('--bite-glow', this.theme.glow);
+        if (!this.bodyGroup) return;
+        this.bodyGroup.style.setProperty('--bite-glow', this.theme.glow);
         AnimationController.pulse(this.tongueEl, 'snake-tongue-flick', 180);
-        await AnimationController.pulse(this.bodyPath, 'snake-bite-glow', 750);
+        await AnimationController.pulse(this.bodyGroup, 'snake-bite-glow', 750);
     }
 
     destroy() {

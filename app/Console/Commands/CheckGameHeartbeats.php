@@ -30,7 +30,7 @@ class CheckGameHeartbeats extends Command
         $reconnectTimeout = $settings->getInt('reconnect_timeout_seconds');
 
         $this->detectNewDisconnects($gameSessionService, $heartbeatTimeout);
-        $this->resolvePausedSessions($gameSessionService, $heartbeatTimeout, $reconnectTimeout);
+        $this->resolveDisconnectedPlayers($gameSessionService, $heartbeatTimeout, $reconnectTimeout);
 
         return self::SUCCESS;
     }
@@ -57,32 +57,38 @@ class CheckGameHeartbeats extends Command
         }
     }
 
-    private function resolvePausedSessions(GameSessionService $gameSessionService, int $heartbeatTimeout, int $reconnectTimeout): void
+    /**
+     * Cek SEMUA pemain berstatus Disconnected di sesi Playing MAUPUN Paused
+     * (bukan cuma sesi Paused seperti sebelumnya) - untuk game 3-6 pemain,
+     * sesi bisa TETAP Playing walau satu pemain terputus (lihat
+     * GameSessionService::pauseForDisconnect(), "lanjut tanpa dia"), jadi
+     * pemain yang terputus itu tetap perlu dipantau reconnect/timeout-nya
+     * walau sesinya sendiri tidak pernah masuk status Paused. Looping semua
+     * pemain Disconnected (bukan cuma firstWhere) juga penting kalau lebih
+     * dari satu pemain terputus bersamaan di sesi yang sama.
+     */
+    private function resolveDisconnectedPlayers(GameSessionService $gameSessionService, int $heartbeatTimeout, int $reconnectTimeout): void
     {
-        $pausedSessions = GameSession::query()
+        $sessions = GameSession::query()
             ->where('mode', GameMode::Multiplayer)
-            ->where('status', GameStatus::Paused)
+            ->whereIn('status', [GameStatus::Playing, GameStatus::Paused])
             ->with('players')
             ->get();
 
-        foreach ($pausedSessions as $gameSession) {
-            $disconnected = $gameSession->players->firstWhere('status', PlayerStatus::Disconnected);
+        foreach ($sessions as $gameSession) {
+            foreach ($gameSession->players->where('status', PlayerStatus::Disconnected) as $disconnected) {
+                $stillStale = $disconnected->last_heartbeat_at === null
+                    || $disconnected->last_heartbeat_at->lt(now()->subSeconds($heartbeatTimeout));
 
-            if (! $disconnected) {
-                continue;
-            }
+                if (! $stillStale) {
+                    $gameSessionService->resumeFromDisconnect($gameSession, $disconnected);
 
-            $stillStale = $disconnected->last_heartbeat_at === null
-                || $disconnected->last_heartbeat_at->lt(now()->subSeconds($heartbeatTimeout));
+                    continue;
+                }
 
-            if (! $stillStale) {
-                $gameSessionService->resumeFromDisconnect($gameSession, $disconnected);
-
-                continue;
-            }
-
-            if ($disconnected->updated_at->lt(now()->subSeconds($reconnectTimeout))) {
-                $gameSessionService->forfeitDueToDisconnect($gameSession, $disconnected);
+                if ($disconnected->updated_at->lt(now()->subSeconds($reconnectTimeout))) {
+                    $gameSessionService->forfeitDueToDisconnect($gameSession, $disconnected);
+                }
             }
         }
     }

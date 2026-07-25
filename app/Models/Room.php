@@ -18,6 +18,7 @@ class Room extends Model
     protected $fillable = [
         'kode_room',
         'tipe',
+        'jumlah_pemain',
         'status',
         'created_by',
         'expires_at',

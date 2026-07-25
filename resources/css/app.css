@@ -276,27 +276,16 @@
     overflow: visible;
 }
 
-/* Ular v6: SATU path SVG utuh dengan profil lebar ANATOMI ular sungguhan
-   (moncong kecil -> rahang lebar -> leher menyempit -> badan -> ekor
-   meruncing — lihat SnakeRenderer buildWidthCurve()) — bukan tabung rata
-   ala belut, dan bukan potongan gambar terpisah yang "ditempel". */
-.snake-body-shape {
+/* Ular v8: SATU SILUET MULUS (dua potongan path kepala+badan yang menyatu
+   presisi di titik leher — lihat SnakeRenderer._polygonPath()), BUKAN
+   rantai ellipse/ruas terpisah (v7 terbaca sebagai cacing/lipan) dan BUKAN
+   satu path yang di-deform tiap frame (v6, mahal/non-GPU). Badan 100%
+   STATIS (tidak ada animasi gelombang sama sekali) — "hidup"-nya cukup dari
+   kedip mata/lidah/mulut (one-shot pulse) + goyang wajah halus di bawah.
+   Volume badan cukup SATU drop-shadow di level grup. */
+.snake-body-group {
     filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.24));
 }
-
-.snake-shadow-shape,
-.snake-belly-shape,
-.snake-scale-group {
-    pointer-events: none;
-}
-
-/* Gelombang SELURUH badan (kepala+badan+ekor bergerak sebagai SATU object)
-   — animasi diisi per-instance oleh SnakeRenderer._injectWaveKeyframes()
-   (nama keyframe unik per ular, "snake-wave-{uid}"), amplitudo PERSIS nol
-   di kedua ujung path jadi moncong & ekor tidak pernah bergeser dari
-   cell-center anchornya walau badan tengah berombak. Shadow & highlight
-   ikut animasi yang sama (keyframe terpisah, fase identik) supaya tetap
-   menempel pas di badan saat bergelombang. */
 
 /* Wajah (mata/mulut/lidah): bentuk SVG kecil, dihitung dari titik/tangent
    path di area rahang — ikut rotasi & posisi kepala secara otomatis karena
@@ -370,6 +359,25 @@
     filter: drop-shadow(0 0 0.05px var(--bite-glow)) drop-shadow(0 0 0.12px var(--bite-glow));
 }
 
+/* Toggle tema visual ular/perosotan (lihat board-visuals.js) - tombol aktif ditandai .is-active. */
+.board-theme-btn.is-active {
+    border-color: transparent;
+    background-color: #1d4ed8;
+    color: #ffffff;
+}
+
+/* Perosotan (SlideRenderer, tema alternatif untuk konektor jenis=ular -
+   lihat BoardRenderer.getBoardTheme()): statis total seperti tangga, TANPA
+   wajah/gerakan idle. Satu-satunya elemen "hidup" adalah glow saat
+   reactToLanding() dipicu (sama seperti .snake-bite-glow). */
+.slide-body-group {
+    filter: drop-shadow(0 4px 7px rgba(0, 0, 0, 0.22));
+}
+
+.slide-glow {
+    filter: drop-shadow(0 0 0.05px var(--bite-glow)) drop-shadow(0 0 0.12px var(--bite-glow));
+}
+
 /* Tangga: SENGAJA statis (tidak ada gerakan idle sama sekali) sesuai
    permintaan - dulu ada bob translateY sangat halus, sekarang dihapus.
    Satu-satunya elemen "hidup" pada tangga adalah drop-shadow lembut di
@@ -434,9 +442,6 @@
 
 /* Papan berhenti "hidup" saat di luar viewport (lihat AnimationController.
    observeVisibility()) — hemat kerja render tanpa perlu melepas elemen. */
-#game-board.board-anims-paused .snake-body-shape,
-#game-board.board-anims-paused .snake-shadow-shape,
-#game-board.board-anims-paused .snake-belly-shape,
 #game-board.board-anims-paused .snake-face-group {
     animation-play-state: paused;
 }
@@ -449,9 +454,6 @@
 .tile-glow-ular { box-shadow: 0 0 7px 1px rgba(225, 29, 72, 0.28); }
 
 @media (prefers-reduced-motion: reduce) {
-    .snake-body-shape,
-    .snake-shadow-shape,
-    .snake-belly-shape,
     .snake-face-group,
     .snake-mouth-open,
     .snake-tongue-flick,
