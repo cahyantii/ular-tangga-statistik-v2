@@ -118,6 +118,14 @@ export class SlideRenderer {
         }
 
         // Tutup bulat di kedua ujung (bukan cuma di moncong seperti ular) - perosotan simetris, tidak ada "kepala".
+        // PENTING: capAt() SELALU menyusun titik dari sisi left ke right
+        // (independen dari `sign`, yang cuma menentukan sisi lengkungnya) -
+        // startCap dipakai apa adanya (left[0] -> right[0], pas menyambung ke
+        // right.slice() berikutnya), tapi endCap WAJIB di-reverse() supaya
+        // urutannya right[last] -> left[last] (menyambung dari ujung right
+        // edge ke awal left edge) - tanpa reverse ini, poligon "memelintir"
+        // balik ke arah berlawanan di ujung bawah dan membentuk siluet
+        // bowtie/terpelintir alih-alih tabung bulat mulus.
         const capAt = (sample, sign) => {
             const r = WIDTH / 2;
             const angleNormal = Math.atan2(sample.normal.y, sample.normal.x);
@@ -130,7 +138,7 @@ export class SlideRenderer {
         };
 
         const startCap = capAt(samples[0], 1);
-        const endCap = capAt(samples[samples.length - 1], -1);
+        const endCap = capAt(samples[samples.length - 1], -1).reverse();
 
         const outline = [...startCap, ...right.slice(1, -1), ...endCap, ...left.slice(1, -1).reverse()];
         return `M ${outline.map((p) => `${fmt(p.x)},${fmt(p.y)}`).join(' L ')} Z`;
