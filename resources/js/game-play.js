@@ -1090,39 +1090,35 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', initDiceSize);
 
     /**
-     * Tombol dadu mengambang (mobile): muncul cuma saat #turn-dice-card asli
-     * sudah discroll keluar layar DAN sedang giliran pemain (rollButton tidak
-     * hidden) - forward klik ke rollButton asli (satu-satunya sumber state),
-     * tidak menduplikasi logic roll sama sekali. Lihat komentar di
-     * show.blade.php untuk alasan UX-nya.
+     * FAB aksi mobile (5 tombol, lihat #mobile-action-fab di show.blade.php)
+     * — "remote control" murni, tidak ada logic yang diduplikasi:
+     *  - Dadu: mirror state disabled dari #roll-dice-button asli (MutationObserver,
+     *    sama seperti versi FAB dadu sebelumnya) + forward klik ke sana.
+     *  - Keluar: forward klik ke #leave-game-button asli (confirm() dkk tetap
+     *    di situ, satu-satunya tempat).
+     *  - Progress/Pemain/Log: dispatch event `open-mobile-panel` yang didengar
+     *    Alpine di masing-masing panel (show.blade.php) untuk membukanya
+     *    sebagai overlay — TIDAK ada state panel yang disimpan di JS ini.
      */
-    (function setupRollDiceFab() {
-        const turnCard = document.getElementById('turn-dice-card');
-        const fabWrap = document.getElementById('roll-dice-fab-wrap');
-        const fab = document.getElementById('roll-dice-fab');
-        if (!turnCard || !fabWrap || !fab || !rollButton || typeof IntersectionObserver === 'undefined') {
-            return;
+    (function initMobileActionFab() {
+        const diceBtn = document.getElementById('mobile-fab-dice');
+        const leaveBtn = document.getElementById('mobile-fab-leave');
+        const leaveButtonReal = document.getElementById('leave-game-button');
+
+        if (diceBtn && rollButton) {
+            const syncDice = () => { diceBtn.disabled = rollButton.disabled; };
+            new MutationObserver(syncDice).observe(rollButton, { attributes: true, attributeFilter: ['disabled'] });
+            diceBtn.addEventListener('click', () => rollButton.click());
+            syncDice();
         }
 
-        let cardVisible = true;
+        leaveBtn?.addEventListener('click', () => leaveButtonReal?.click());
 
-        const syncFab = () => {
-            fab.disabled = rollButton.disabled;
-            const isMobile = window.matchMedia('(max-width: 767px)').matches;
-            const myTurn = !rollButton.classList.contains('hidden');
-            fabWrap.classList.toggle('hidden', !(isMobile && myTurn && !cardVisible));
-        };
-
-        new IntersectionObserver(([entry]) => {
-            cardVisible = entry.isIntersecting;
-            syncFab();
-        }, { threshold: 0.1 }).observe(turnCard);
-
-        new MutationObserver(syncFab).observe(rollButton, { attributes: true, attributeFilter: ['disabled', 'class'] });
-        window.addEventListener('resize', syncFab);
-        fab.addEventListener('click', () => rollButton.click());
-
-        syncFab();
+        document.querySelectorAll('#mobile-action-fab [data-open-panel]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                window.dispatchEvent(new CustomEvent('open-mobile-panel', { detail: btn.dataset.openPanel }));
+            });
+        });
     })();
 
     document.getElementById('leave-game-button')?.addEventListener('click', async () => {
