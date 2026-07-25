@@ -24,7 +24,7 @@
                     @endif
                 </x-player.topbar>
 
-                <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+                <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 {{ request()->routeIs('game.show') ? '' : 'max-lg:pb-24' }}">
                     <x-admin.flash />
                     {{ $slot }}
                 </main>
@@ -32,6 +32,17 @@
 
             <x-player.notification-icon-templates />
             <x-player.feedback-modal />
+
+            {{--
+                FAB navigasi global — disembunyikan HANYA di halaman gameplay
+                (route game.show), karena halaman itu sudah punya FAB aksi
+                permainan sendiri (5 tombol berbeda: Progress/Pemain/Dadu/Log/
+                Keluar, lihat #mobile-action-fab di resources/views/game/show.blade.php)
+                supaya tidak dobel FAB di layar yang sama.
+            --}}
+            @unless (request()->routeIs('game.show'))
+                <x-player.mobile-fab />
+            @endunless
         </div>
 
         @stack('scripts')
