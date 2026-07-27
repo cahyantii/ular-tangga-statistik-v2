@@ -293,6 +293,7 @@ class GameSessionService
 
             // Pool soal kategori ini habis dalam sesi ini -> diperlakukan seperti petak biasa.
             $effect = ['type' => 'none'];
+            $toast = 'Tidak ada soal tersisa untuk kategori ini! Petak diperlakukan seperti petak biasa.';
         }
 
         if (in_array($effect['type'], ['bonus', 'penalti', 'mystery'], true)) {
@@ -311,7 +312,12 @@ class GameSessionService
 
         $this->turn->advance($gameSession);
 
-        return ['type' => $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
+        $response = ['type' => $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
+        if (isset($toast)) {
+            $response['toast'] = $toast;
+        }
+        
+        return $response;
     }
 
     /**

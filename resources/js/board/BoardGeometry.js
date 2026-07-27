@@ -9,8 +9,7 @@
  * DOM. Dipakai oleh SnakeRenderer & LadderRenderer untuk kedua jenis
  * konektor dengan cara yang identik.
  */
-const LANES = [-0.34, -0.16, 0.16, 0.34];
-
+const LANES = [0]; // Jalur selalu di tengah, tidak ada offset ke samping
 export class BoardGeometry {
     /** @param {import('./CoordinateHelper').CoordinateHelper} coordHelper */
     constructor(coordHelper) {

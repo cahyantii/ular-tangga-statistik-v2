@@ -13,10 +13,10 @@ const SVG_NS = 'http://www.w3.org/2000/svg';
  * sendiri untuk ujung yang membulat natural) — guratan serat kayu v6 tetap
  * dihapus (terlalu halus untuk gaya flat, banyak node tanpa payoff visual).
  */
-const RAIL_GAP = 0.46;
-const RUNG_SPACING = 0.26;
-const RAIL_THICKNESS = 0.15;
-const RUNG_THICKNESS = 0.085;
+const RAIL_GAP = 0.36;
+const RUNG_SPACING = 0.20;
+const RAIL_THICKNESS = 0.05;
+const RUNG_THICKNESS = 0.065;
 /** Outline tipis di bawah tiap rel/anak tangga — supaya tetap terbaca kontras di kotak putih/terang (bukan cuma drop-shadow). */
 const OUTLINE_EXTRA = 0.055;
 

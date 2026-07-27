@@ -138,6 +138,10 @@ class GameController extends Controller
         $response['robot_turns'] = $result['robot_turns'] ?? [];
         $response['newly_unlocked_achievements'] = $result['newly_unlocked_achievements'] ?? [];
 
+        if (isset($result['toast'])) {
+            $response['toast'] = $result['toast'];
+        }
+
         return $response;
     }
 }

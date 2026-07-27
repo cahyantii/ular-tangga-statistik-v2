@@ -333,15 +333,29 @@ document.addEventListener('DOMContentLoaded', () => {
         let el = pawnLayer.querySelector(`[data-pawn-id="${player.id}"]`);
         if (el) return el;
 
-        const { bg, ring } = pawnColorStyle(player);
+        const { bg } = pawnColorStyle(player);
         el = document.createElement('div');
         el.dataset.pawnId = String(player.id);
         el.className = 'game-pawn';
-        el.style.width = `${(100 / jumlahKolom) * 0.52}%`;
-        el.style.height = `${(100 / totalRows) * 0.52}%`;
+        // Pion 3D lebih tinggi dan ramping
+        el.style.width = `${(100 / jumlahKolom) * 0.45}%`;
+        el.style.height = `${(100 / totalRows) * 0.8}%`;
+        
         el.innerHTML = `
-            <div class="pawn-body" style="background:${bg}; border-color:${ring};">
-                <span class="pawn-head" style="background:${ring};"></span>
+            <div class="pawn-body">
+                <svg viewBox="0 0 100 150" class="pawn-svg">
+                    <!-- Base Shadow -->
+                    <ellipse cx="50" cy="140" rx="35" ry="10" fill="#000000" opacity="0.35" class="pawn-shadow" />
+                    <g class="pawn-shape" transform-origin="50px 140px">
+                        <!-- Body (Base to Neck) -->
+                        <path d="M 22,130 Q 50,150 78,130 L 63,45 L 37,45 Z" fill="${bg}" stroke="#111827" stroke-width="5" stroke-linejoin="round" />
+                        <!-- Head -->
+                        <circle cx="50" cy="35" r="30" fill="${bg}" stroke="#111827" stroke-width="5" />
+                        <!-- Highlights (Glossy 3D) -->
+                        <path d="M 32,20 A 18,18 0 0,0 25,40" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.75" />
+                        <path d="M 32,120 L 41,55" stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.5" />
+                    </g>
+                </svg>
             </div>
         `;
         el.title = player.is_robot ? 'Robot' : (player.nama ?? 'Pemain');
@@ -411,10 +425,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // konektor, ini JUGA posisi akhir) - beri stackIndex yang benar di
             // situ; langkah transit sebelumnya cukup stackIndex 0 (lewat saja).
             const stackIndex = step === landingPosisi ? stackIndexAt(step, player.id, result.session?.players) : 0;
+            
+            // Beri animasi loncat saat pindah petak
+            el.classList.remove('pawn-hop');
+            void el.offsetWidth; // Force reflow agar animasi me-restart
+            el.classList.add('pawn-hop');
+            
             placePawnAt(el, step, stackIndex);
             // eslint-disable-next-line no-await-in-loop
-            await delay(220);
+            await delay(400);
         }
+        el.classList.remove('pawn-hop');
 
         if (finalPosisi !== landingPosisi) {
             // Konektor diterapkan: tangga (naik) atau ular (turun). Ambil jenis
@@ -967,6 +988,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await postJson(rollUrl);
 
             await animateDiceRoll(result.nilai_dadu ?? 1);
+
+            if (result.toast) {
+                showToast(result.toast);
+            }
 
             const actingPlayer = result.session.players.find((p) => p.id === myGamePlayerId) ?? me;
             if (actingPlayer) {

@@ -4,15 +4,15 @@ import { AnimationController } from './AnimationController.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 /** Ketebalan badan (satuan kotak) — KONSTAN dari leher sampai pangkal ekor. */
-const BODY_THICK = 0.34;
+const BODY_THICK = 0.25; // Dikembalikan tebal seperti referensi
 /** Profil lebar KEPALA (anatomi ular, bukan tabung rata): moncong kecil -> rahang LEBAR -> leher MENGECIL (lebih sempit dari badan) -> badan. */
-const NOSE_W = BODY_THICK * 0.9;
-const JAW_W = BODY_THICK * 1.75;
-const NECK_W = BODY_THICK * 0.74;
+const NOSE_W = BODY_THICK * 1.5; // Moncong rata dan lebar seperti gaya kartun
+const JAW_W = BODY_THICK * 1.7; // Rahang lebar untuk menampung mata besar yang menonjol
+const NECK_W = BODY_THICK * 0.9;
 /** Panjang tiap fase kepala dalam satuan kotak ABSOLUT (bukan fraksi jarak) — diskalakan mengikuti BODY_THICK supaya ukuran kepala konsisten berapa pun panjang ularnya. */
 const HEAD_LENS = [0, 0.06, 0.11, 0.2, 0.27];
 const TAIL_T = 0.82;
-const SEGMENTS = 30;
+const SEGMENTS = 20;
 
 function smoothstep(edge0, edge1, x) {
     if (edge1 <= edge0) return x >= edge1 ? 1 : 0;
@@ -135,7 +135,7 @@ export class SnakeRenderer {
         // sungguhan dengan lekukan S (p1/p2 dibengkokkan berlawanan arah)
         // supaya ular terlihat meliuk, bukan lurus seperti pipa.
         const bendSign = px + py >= 0 ? 1 : -1;
-        const bend = Math.min(distance * 0.32, 0.85);
+        const bend = Math.min(distance * 0.35, 1.0); // Kurva S yang lembut
         this.p0 = { x: 0, y: 0 };
         this.p1 = { x: bendSign * bend, y: distance * 0.33 };
         this.p2 = { x: -bendSign * bend, y: distance * 0.67 };
@@ -143,7 +143,7 @@ export class SnakeRenderer {
 
         // Wrapper dilebarkan mengikuti titik terlebar (rahang) + margin aman
         // untuk lekukan S & pola totol di badan.
-        this.wrapWidth = JAW_W * 1.3 + Math.abs(bend) * 1.6;
+        this.wrapWidth = JAW_W * 1.5 + Math.abs(bend) * 2.0 + 0.5;
 
         this.wrap = document.createElement('div');
         this.wrap.className = 'board-object snake-object';
@@ -166,7 +166,9 @@ export class SnakeRenderer {
         const point = cubicPoint(this.p0, this.p1, this.p2, this.p3, t);
         const tangent = cubicTangent(this.p0, this.p1, this.p2, this.p3, t);
         const normal = { x: -tangent.y, y: tangent.x };
-        return { point, tangent, normal, width: widthAtCurve(this.widthCurve, t) };
+        
+        // Osilasi (waviness) dihilangkan agar garis lurus melengkung halus mengikuti kurva dasar saja
+        return { point: point, tangent, normal, width: widthAtCurve(this.widthCurve, t) };
     }
 
     /**
@@ -272,7 +274,36 @@ export class SnakeRenderer {
         });
         this.bodyGroup.appendChild(this.bellyPath);
 
+        // Tambahkan sisik iga melintang (scutes) di area perut
+        const bellyScutesGroup = svgEl('g', { class: 'snake-belly-scutes', opacity: 0.35 });
+        const scutesStart = neckEndT + 0.05;
+        const scutesEnd = TAIL_T - 0.05;
+        const numScutes = Math.floor((scutesEnd - scutesStart) * distance / 0.1);
+        for (let i = 0; i < numScutes; i++) {
+            const t = scutesStart + ((scutesEnd - scutesStart) * (i / numScutes));
+            const s = this._sampleAt(t);
+            const w = s.width * 0.44 * 0.7; // 70% dari lebar perut
+            const cx = s.point.x + s.normal.x * s.width * 0.26;
+            const cy = s.point.y + s.normal.y * s.width * 0.26;
+            const p1 = { x: cx + s.normal.x * w/2, y: cy + s.normal.y * w/2 };
+            const p2 = { x: cx - s.normal.x * w/2, y: cy - s.normal.y * w/2 };
+            bellyScutesGroup.appendChild(svgEl('line', {
+                x1: fmt(p1.x), y1: fmt(p1.y), x2: fmt(p2.x), y2: fmt(p2.y),
+                stroke: this.theme.outline, 'stroke-width': 0.015
+            }));
+        }
+        this.bodyGroup.appendChild(bellyScutesGroup);
+
         this._buildPatternSpots(distance, neckEndT);
+        
+        // Highlight 3D punggung (spine highlight) tipis transparan
+        this.spineHighlight = svgEl('path', {
+            d: this._polygonPath(neckEndT + 0.05, TAIL_T - 0.05, 0.04, -0.1),
+            fill: '#ffffff',
+            opacity: 0.25,
+        });
+        this.bodyGroup.appendChild(this.spineHighlight);
+
         this._buildFace(defs, jaw);
 
         this.wrap.appendChild(svg);
@@ -299,9 +330,18 @@ export class SnakeRenderer {
             const cy = s.point.y + s.normal.y * offset * side;
             const r = s.width * 0.24;
 
-            this.bodyGroup.appendChild(svgEl('ellipse', {
-                cx: fmt(cx), cy: fmt(cy), rx: fmt(r), ry: fmt(r * 1.15),
-                fill: this.theme.pattern, opacity: 0.55,
+            // Motif berlian/chevron mengikuti arah normal dan tangent
+            const dW = r * 0.9;
+            const dH = r * 1.6;
+            const dTop = { x: cx + s.normal.x * dW, y: cy + s.normal.y * dW };
+            const dBot = { x: cx - s.normal.x * dW, y: cy - s.normal.y * dW };
+            const dLeft = { x: cx - s.tangent.x * dH, y: cy - s.tangent.y * dH };
+            const dRight = { x: cx + s.tangent.x * dH, y: cy + s.tangent.y * dH };
+
+            this.bodyGroup.appendChild(svgEl('polygon', {
+                points: `${fmt(dTop.x)},${fmt(dTop.y)} ${fmt(dRight.x)},${fmt(dRight.y)} ${fmt(dBot.x)},${fmt(dBot.y)} ${fmt(dLeft.x)},${fmt(dLeft.y)}`,
+                fill: this.theme.pattern, opacity: 0.65,
+                'stroke-linejoin': 'round',
             }));
         }
     }
@@ -319,9 +359,9 @@ export class SnakeRenderer {
             y: jaw.point.y + fwd.y * r * fwdFrac + jaw.normal.y * r * sideFrac,
         });
 
-        const eyeL = at(0.12, 0.56);
-        const eyeR = at(0.12, -0.56);
-        const eyeR_ = r * 0.4; // mata besar & lucu
+        const eyeL = at(0.2, 0.7); // Mata menonjol keluar ke samping
+        const eyeR = at(0.2, -0.7);
+        const eyeR_ = r * 0.55; // Mata bundar besar gaya kartun
 
         const seed = this.config.start + this.config.end * 0.5;
         const swayDuration = randRange(4.5, 5.5).toFixed(2);
@@ -332,51 +372,53 @@ export class SnakeRenderer {
         this.faceGroup.style.animationDuration = `${swayDuration}s`;
         this.faceGroup.style.animationDelay = `${swayDelay}s`;
 
-        // Ekspresi berbeda per ular, deterministik dari posisi asal/tujuan
-        // (bukan Math.random, supaya sama setiap kali halaman dimuat ulang).
         const expr = Math.min(2, Math.floor(AnimationController.seeded(seed, 0.47, 1.1, 3)));
-        const browTilt = expr === 1 ? -0.16 : expr === 2 ? 0.1 : 0;
-
-        const eyeGradId = `snake-eye-grad-${this.uid}`;
-        const eyeGrad = svgEl('radialGradient', { id: eyeGradId, cx: '38%', cy: '32%', r: '75%' });
-        eyeGrad.appendChild(svgEl('stop', { offset: '0%', 'stop-color': '#ffffff' }));
-        eyeGrad.appendChild(svgEl('stop', { offset: '100%', 'stop-color': '#e2e8f0' }));
-        defs.appendChild(eyeGrad);
+        const browTilt = expr === 1 ? -0.2 : expr === 2 ? 0.2 : 0;
 
         this.eyesOpen = svgEl('g', { class: 'snake-eyes-open' });
         [eyeL, eyeR].forEach((e, idx) => {
             const side = idx === 0 ? 1 : -1;
-            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_), fill: `url(#${eyeGradId})`, stroke: this.theme.outline, 'stroke-width': 0.018 }));
-            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.5), fill: this.theme.iris }));
-            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.22), fill: '#0b0b0f' }));
-            this.eyesOpen.appendChild(svgEl('circle', {
-                cx: fmt(e.x + eyeR_ * 0.32), cy: fmt(e.y - eyeR_ * 0.35), r: fmt(eyeR_ * 0.28),
-                fill: '#ffffff', opacity: 0.95, class: 'snake-eye-shine',
+            // Bola mata putih besar
+            this.eyesOpen.appendChild(svgEl('circle', { cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_), fill: '#ffffff', stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.15) }));
+            
+            // Pupil bulat besar hitam
+            this.eyesOpen.appendChild(svgEl('circle', { 
+                cx: fmt(e.x), cy: fmt(e.y), r: fmt(eyeR_ * 0.45), 
+                fill: '#111827'
             }));
-            const browY = e.y - eyeR_ * 1.25;
+
+            // Pantulan cahaya (Shine) statis
+            this.eyesOpen.appendChild(svgEl('circle', {
+                cx: fmt(e.x + eyeR_ * 0.15), cy: fmt(e.y - eyeR_ * 0.15), r: fmt(eyeR_ * 0.15),
+                fill: '#ffffff', opacity: 0.95
+            }));
+
+            // Alis melengkung
+            const browY = e.y - eyeR_ * 1.35;
             this.eyesOpen.appendChild(svgEl('path', {
-                d: `M ${fmt(e.x - eyeR_ * 0.9)},${fmt(browY + eyeR_ * browTilt * side)} Q ${fmt(e.x)},${fmt(browY - eyeR_ * 0.35)} ${fmt(e.x + eyeR_ * 0.9)},${fmt(browY - eyeR_ * browTilt * side)}`,
-                stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.2), fill: 'none', 'stroke-linecap': 'round',
+                d: `M ${fmt(e.x - eyeR_ * 0.8)},${fmt(browY + eyeR_ * browTilt * side)} Q ${fmt(e.x)},${fmt(browY - eyeR_ * 0.4)} ${fmt(e.x + eyeR_ * 0.8)},${fmt(browY - eyeR_ * browTilt * side)}`,
+                stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.15), fill: 'none', 'stroke-linecap': 'round',
             }));
         });
 
         this.eyesClosed = svgEl('g', { class: 'snake-eyes-closed', style: 'display:none;' });
         [eyeL, eyeR].forEach((e) => {
             this.eyesClosed.appendChild(svgEl('line', {
-                x1: fmt(e.x - eyeR_), y1: fmt(e.y), x2: fmt(e.x + eyeR_), y2: fmt(e.y),
-                stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.45), 'stroke-linecap': 'round',
+                x1: fmt(e.x - eyeR_ * 0.8), y1: fmt(e.y), x2: fmt(e.x + eyeR_ * 0.8), y2: fmt(e.y),
+                stroke: this.theme.outline, 'stroke-width': fmt(eyeR_ * 0.35), 'stroke-linecap': 'round',
             }));
         });
 
         this.faceGroup.appendChild(this.eyesOpen);
         this.faceGroup.appendChild(this.eyesClosed);
 
-        const mouthBulge = expr === 1 ? 1.0 : expr === 2 ? 0.65 : 0.85;
-        const mouthA = at(0.7, 0.5);
-        const mouthB = at(0.7, -0.5);
+        // Mulut lurus/datar khas wajah bingung/datar
+        const mouthA = at(0.85, 0.4);
+        const mouthB = at(0.85, -0.4);
+        const mouthBulge = expr === 1 ? 0.95 : expr === 2 ? 0.8 : 0.85; // Sedikit cekung/cembung ringan
         this.mouthEl = svgEl('path', {
             d: `M ${fmt(mouthA.x)},${fmt(mouthA.y)} Q ${fmt(jaw.point.x + fwd.x * r * mouthBulge)},${fmt(jaw.point.y + fwd.y * r * mouthBulge)} ${fmt(mouthB.x)},${fmt(mouthB.y)}`,
-            stroke: this.theme.outline, 'stroke-width': fmt(r * 0.1), fill: 'none', 'stroke-linecap': 'round',
+            stroke: this.theme.outline, 'stroke-width': fmt(r * 0.08), fill: 'none', 'stroke-linecap': 'round',
             class: 'snake-mouth-shape',
         });
         this.mouthEl.style.transformOrigin = `${fmt(jaw.point.x)}px ${fmt(jaw.point.y)}px`;

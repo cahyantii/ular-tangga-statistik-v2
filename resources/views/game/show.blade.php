@@ -274,6 +274,47 @@
         </div>
     </x-player.modal>
 
+    {{-- Modal Preview Petak --}}
+    <x-player.modal name="preview-tile-modal">
+        <div class="text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 shadow-sm mb-4">
+                <x-player.icon name="info" class="h-7 w-7 text-slate-500" />
+            </div>
+            <h3 class="text-lg font-bold text-slate-800">Preview Petak Khusus</h3>
+            <p id="preview-tile-text" class="mt-2 text-sm leading-relaxed text-slate-600"></p>
+            <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal'))" class="mt-6 w-full rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-600">Tutup</button>
+        </div>
+    </x-player.modal>
+
+    <script>
+        window.addEventListener('preview-tile', function (e) {
+            const data = e.detail;
+            let message = `Ini adalah petak ${data.jenis.toUpperCase()} di posisi ${data.posisi}. `;
+            
+            switch (data.jenis) {
+                case 'soal':
+                    message += 'Jika Anda mendarat di petak ini, Anda harus menjawab pertanyaan dengan benar untuk mendapatkan poin.';
+                    break;
+                case 'bonus':
+                    message += 'Anda akan mendapatkan bonus poin jika berhenti di petak ini.';
+                    break;
+                case 'penalti':
+                    message += 'Poin Anda akan dikurangi jika berhenti di petak ini.';
+                    break;
+                case 'ular':
+                case 'tangga':
+                    message += `Petak ini adalah jalur ${data.jenis}.`;
+                    break;
+                case 'mystery':
+                    message += 'Petak misteri bisa memberikan Anda bonus poin atau penalti!';
+                    break;
+            }
+            
+            document.getElementById('preview-tile-text').textContent = message;
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'preview-tile-modal' }));
+        });
+    </script>
+
     {{-- Template icon achievement (dikloning JS, lihat catatan di atas) --}}
     <div id="achievement-icon-templates" class="hidden">
         <template data-icon="trophy"><x-player.icon name="trophy" class="h-10 w-10" /></template>

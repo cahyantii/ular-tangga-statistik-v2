@@ -115,8 +115,8 @@
 .game-pawn {
     position: absolute;
     transition:
-        left 0.22s ease-in-out,
-        top 0.22s ease-in-out,
+        left 0.4s ease-in-out,
+        top 0.4s ease-in-out,
         opacity 0.2s ease-in-out;
     z-index: 5;
     transform: translate(-50%, -50%);
@@ -132,19 +132,36 @@
     position: relative;
     width: 100%;
     height: 100%;
-    border-radius: 9999px;
-    border: 2px solid #ffffff;
-    box-shadow: 0 3px 6px rgba(15, 23, 42, 0.35);
+    /* 3D Pion tidak butuh style lingkaran lagi karena pakai SVG */
 }
 
-.pawn-head {
-    position: absolute;
-    top: 18%;
-    left: 50%;
-    width: 34%;
-    height: 34%;
-    border-radius: 9999px;
-    transform: translateX(-50%);
+.pawn-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Animasi melompat antar petak */
+.pawn-hop .pawn-shape {
+    animation: pawn-hop-shape-kf 0.4s cubic-bezier(0.3, 0, 0.7, 1) forwards;
+}
+
+.pawn-hop .pawn-shadow {
+    animation: pawn-hop-shadow-kf 0.4s cubic-bezier(0.3, 0, 0.7, 1) forwards;
+}
+
+@keyframes pawn-hop-shape-kf {
+    0%   { transform: translateY(0) scale(1, 1); }
+    15%  { transform: translateY(2%) scale(1.05, 0.95); } /* Squash sebelum loncat */
+    50%  { transform: translateY(-40%) scale(0.95, 1.05); } /* Puncak loncatan + stretch */
+    85%  { transform: translateY(2%) scale(1.05, 0.95); } /* Squash saat mendarat */
+    100% { transform: translateY(0) scale(1, 1); }
+}
+
+@keyframes pawn-hop-shadow-kf {
+    0%   { transform: scale(1); opacity: 0.35; }
+    50%  { transform: scale(0.6); opacity: 0.15; } /* Bayangan mengecil saat di udara */
+    100% { transform: scale(1); opacity: 0.35; }
 }
 
 .pawn-bump {
