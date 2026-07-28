@@ -139,6 +139,15 @@
                             <input type="number" id="forced-roll-input" min="1" max="100" class="w-20 rounded-md border border-slate-300 py-1 px-2 text-center text-sm" placeholder="Auto">
                         </div>
                     @endif
+
+                    {{-- UI Inventory --}}
+                    <div id="player-inventory-container" class="mt-4 w-full border-t border-slate-100 pt-3">
+                        <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide text-center">Item Anda</h4>
+                        <div id="player-inventory-list" class="flex flex-wrap gap-2 justify-center">
+                            <!-- Item akan dirender oleh JS -->
+                            <p class="text-xs text-slate-400 italic" id="empty-inventory-text">Kosong</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -197,6 +206,64 @@
     {{-- Template kartu (di-clone JS, lihat komentar di masing-masing file komponen) --}}
     <x-game.player-card />
     <x-game.robot-card />
+
+    {{-- Modal Gacha Power-Up --}}
+    <x-player.modal name="gacha-modal">
+        <div class="mb-2 flex flex-col items-center justify-center text-center animate-fade-in-up">
+            <h3 class="text-xl font-black text-violet-600 uppercase tracking-widest mb-4">
+                Petak Misteri!
+            </h3>
+            
+            <div id="gacha-image-container" class="relative w-32 h-32 mb-4 mx-auto animate-float">
+                <div class="absolute inset-0 bg-violet-400 rounded-full opacity-20 blur-xl animate-pulse"></div>
+                <img id="gacha-image" src="" alt="Power Up" style="transform: scale(0);" class="relative z-10 w-full h-full object-contain drop-shadow-2xl transition-transform duration-500 delay-200">
+            </div>
+
+            <h4 id="gacha-item-name" class="text-lg font-bold text-slate-800 mb-1 opacity-0 transition-opacity duration-500 delay-500"></h4>
+            <p id="gacha-item-desc" class="text-sm text-slate-500 opacity-0 transition-opacity duration-500 delay-700"></p>
+            
+            <div id="gacha-actions-normal" class="w-full mt-6 opacity-0 transition-opacity duration-500 delay-1000">
+                <button type="button" id="gacha-klaim-btn" class="w-full rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
+                    Klaim
+                </button>
+            </div>
+            
+            <div id="gacha-actions-resolve" class="w-full mt-6 hidden opacity-0 flex-col gap-2 transition-opacity duration-500 delay-1000">
+                <p class="text-xs text-rose-500 font-bold mb-1">Inventory Penuh (Maks 3)!</p>
+                <button type="button" id="gacha-keep-btn" class="w-full rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
+                    Simpan & Buang Terlama
+                </button>
+                <button type="button" id="gacha-discard-btn" class="w-full rounded-xl border-2 border-rose-500 bg-white px-4 py-2 text-rose-500 font-bold hover:bg-rose-50 transition-colors">
+                    Buang Item Ini
+                </button>
+            </div>
+        </div>
+    </x-player.modal>
+
+    {{-- Modal Info Power-Up --}}
+    <x-player.modal name="powerup-use-modal">
+        <div class="mb-2 flex flex-col items-center justify-center text-center">
+            <h3 class="text-xl font-black text-violet-600 uppercase tracking-widest mb-4">
+                Pakai Item?
+            </h3>
+            
+            <div class="relative w-24 h-24 mb-4 mx-auto">
+                <img id="powerup-use-image" src="" alt="Power Up" class="w-full h-full object-contain drop-shadow-lg">
+            </div>
+
+            <h4 id="powerup-use-name" class="text-lg font-bold text-slate-800 mb-2"></h4>
+            <p id="powerup-use-desc" class="text-sm text-slate-600 mb-6"></p>
+            
+            <div class="w-full flex gap-2">
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal', {detail: 'powerup-use-modal'}))" class="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors">
+                    Batal
+                </button>
+                <button type="button" id="powerup-use-btn" class="flex-1 rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
+                    Pakai
+                </button>
+            </div>
+        </div>
+    </x-player.modal>
 
     {{-- Modal Soal --}}
     <x-player.modal name="question-modal">

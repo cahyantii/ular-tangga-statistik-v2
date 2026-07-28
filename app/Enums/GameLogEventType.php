@@ -15,4 +15,5 @@ enum GameLogEventType: string
     case Resumed = 'resumed';
     case Forfeited = 'forfeited';
     case Finished = 'finished';
+    case ItemGacha = 'item_gacha';
 }

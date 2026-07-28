@@ -7,6 +7,7 @@ use App\Enums\TileType;
 use App\Models\GamePlayer;
 use App\Models\GameSession;
 use App\Models\Petak;
+use App\Services\Game\PowerUpService;
 
 /**
  * Menentukan (dan menerapkan) efek petak selain "soal" (yang butuh ronde
@@ -35,31 +36,36 @@ class TileResolverService
         }
 
         return match ($petak->jenis_petak) {
-            TileType::Bonus => [
-                'type' => 'bonus',
-                'delta' => $this->scoreService->apply($gamePlayer, ScoreEventType::Bonus),
-            ],
-            TileType::Penalti => [
-                'type' => 'penalti',
-                'delta' => $this->scoreService->apply($gamePlayer, ScoreEventType::TilePenalty),
-            ],
             TileType::Mystery => $this->resolveMystery($gameSession, $gamePlayer),
-            TileType::Soal => ['type' => 'none'],
             default => ['type' => 'none'],
         };
     }
 
     /**
-     * Efek acak bonus/penalti (Tahap 17, keputusan final), coin-flip
-     * deterministik crc32(seed:mystery:turn) % 2 — bukan mt_rand.
+     * Efek gacha mendapatkan power up dari tile misteri.
      */
     private function resolveMystery(GameSession $gameSession, GamePlayer $gamePlayer): array
     {
         $hash = crc32($gameSession->random_seed.':mystery:'.$gameSession->total_turn);
-        $isBonus = ($hash % 2) === 0;
+        $powerUps = array_keys(PowerUpService::getAvailablePowerUps());
+        $index = $hash % count($powerUps);
+        $obtainedItem = $powerUps[$index];
+        
+        $itemDetail = PowerUpService::getAvailablePowerUps()[$obtainedItem];
 
-        $delta = $this->scoreService->apply($gamePlayer, $isBonus ? ScoreEventType::Bonus : ScoreEventType::TilePenalty);
+        // Jika item HOLD, masukkan ke inventory
+        if ($itemDetail['type'] === 'hold') {
+            $inventory = $gamePlayer->inventory ?? [];
+            $inventory[] = $obtainedItem;
+            $gamePlayer->inventory = $inventory;
+            $gamePlayer->save();
+        }
 
-        return ['type' => 'mystery', 'hasil' => $isBonus ? 'bonus' : 'penalti', 'delta' => $delta];
+        return [
+            'type' => 'mystery', 
+            'item_id' => $obtainedItem, 
+            'item_name' => $itemDetail['name'],
+            'item_type' => $itemDetail['type']
+        ];
     }
 }

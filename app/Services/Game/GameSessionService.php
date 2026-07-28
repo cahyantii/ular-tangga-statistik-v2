@@ -154,6 +154,7 @@ class GameSessionService
     {
         [$result, $events] = DB::transaction(function () use ($gameSession, $gamePlayer, $forcedRoll) {
             $gameSession = GameSession::query()->lockForUpdate()->findOrFail($gameSession->id);
+            $gamePlayer  = GamePlayer::query()->lockForUpdate()->findOrFail($gamePlayer->id);
             $this->assertPlayable($gameSession, $gamePlayer);
 
             $events = [];
@@ -262,8 +263,36 @@ class GameSessionService
 
         if (app()->environment('local') && $forcedRoll !== null && $forcedRoll >= 1 && $forcedRoll <= 100) {
             $nilaiDadu = $forcedRoll;
+            $rawNilaiDadu = $forcedRoll;
+            $doubleDiceActive = false;
         } else {
             $nilaiDadu = $this->dice->roll($gameSession);
+            $rawNilaiDadu = $nilaiDadu; // simpan nilai asli sebelum buff
+            
+            $buffs = $gamePlayer->active_buffs ?? [];
+            $buffsChanged = false;
+            $doubleDiceActive = false;
+
+            \Log::debug('[executeRoll] player_id='.$gamePlayer->id.' active_buffs='.json_encode($buffs).' raw_dice='.$nilaiDadu);
+
+            if (in_array('double_dice', $buffs)) {
+                $nilaiDadu *= 2;
+                $doubleDiceActive = true;
+                $buffs = array_values(array_diff($buffs, ['double_dice']));
+                $buffsChanged = true;
+                \Log::debug('[executeRoll] double_dice applied, final_dice='.$nilaiDadu);
+            }
+
+            if (in_array('cursed_dice', $buffs)) {
+                $nilaiDadu = min($nilaiDadu, 3);
+                $buffs = array_values(array_diff($buffs, ['cursed_dice']));
+                $buffsChanged = true;
+            }
+
+            if ($buffsChanged) {
+                $gamePlayer->active_buffs = $buffs;
+                $gamePlayer->save();
+            }
         }
         
         $events[] = new DiceRolled($gameSession, $gamePlayer, $nilaiDadu);
@@ -281,7 +310,7 @@ class GameSessionService
 
             $this->turn->advance($gameSession);
 
-            return ['type' => 'blocked', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
+            return ['type' => 'blocked', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false];
         }
 
         $events[] = new PawnMoved($gameSession, $gamePlayer, $move['posisi_sebelum'], $move['posisi_sesudah']);
@@ -298,6 +327,8 @@ class GameSessionService
                 'session' => $gameSession->fresh(),
                 'player' => $gamePlayer->fresh(),
                 'nilai_dadu' => $nilaiDadu,
+                'raw_nilai_dadu' => $rawNilaiDadu,
+                'double_dice_active' => $doubleDiceActive ?? false,
                 '_achievements_by_player' => $achievementsByPlayer,
             ];
         }
@@ -320,44 +351,64 @@ class GameSessionService
                     'soal_id' => $soal->id,
                 ]);
 
-                return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'soal' => $soal];
+                return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false, 'soal' => $soal];
             } else {
                 // Jika tidak ada soal tersisa, langsung terapkan konektor
-                $events[] = new ConnectorApplied($gameSession, $gamePlayer, $konektor->jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
-                $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
-                    'jenis' => $konektor->jenis->value,
-                    'posisi_awal' => $konektor->posisi_awal,
-                    'posisi_akhir' => $konektor->posisi_akhir,
-                ]);
-                $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
+                $buffs = $gamePlayer->active_buffs ?? [];
+                if ($konektor->jenis->value === 'ular' && in_array('snake_shield', $buffs)) {
+                    $buffs = array_values(array_diff($buffs, ['snake_shield']));
+                    $gamePlayer->update(['active_buffs' => $buffs]);
+                    // Batal turun
+                } else {
+                    $events[] = new ConnectorApplied($gameSession, $gamePlayer, $konektor->jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
+                    $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
+                        'jenis' => $konektor->jenis->value,
+                        'posisi_awal' => $konektor->posisi_awal,
+                        'posisi_akhir' => $konektor->posisi_akhir,
+                    ]);
+                    $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
+                }
             }
         }
 
         $effect = $this->tileResolver->resolve($gameSession, $gamePlayer, $petak);
 
-        if (in_array($effect['type'], ['bonus', 'penalti', 'mystery'], true)) {
-            $scoreEventType = match ($effect['type']) {
-                'bonus' => ScoreEventType::Bonus,
-                'penalti' => ScoreEventType::TilePenalty,
-                'mystery' => $effect['hasil'] === 'bonus' ? ScoreEventType::Bonus : ScoreEventType::TilePenalty,
-            };
+        if ($effect['type'] === 'mystery') {
+            if (isset($effect['item_type']) && $effect['item_type'] === 'immediate') {
+                if ($effect['item_id'] === 'teleport_forward') {
+                    $newPos = min($gamePlayer->posisi_pion + 3, $papan->jumlah_petak);
+                    $events[] = new PawnMoved($gameSession, $gamePlayer, $gamePlayer->posisi_pion, $newPos);
+                    $gamePlayer->update(['posisi_pion' => $newPos]);
 
-            $events[] = new ScoreUpdated($gameSession, $gamePlayer, $scoreEventType, $effect['delta'], $gamePlayer->fresh()->skor);
-            $this->gameLog->log($gameSession, GameLogEventType::ScoreUpdated, $gamePlayer->user_id, $gameSession->total_turn, [
-                'jenis_efek' => $effect['type'],
-                'delta' => $effect['delta'],
+                    // Cek apakah posisi baru juga adalah mystery tile
+                    $secondEffect = $this->resolveMysteryAtCurrentPosition($gameSession, $gamePlayer, $papan, $events);
+                    if ($secondEffect !== null) {
+                        $effect = $secondEffect; // Override response dengan mystery tile baru
+                    }
+                }
+            }
+            
+            $this->gameLog->log($gameSession, GameLogEventType::ItemGacha, $gamePlayer->user_id, $gameSession->total_turn, [
+                'jenis_efek' => 'mystery',
+                'item_id' => $effect['item_id'] ?? null,
             ]);
         }
 
         $activeDuel = $this->duel->checkAndStartDuel($gameSession, $gamePlayer, $events);
         if ($activeDuel) {
-            return ['type' => 'duel', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'duel' => $activeDuel];
+            return ['type' => 'duel', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false, 'duel' => $activeDuel];
         }
 
         $this->turn->advance($gameSession);
 
-        $response = ['type' => $effect['type'] === 'none' ? 'normal' : $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
+        $response = ['type' => $effect['type'] === 'none' ? 'normal' : $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false];
         
+        if ($effect['type'] === 'mystery') {
+            $response['item_id'] = $effect['item_id'] ?? null;
+            $response['item_name'] = $effect['item_name'] ?? null;
+            $response['item_type'] = $effect['item_type'] ?? null;
+        }
+
         return $response;
     }
 
@@ -410,17 +461,32 @@ class GameSessionService
             ->where('posisi_awal', $gamePlayer->posisi_pion)
             ->first();
 
+        $mysteryAfterKonektor = null;
+
         if ($konektor) {
             $jenis = $konektor->jenis;
             if (($isCorrect && $jenis->value === 'tangga') || (!$isCorrect && $jenis->value === 'ular')) {
-                $events[] = new ConnectorApplied($gameSession, $gamePlayer, $jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
-                $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
-                    'jenis' => $jenis->value,
-                    'posisi_awal' => $konektor->posisi_awal,
-                    'posisi_akhir' => $konektor->posisi_akhir,
-                ]);
-                $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
-                $konektor_applied = true;
+                
+                $buffs = $gamePlayer->active_buffs ?? [];
+                if (!$isCorrect && $jenis->value === 'ular' && in_array('snake_shield', $buffs)) {
+                    $buffs = array_values(array_diff($buffs, ['snake_shield']));
+                    $gamePlayer->update(['active_buffs' => $buffs]);
+                    // Dilindungi perisai ular, batal turun
+                } else {
+                    $events[] = new ConnectorApplied($gameSession, $gamePlayer, $jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
+                    $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
+                        'jenis' => $jenis->value,
+                        'posisi_awal' => $konektor->posisi_awal,
+                        'posisi_akhir' => $konektor->posisi_akhir,
+                    ]);
+                    $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
+                    $konektor_applied = true;
+
+                    // Cek apakah posisi akhir konektor adalah mystery tile
+                    $mysteryAfterKonektor = $this->resolveMysteryAtCurrentPosition(
+                        $gameSession, $gamePlayer, $gameSession->papan, $events
+                    );
+                }
             }
         }
 
@@ -430,7 +496,7 @@ class GameSessionService
             $this->turn->advance($gameSession);
         }
 
-        return [
+        $response = [
             'type' => $activeDuel ? 'duel' : 'answered',
             'duel' => $activeDuel,
             'session' => $gameSession->fresh(),
@@ -445,6 +511,57 @@ class GameSessionService
                 'posisi_akhir' => $konektor->posisi_akhir,
             ] : null,
         ];
+
+        // Jika setelah konektor mendarat di mystery tile, sertakan di response
+        if ($mysteryAfterKonektor !== null) {
+            $response['mystery_after_konektor'] = $mysteryAfterKonektor;
+        }
+
+        return $response;
+    }
+
+    /**
+     * Cek apakah posisi pion saat ini adalah mystery tile, dan jika ya,
+     * jalankan efeknya. Digunakan setelah konektor atau power-up menggeser pion.
+     *
+     * @return array|null  Array efek mystery, atau null jika bukan mystery tile.
+     */
+    private function resolveMysteryAtCurrentPosition(
+        GameSession $gameSession,
+        GamePlayer $gamePlayer,
+        PapanPermainan $papan,
+        array &$events
+    ): ?array {
+        $petak = Petak::query()
+            ->where('papan_id', $papan->id)
+            ->where('posisi', $gamePlayer->posisi_pion)
+            ->first();
+
+        if (!$petak) {
+            return null;
+        }
+
+        $effect = $this->tileResolver->resolve($gameSession, $gamePlayer, $petak);
+
+        if ($effect['type'] !== 'mystery') {
+            return null;
+        }
+
+        // Jika immediate, terapkan efeknya
+        if (isset($effect['item_type']) && $effect['item_type'] === 'immediate') {
+            if ($effect['item_id'] === 'teleport_forward') {
+                $newPos = min($gamePlayer->posisi_pion + 3, $papan->jumlah_petak);
+                $events[] = new PawnMoved($gameSession, $gamePlayer, $gamePlayer->posisi_pion, $newPos);
+                $gamePlayer->update(['posisi_pion' => $newPos]);
+            }
+        }
+
+        $this->gameLog->log($gameSession, GameLogEventType::ItemGacha, $gamePlayer->user_id, $gameSession->total_turn, [
+            'jenis_efek' => 'mystery_chained',
+            'item_id' => $effect['item_id'] ?? null,
+        ]);
+
+        return $effect;
     }
 
     /**
@@ -890,6 +1007,11 @@ class GameSessionService
 
         if ($gameSession->current_turn_game_player_id !== $gamePlayer->id) {
             throw new NotYourTurnException();
+        }
+
+        $inventory = $gamePlayer->inventory ?? [];
+        if (count($inventory) > 3) {
+            abort(403, 'Inventory penuh. Anda harus membuang item terlebih dahulu sebelum melempar dadu.');
         }
     }
 

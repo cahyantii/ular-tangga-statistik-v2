@@ -139,6 +139,78 @@ class GameController extends Controller
         return $gameSession->players()->where('user_id', $request->user()->id)->firstOrFail();
     }
 
+    public function usePowerUp(Request $request, GameSession $gameSession, \App\Services\Game\PowerUpService $powerUpService): JsonResponse
+    {
+        Gate::authorize('view', $gameSession);
+
+        $request->validate([
+            'item_id' => 'required|string'
+        ]);
+
+        $player = $this->resolvePlayer($gameSession, $request);
+
+        // Pastikan game sedang aktif
+        if ($gameSession->status->value !== 'playing') {
+            return response()->json(['error' => 'Permainan tidak sedang berjalan.'], 403);
+        }
+
+        // Pastikan giliran player tersebut (opsional, tapi disarankan)
+        if ($gameSession->current_turn_game_player_id !== $player->id) {
+            return response()->json(['error' => 'Bukan giliran Anda.'], 403);
+        }
+
+        try {
+            $result = $powerUpService->useItem($gameSession, $player, $request->input('item_id'));
+            
+            // Broadcast ke pemain lain lewat soket (misal memanfaatkan GameSessionService atau event)
+            broadcast(new \App\Events\Game\PowerupUsed(
+                $gameSession, 
+                $player, 
+                $request->input('item_id'), 
+                "{$player->user->name} {$result['message']}"
+            ))->toOthers();
+            
+            return response()->json([
+                'status' => 'success',
+                'message' => $result['message'],
+                'session' => new GameSessionResource($gameSession->load('players.user'))
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function resolveInventory(Request $request, GameSession $gameSession): JsonResponse
+    {
+        Gate::authorize('view', $gameSession);
+
+        $request->validate([
+            'action' => 'required|in:keep,discard'
+        ]);
+
+        $player = $this->resolvePlayer($gameSession, $request);
+
+        $inventory = $player->inventory ?? [];
+        if (count($inventory) <= 3) {
+            return response()->json(['error' => 'Inventory belum penuh.'], 400);
+        }
+
+        if ($request->input('action') === 'keep') {
+            // Hapus index 0 (paling lama)
+            array_splice($inventory, 0, 1);
+        } else {
+            // Hapus index terakhir (yang baru didapat)
+            array_splice($inventory, count($inventory) - 1, 1);
+        }
+
+        $player->update(['inventory' => $inventory]);
+
+        return response()->json([
+            'status' => 'success',
+            'session' => new GameSessionResource($gameSession->load('players.user'))
+        ]);
+    }
+
     private function formatTurnResult(array $result): array
     {
         $response = [
@@ -149,6 +221,8 @@ class GameController extends Controller
 
         if (isset($result['nilai_dadu'])) {
             $response['nilai_dadu'] = $result['nilai_dadu'];
+            $response['raw_nilai_dadu'] = $result['raw_nilai_dadu'] ?? $result['nilai_dadu'];
+            $response['double_dice_active'] = $result['double_dice_active'] ?? false;
         }
 
         if (isset($result['soal'])) {
@@ -161,6 +235,11 @@ class GameController extends Controller
             $response['kunci_jawaban'] = $result['kunci_jawaban'];
             $response['konektor_applied'] = $result['konektor_applied'] ?? false;
             $response['konektor_info'] = $result['konektor_info'] ?? null;
+
+            // Sertakan mystery tile yang dipicu setelah konektor (tangga/ular)
+            if (isset($result['mystery_after_konektor'])) {
+                $response['mystery_after_konektor'] = $result['mystery_after_konektor'];
+            }
         }
 
         if ($result['type'] === 'duel_answered') {
@@ -187,6 +266,12 @@ class GameController extends Controller
 
         if (isset($result['toast'])) {
             $response['toast'] = $result['toast'];
+        }
+
+        if ($result['type'] === 'mystery') {
+            $response['item_id'] = $result['item_id'] ?? null;
+            $response['item_name'] = $result['item_name'] ?? null;
+            $response['item_type'] = $result['item_type'] ?? null;
         }
 
         return $response;

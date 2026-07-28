@@ -272,7 +272,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 pushLog('penalti', `${nama} kena petak Penalti`);
                 break;
             case 'mystery':
-                pushLog('mystery', `${nama} kena petak Mystery`);
+                const itemName = result.item_name || 'Power-Up';
+                pushLog('mystery', `${nama} mendapat ${itemName} dari Tile Misteri`);
                 break;
             case 'finished':
                 pushLog('finish', `${nama} mencapai Finish!`);
@@ -356,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function animateDiceRoll(finalValue) {
+    async function animateDiceRoll(finalValue, doubleDiceActive = false) {
         if (!diceCube) return;
         
         const diceWrap = document.getElementById('dice-3d-wrap');
@@ -510,6 +511,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         cube.style.transition = 'none';
                         cube.style.transform = `rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg)`;
                     });
+
+                    // Efek ×2 untuk double dice
+                    if (doubleDiceActive) {
+                        const multiplierBadge = document.createElement('div');
+                        multiplierBadge.textContent = '×2';
+                        multiplierBadge.className = 'absolute font-black text-4xl text-primary-500 drop-shadow-md z-50 animate-bounce';
+                        multiplierBadge.style.left = `${endX + 20}px`;
+                        multiplierBadge.style.top = `${endY - 40}px`;
+                        multiplierBadge.style.textShadow = '0 0 10px white, 0 0 20px white';
+                        
+                        document.body.appendChild(multiplierBadge);
+                        
+                        // Hapus badge setelah selesai tampil
+                        setTimeout(() => multiplierBadge.remove(), 2000);
+                    }
                     
                     // Tunggu 2000ms supaya hasil terlihat lebih lama sebelum memindahkan pion
                     setTimeout(() => {
@@ -656,6 +672,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         el.classList.remove('pawn-hop');
 
+        // Tampilkan Modal Gacha JIKA INI MYSTERY TILE
+        if (result.type === 'mystery' && result.item_id && player.id === myGamePlayerId) {
+            await showGachaModal(result);
+        }
+
         if (finalPosisi !== landingPosisi) {
             const isBounce = landingPosisi === jumlahPetak && !konektorByStart.get(landingPosisi) && finalPosisi < landingPosisi;
 
@@ -705,6 +726,117 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(200);
             }
         }
+
+    function showGachaModal(result) {
+        return new Promise((resolve) => {
+            const itemImages = {
+                'double_dice': '/images/powerups/double_dice.jpg',
+                'snake_shield': '/images/powerups/snake_shield.jpg',
+                'teleport_forward': '/images/powerups/teleport_forward.jpg',
+                'curse_dice': '/images/powerups/curse_dice.jpg'
+            };
+            
+            const gachaImg = document.getElementById('gacha-image');
+            const gachaName = document.getElementById('gacha-item-name');
+            const gachaDesc = document.getElementById('gacha-item-desc');
+            const normalActions = document.getElementById('gacha-actions-normal');
+            const resolveActions = document.getElementById('gacha-actions-resolve');
+            const klaimBtn = document.getElementById('gacha-klaim-btn');
+            const keepBtn = document.getElementById('gacha-keep-btn');
+            const discardBtn = document.getElementById('gacha-discard-btn');
+            
+            if (!gachaImg || !gachaName || !gachaDesc) {
+                resolve();
+                return;
+            }
+
+            gachaImg.src = itemImages[result.item_id] || itemImages['double_dice'];
+            gachaName.textContent = result.item_name || 'Item Misteri';
+            gachaDesc.textContent = result.item_type === 'immediate' ? '(Efek Langsung)' : '(Disimpan ke Inventory)';
+            
+            // Reset animasi
+            gachaImg.style.transform = 'scale(0)';
+            gachaName.classList.remove('opacity-100');
+            gachaDesc.classList.remove('opacity-100');
+            normalActions.classList.remove('opacity-100');
+            resolveActions.classList.remove('opacity-100');
+            
+            // Cek apakah inventory penuh (lebih dari 3, di mana item ke-4 adalah ini)
+            const updatedPlayer = result.session?.players.find(p => p.id === myGamePlayerId);
+            const inventory = updatedPlayer?.inventory || [];
+            
+            // Menentukan state tombol
+            let requireResolve = false;
+            if (result.item_type === 'hold' && inventory.length >= 4) {
+                requireResolve = true;
+                normalActions.classList.add('hidden');
+                resolveActions.classList.remove('hidden');
+                resolveActions.classList.add('flex');
+            } else {
+                normalActions.classList.remove('hidden');
+                resolveActions.classList.add('hidden');
+                resolveActions.classList.remove('flex');
+            }
+            
+            const cleanupAndClose = () => {
+                klaimBtn.onclick = null;
+                keepBtn.onclick = null;
+                discardBtn.onclick = null;
+                window.dispatchEvent(new CustomEvent('close-modal', {detail: 'gacha-modal'}));
+                resolve();
+            };
+
+            klaimBtn.onclick = () => {
+                cleanupAndClose();
+            };
+
+            keepBtn.onclick = async () => {
+                keepBtn.disabled = true;
+                discardBtn.disabled = true;
+                try {
+                    const resolveUrl = rollUrl.replace('/roll', '/inventory/resolve');
+                    await postJson(resolveUrl, { action: 'keep' });
+                    cleanupAndClose();
+                    await loadState();
+                } catch (err) {
+                    showToast(err.message || 'Gagal resolve inventory');
+                    keepBtn.disabled = false;
+                    discardBtn.disabled = false;
+                }
+            };
+
+            discardBtn.onclick = async () => {
+                keepBtn.disabled = true;
+                discardBtn.disabled = true;
+                try {
+                    const resolveUrl = rollUrl.replace('/roll', '/inventory/resolve');
+                    await postJson(resolveUrl, { action: 'discard' });
+                    cleanupAndClose();
+                    await loadState();
+                } catch (err) {
+                    showToast(err.message || 'Gagal resolve inventory');
+                    keepBtn.disabled = false;
+                    discardBtn.disabled = false;
+                }
+            };
+
+            window.dispatchEvent(new CustomEvent('open-modal', {detail: 'gacha-modal'}));
+            
+            // Mulai sequence animasi
+            setTimeout(() => gachaImg.style.transform = 'scale(1)', 100);
+            setTimeout(() => gachaName.classList.add('opacity-100'), 400);
+            setTimeout(() => gachaDesc.classList.add('opacity-100'), 600);
+            setTimeout(() => {
+                if (requireResolve) {
+                    resolveActions.classList.add('opacity-100');
+                    keepBtn.disabled = false;
+                    discardBtn.disabled = false;
+                } else {
+                    normalActions.classList.add('opacity-100');
+                }
+            }, 900);
+        });
+    }
     }
 
     // ---------------------------------------------------------------
@@ -747,6 +879,143 @@ document.addEventListener('DOMContentLoaded', () => {
 
             playerPanelListEl.appendChild(node);
         });
+    }
+
+    function renderInventoryUI(session) {
+        const inventoryContainerEl = document.getElementById('player-inventory-container');
+        const inventoryListEl = document.getElementById('player-inventory-list');
+        const emptyTextEl = document.getElementById('empty-inventory-text');
+
+        if (!inventoryContainerEl || !inventoryListEl) return;
+
+        const me = session.players.find((p) => p.id === myGamePlayerId);
+        if (!me) return;
+
+        const inventory = me.inventory || [];
+        
+        inventoryListEl.innerHTML = '';
+
+        if (inventory.length === 0) {
+            if (!emptyTextEl) {
+                const newEmptyText = document.createElement('p');
+                newEmptyText.id = 'empty-inventory-text';
+                newEmptyText.className = 'text-xs text-slate-400 italic';
+                newEmptyText.textContent = 'Kosong';
+                inventoryListEl.appendChild(newEmptyText);
+            } else {
+                emptyTextEl.style.display = 'block';
+                inventoryListEl.appendChild(emptyTextEl);
+            }
+            return;
+        }
+
+        if (emptyTextEl) {
+            emptyTextEl.style.display = 'none';
+        }
+
+        const itemImages = {
+            'double_dice': '/images/powerups/double_dice.jpg',
+            'snake_shield': '/images/powerups/snake_shield.jpg',
+            'teleport_forward': '/images/powerups/teleport_forward.jpg',
+            'curse_dice': '/images/powerups/curse_dice.jpg'
+        };
+
+        const itemNames = {
+            'double_dice': 'Dadu Ganda',
+            'snake_shield': 'Perisai Ular',
+            'teleport_forward': 'Teleport',
+            'curse_dice': 'Kutukan'
+        };
+
+        inventory.forEach((itemId) => {
+            const btn = document.createElement('button');
+            btn.className = 'flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-slate-200 hover:border-primary-500 hover:shadow-md transition-all cursor-pointer text-center group disabled:opacity-50 disabled:cursor-not-allowed';
+            
+            const imageSrc = itemImages[itemId] || '/images/powerups/double_dice.jpg'; // fallback
+            
+            if (itemId === 'hidden') {
+                btn.innerHTML = `
+                    <div class="w-8 h-8 bg-slate-200 rounded-full mb-1 flex items-center justify-center text-slate-400">?</div>
+                    <span class="text-[10px] font-bold text-slate-400 leading-tight">Rahasia</span>
+                `;
+                btn.disabled = true;
+            } else {
+                btn.innerHTML = `
+                    <img src="${imageSrc}" alt="${itemNames[itemId]}" class="w-8 h-8 object-contain mb-1 group-hover:scale-110 transition-transform">
+                    <span class="text-[10px] font-bold text-slate-600 leading-tight">${itemNames[itemId] || 'Item'}</span>
+                `;
+            }
+            
+            // Nonaktifkan jika bukan giliran kita
+            if (session.current_turn_game_player_id !== myGamePlayerId || session.status !== 'playing') {
+                btn.disabled = true;
+            } else {
+                btn.onclick = () => showPowerupUseModal(itemId, btn);
+            }
+
+            inventoryListEl.appendChild(btn);
+        });
+    }
+
+    function showPowerupUseModal(itemId, btnElement) {
+        const itemImages = {
+            'double_dice': '/images/powerups/double_dice.jpg',
+            'snake_shield': '/images/powerups/snake_shield.jpg',
+            'teleport_forward': '/images/powerups/teleport_forward.jpg',
+            'curse_dice': '/images/powerups/curse_dice.jpg'
+        };
+
+        const itemNames = {
+            'double_dice': 'Dadu Ganda',
+            'snake_shield': 'Perisai Ular',
+            'teleport_forward': 'Teleport',
+            'curse_dice': 'Kutukan'
+        };
+        
+        const itemDescs = {
+            'double_dice': 'Gunakan untuk melempar 2 dadu sekaligus di giliran ini.',
+            'snake_shield': 'Gunakan untuk mendapatkan perisai penangkal 1x gigitan ular.',
+            'teleport_forward': 'Langsung maju 3 petak ke depan (teleportasi).',
+            'curse_dice': 'Kutuk lawan! Lawan selanjutnya maksimal hanya bisa mendapat angka dadu 3.'
+        };
+
+        const imgEl = document.getElementById('powerup-use-image');
+        const nameEl = document.getElementById('powerup-use-name');
+        const descEl = document.getElementById('powerup-use-desc');
+        const useBtn = document.getElementById('powerup-use-btn');
+
+        if (imgEl && nameEl && descEl && useBtn) {
+            imgEl.src = itemImages[itemId] || itemImages['double_dice'];
+            nameEl.textContent = itemNames[itemId] || 'Power Up';
+            descEl.textContent = itemDescs[itemId] || 'Pakai item ini?';
+            
+            useBtn.onclick = () => {
+                window.dispatchEvent(new CustomEvent('close-modal', {detail: 'powerup-use-modal'}));
+                executePowerUp(itemId, btnElement);
+            };
+
+            window.dispatchEvent(new CustomEvent('open-modal', {detail: 'powerup-use-modal'}));
+        }
+    }
+
+    async function executePowerUp(itemId, btnElement) {
+        if (btnElement) btnElement.disabled = true;
+        
+        try {
+            const powerupUrl = rollUrl.replace('/roll', '/powerup');
+            console.log('[PowerUp] Sending use request:', itemId, 'URL:', powerupUrl);
+            const result = await postJson(powerupUrl, { item_id: itemId });
+            console.log('[PowerUp] Response:', result);
+            
+            showToast(result.message || 'Item berhasil digunakan!');
+            
+            // Refresh state agar inventory dan buff terbaru muncul
+            await loadState();
+        } catch (err) {
+            console.error('[PowerUp] Gagal menggunakan item:', err);
+            showToast(err.message || 'Gagal menggunakan item.');
+            if (btnElement) btnElement.disabled = false;
+        }
     }
 
 
@@ -1418,6 +1687,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPlayerPanels(session);
         updateTurnIndicator(session);
         renderPaused(session);
+        renderInventoryUI(session);
 
         if (!deferOutcome) {
             finalizeOutcome(session);
@@ -1445,7 +1715,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            throw new Error(data.message || 'Terjadi kesalahan.');
+            throw new Error(data.error || data.message || 'Terjadi kesalahan.');
         }
 
         return data;
@@ -1467,7 +1737,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const body = forcedRoll ? { forced_roll: parseInt(forcedRoll, 10) } : {};
             const result = await postJson(rollUrl, body);
 
-            await animateDiceRoll(result.nilai_dadu ?? 1);
+            await animateDiceRoll(result.raw_nilai_dadu ?? result.nilai_dadu ?? 1, result.double_dice_active ?? false);
 
             if (result.toast) {
                 showToast(result.toast);
@@ -1759,6 +2029,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 placePawnAt(el, info.posisi_akhir, stackIndexAt(info.posisi_akhir, actingPlayer.id, result.session?.players));
                 await delay(200);
+
+                // Cek apakah mendarat di mystery tile setelah konektor
+                if (result.mystery_after_konektor && actingPlayer.id === myGamePlayerId) {
+                    // Inject session ke objek mystery agar showGachaModal bisa cek inventory
+                    const mysteryWithSession = { ...result.mystery_after_konektor, session: result.session };
+                    await showGachaModal(mysteryWithSession);
+                }
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
             }
