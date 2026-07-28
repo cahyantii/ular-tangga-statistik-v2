@@ -163,6 +163,12 @@ class GameController extends Controller
             $response['konektor_info'] = $result['konektor_info'] ?? null;
         }
 
+        if ($result['type'] === 'duel_answered') {
+            $response['benar'] = $result['benar'];
+            $response['pembahasan'] = $result['pembahasan'] ?? null;
+            $response['kunci_jawaban'] = $result['kunci_jawaban'] ?? null;
+        }
+
         if (isset($result['duel'])) {
             $response['duel'] = $result['duel']->toArray();
             if ($result['duel']->relationLoaded('questions')) {

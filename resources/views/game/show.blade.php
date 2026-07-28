@@ -25,8 +25,6 @@
         <span id="game-paused-timer" class="font-bold"></span>
     </div>
 
-    <x-game.board-stats :papan="$papan" class="mb-5 xl:mb-6" />
-
     {{--
         Layout v2 (desktop &ge;1280px = 4 kolom eksplisit, di bawahnya = 1
         kolom ditumpuk + panel Pemain/Progress/Log disembunyikan di balik FAB
@@ -159,7 +157,7 @@
         </div>
 
         {{-- Kolom 4: Tips, di bawah Giliran+Dadu --}}
-        <x-game.tips-card :papan="$papan" class="max-xl:order-3 xl:col-start-4 xl:row-start-2 max-h-[40vh] overflow-y-auto" />
+        
 
         {{-- Kolom 4: Keluar, di bawah Tips (mobile: disembunyikan, sudah terwakili tombol Keluar di FAB) --}}
         <button
@@ -243,8 +241,21 @@
         <p id="question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
     </x-player.modal>
 
+    {{-- Modal Soal Bot (spectator view) --}}
+    <x-player.modal name="bot-question-modal">
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="flex items-center gap-2 text-lg font-bold text-slate-800">
+                <x-player.icon name="bot" class="h-5 w-5 text-violet-500" />
+                Bot Sedang Menjawab
+            </h3>
+        </div>
+        <p id="bot-question-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
+        <div id="bot-question-options" class="space-y-2"></div>
+        <p id="bot-question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
+    </x-player.modal>
+
     {{-- Modal Duel --}}
-    <x-player.modal name="duel-modal">
+    <x-player.modal name="duel-modal" maxWidth="max-w-4xl">
         <div class="mb-4 flex flex-col items-center justify-center">
             <h3 class="flex items-center gap-2 text-xl font-black text-rose-600 uppercase tracking-widest mb-1">
                 <x-player.icon name="swords" class="h-6 w-6" />
@@ -252,14 +263,37 @@
             </h3>
             <p id="duel-status-text" class="text-sm font-medium text-slate-500">Pertanyaan <span id="duel-question-number">1</span> dari 3</p>
         </div>
-        <div class="mb-4 flex items-center justify-between">
-            <h4 class="text-md font-bold text-slate-800">Soal Duel</h4>
-            <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600"></span>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Kiri (Anda) -->
+            <div class="md:border-r md:border-slate-100 md:pr-6">
+                <div class="mb-4 flex items-center justify-between">
+                    <h4 class="text-md font-bold text-slate-800">Soal Anda</h4>
+                    <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600"></span>
+                </div>
+                <p id="duel-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
+                <div id="duel-options" class="space-y-2"></div>
+                <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></div>
+            </div>
+
+            <!-- Kanan (Lawan) -->
+            <div class="md:pl-2">
+                <div class="mb-4 flex items-center justify-between">
+                    <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                        <span id="duel-opponent-name">Lawan</span>
+                    </h4>
+                    <span id="duel-opponent-status" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Menjawab...</span>
+                </div>
+                
+                <div id="duel-opponent-content">
+                    <p id="duel-opponent-text" class="mb-4 text-sm leading-relaxed text-slate-700 text-center italic">Menunggu lawan...</p>
+                    <div id="duel-opponent-options" class="space-y-2"></div>
+                    <div id="duel-opponent-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-center font-medium text-slate-700"></div>
+                </div>
+            </div>
         </div>
-        <p id="duel-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
-        <div id="duel-options" class="space-y-2"></div>
-        <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></div>
     </x-player.modal>
+
 
     {{-- Modal Hasil Akhir --}}
     <x-player.modal name="game-finished-modal">

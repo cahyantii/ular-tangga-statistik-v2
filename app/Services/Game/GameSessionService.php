@@ -485,6 +485,12 @@ class GameSessionService
                 $jawaban = $this->deciderFor($current)->decideAnswer($gameSession, $current, $rollResult['soal']);
                 $answerResult = $this->executeAnswer($gameSession, $current, $rollResult['soal']->id, $jawaban, $events);
                 $turnSummary['benar'] = $answerResult['benar'];
+                $turnSummary['kunci_jawaban'] = $answerResult['kunci_jawaban'] ?? null;
+                $turnSummary['jawaban_robot'] = $jawaban;
+                $turnSummary['soal'] = [
+                    'pertanyaan' => $rollResult['soal']->pertanyaan,
+                    'opsi_jawaban' => $rollResult['soal']->opsi_jawaban,
+                ];
                 $turnSummary['konektor_applied'] = $answerResult['konektor_applied'] ?? false;
                 $turnSummary['konektor_info'] = $answerResult['konektor_info'] ?? null;
                 $achievementsByPlayer = array_replace($achievementsByPlayer, $answerResult['_achievements_by_player'] ?? []);

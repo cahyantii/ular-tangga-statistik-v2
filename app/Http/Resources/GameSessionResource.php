@@ -39,7 +39,7 @@ class GameSessionResource extends JsonResource
             ),
             'active_duel' => $this->when(
                 $this->status === GameStatus::Duel,
-                fn () => tap(\App\Models\GameDuel::with(['questions.soal', 'answers'])
+                fn () => tap(\App\Models\GameDuel::with(['questions.soal', 'answers.player'])
                     ->where('game_session_id', $this->id)
                     ->where('status', 'waiting')
                     ->first(), function ($duel) {
@@ -55,10 +55,15 @@ class GameSessionResource extends JsonResource
                                     'soal' => new SoalPublicResource($q->soal)
                                 ];
                             }),
-                            'answers' => $duel->answers->map(function ($a) {
+                            'answers' => $duel->answers->map(function ($a) use ($duel) {
+                                $isRobot = $a->player->is_robot ?? false;
                                 return [
                                     'game_player_id' => $a->game_player_id,
                                     'soal_id' => $a->soal_id,
+                                    'is_robot' => $isRobot,
+                                    'jawaban' => $isRobot ? $a->jawaban : null,
+                                    'is_correct' => $isRobot ? $a->is_correct : null,
+                                    'time_taken_ms' => $isRobot ? $a->time_taken_ms : null,
                                 ];
                             })
                         ] : null;

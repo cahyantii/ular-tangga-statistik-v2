@@ -93,7 +93,7 @@ class DuelService
         }
 
         $soal = Soal::findOrFail($soalId);
-        $isCorrect = $soal->kunci_jawaban === $jawaban;
+        $isCorrect = $jawaban !== null && strtoupper($jawaban) === strtoupper($soal->kunci_jawaban);
 
         DB::transaction(function () use ($duel, $gamePlayer, $soalId, $isCorrect, $timeTakenMs) {
             $duel->answers()->updateOrCreate(

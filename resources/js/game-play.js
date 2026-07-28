@@ -877,7 +877,8 @@ document.addEventListener('DOMContentLoaded', () => {
             button.type = 'button';
             button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50';
             button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
-            button.addEventListener('click', () => submitAnswer(soal.id, kunci));
+            button.dataset.kunci = kunci;
+            button.addEventListener('click', () => submitAnswer(soal.id, kunci, button));
             questionOptionsEl.appendChild(button);
         });
 
@@ -913,11 +914,135 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let duelStartTime = null;
 
+    let duelOpponentSimTimeout = null;
+    let duelBotCurrentDuelId = null;
+    let duelBotSimulatedIndex = 0;
+    let duelBotIsThinking = false;
+
+    function updateDuelOpponentView(duel) {
+        const opponentId = duel.challenger_id === myGamePlayerId ? duel.opponent_id : duel.challenger_id;
+        const opponent = latestSession?.players.find(p => p.id === opponentId);
+        
+        const nameEl = document.getElementById('duel-opponent-name');
+        const statusEl = document.getElementById('duel-opponent-status');
+        const textEl = document.getElementById('duel-opponent-text');
+        const optionsEl = document.getElementById('duel-opponent-options');
+        const feedbackEl = document.getElementById('duel-opponent-feedback');
+        
+        if (!opponent) return;
+        
+        nameEl.textContent = opponent.is_robot ? 'Robot' : opponent.nama;
+        
+        if (opponent.is_robot) {
+            // Check if this is a new duel
+            if (duelBotCurrentDuelId !== duel.id) {
+                duelBotCurrentDuelId = duel.id;
+                duelBotSimulatedIndex = 0;
+                duelBotIsThinking = false;
+                if (duelOpponentSimTimeout) clearTimeout(duelOpponentSimTimeout);
+            }
+            
+            // If currently running an animation step, do not interrupt
+            if (duelBotIsThinking) return;
+
+            const opponentAnswers = duel.answers.filter(a => a.game_player_id === opponentId);
+            
+            if (duelBotSimulatedIndex >= 3 || duelBotSimulatedIndex >= opponentAnswers.length) {
+                statusEl.textContent = 'SELESAI';
+                textEl.textContent = 'Lawan telah menyelesaikan semua pertanyaan.';
+                textEl.classList.add('text-center', 'italic');
+                optionsEl.innerHTML = '';
+                feedbackEl.classList.add('hidden');
+                return;
+            }
+
+            // Start thinking for current simulated index
+            duelBotIsThinking = true;
+            statusEl.textContent = `Menjawab Soal ${duelBotSimulatedIndex + 1}`;
+            
+            const currentQuestion = duel.questions[duelBotSimulatedIndex];
+            const botAnswer = opponentAnswers.find(a => a.soal_id === currentQuestion.soal.id);
+            
+            if (botAnswer) {
+                // Tampilkan soal dan opsi
+                textEl.textContent = currentQuestion.soal.pertanyaan;
+                textEl.classList.remove('text-center', 'italic');
+                optionsEl.innerHTML = '';
+                feedbackEl.classList.add('hidden');
+
+                // Render opsi
+                Object.entries(currentQuestion.soal.opsi_jawaban).forEach(([kunci, teks]) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.disabled = true;
+                    button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 cursor-default transition-all';
+                    button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+                    button.dataset.kunci = kunci;
+                    optionsEl.appendChild(button);
+                });
+
+                // Tunggu 2 detik, baru tampilkan hasil pilihan bot
+                duelOpponentSimTimeout = setTimeout(() => {
+                    // Cari tombol yang dipilih dan yang benar
+                    // Kita tidak punya akses ke 'kunciJawaban' dari backend karena disembunyikan untuk mencegah kecurangan.
+                    // Namun kita tahu jawaban bot (botAnswer.jawaban) dan apakah itu benar (botAnswer.is_correct).
+                    
+                    const selectedBtn = Array.from(optionsEl.children).find(b => b.dataset.kunci?.toUpperCase() === botAnswer.jawaban?.toUpperCase());
+                    
+                    if (selectedBtn) {
+                        if (botAnswer.is_correct) {
+                            selectedBtn.classList.remove('border-slate-200', 'text-slate-700');
+                            selectedBtn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                        } else {
+                            selectedBtn.classList.remove('border-slate-200', 'text-slate-700');
+                            selectedBtn.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                        }
+                    }
+
+                    feedbackEl.textContent = botAnswer.is_correct ? '✅ Bot menjawab benar!' : '❌ Bot menjawab salah!';
+                    feedbackEl.classList.remove('hidden');
+
+                    duelBotSimulatedIndex++; // Advance to next question locally
+
+                    // Jeda sebentar sebelum pindah ke soal bot berikutnya
+                    duelOpponentSimTimeout = setTimeout(() => {
+                        duelBotIsThinking = false;
+                        updateDuelOpponentView(duel); // Recurse to render next
+                    }, 1500);
+                }, 2000); // Tepat 2 detik sesuai permintaan pengguna
+            } else {
+                duelBotIsThinking = false;
+            }
+        } else {
+            // Real human
+            if (duelOpponentSimTimeout) {
+                clearTimeout(duelOpponentSimTimeout);
+                duelOpponentSimTimeout = null;
+            }
+            const opponentAnswers = duel.answers.filter(a => a.game_player_id === opponentId);
+            const answeredCount = opponentAnswers.length;
+            
+            if (answeredCount >= 3) {
+                statusEl.textContent = 'SELESAI';
+                textEl.textContent = 'Lawan telah menyelesaikan semua pertanyaan.';
+                textEl.classList.add('text-center', 'italic');
+            } else {
+                statusEl.textContent = `Menjawab Soal ${answeredCount + 1}`;
+                textEl.textContent = 'Menunggu lawan menjawab...';
+                textEl.classList.add('text-center', 'italic');
+            }
+            optionsEl.innerHTML = '';
+            feedbackEl.classList.add('hidden');
+        }
+    }
+
     function showDuel(duel) {
         if (!myGamePlayerId || (duel.challenger_id !== myGamePlayerId && duel.opponent_id !== myGamePlayerId)) {
             // Not part of duel
             return;
         }
+
+        updateDuelOpponentView(duel);
 
         // Find the first question we haven't answered yet
         const myAnswers = duel.answers.filter(a => a.game_player_id === myGamePlayerId);
@@ -927,20 +1052,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!nextQuestion) {
             // Waiting for opponent
-            duelStatusTextEl.textContent = 'Menunggu lawan selesai...';
-            duelTextEl.textContent = 'Anda telah menjawab semua soal. Harap tunggu.';
-            duelOptionsEl.innerHTML = '';
-            duelTimerEl.textContent = '';
+            const duelStatusTextEl = document.getElementById('duel-status-text');
+            const duelTextEl = document.getElementById('duel-text');
+            const duelOptionsEl = document.getElementById('duel-options');
+            const duelTimerEl = document.getElementById('duel-timer');
+            if (duelStatusTextEl) duelStatusTextEl.textContent = 'Menunggu lawan selesai...';
+            if (duelTextEl) duelTextEl.textContent = 'Anda telah menjawab semua soal. Harap tunggu.';
+            if (duelOptionsEl) duelOptionsEl.innerHTML = '';
+            if (duelTimerEl) duelTimerEl.textContent = '';
             clearInterval(duelCountdownInterval);
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'duel-modal' }));
             return;
         }
 
         const soal = nextQuestion.soal;
-        duelStatusTextEl.textContent = `Pertanyaan ${nextQuestion.order} dari 3`;
-        duelFeedbackEl.classList.add('hidden');
-        duelTextEl.textContent = soal.pertanyaan;
-        duelOptionsEl.innerHTML = '';
+        const duelStatusTextEl = document.getElementById('duel-status-text');
+        const duelFeedbackEl = document.getElementById('duel-feedback');
+        const duelTextEl = document.getElementById('duel-text');
+        const duelOptionsEl = document.getElementById('duel-options');
+        
+        if (duelStatusTextEl) duelStatusTextEl.textContent = `Pertanyaan ${nextQuestion.order} dari 3`;
+        if (duelFeedbackEl) duelFeedbackEl.classList.add('hidden');
+        if (duelTextEl) duelTextEl.textContent = soal.pertanyaan;
+        if (duelOptionsEl) duelOptionsEl.innerHTML = '';
 
         duelStartTime = Date.now();
 
@@ -949,11 +1083,12 @@ document.addEventListener('DOMContentLoaded', () => {
             button.type = 'button';
             button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-rose-400 hover:bg-rose-50';
             button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+            button.dataset.kunci = kunci;
             button.addEventListener('click', () => {
                 const timeTaken = Date.now() - duelStartTime;
-                submitDuelAnswer(soal.id, kunci, timeTaken);
+                submitDuelAnswer(soal.id, kunci, timeTaken, button);
             });
-            duelOptionsEl.appendChild(button);
+            if (duelOptionsEl) duelOptionsEl.appendChild(button);
         });
 
         window.dispatchEvent(new CustomEvent('open-modal', { detail: 'duel-modal' }));
@@ -962,6 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideDuel() {
         clearInterval(duelCountdownInterval);
+        if (duelOpponentSimTimeout) clearTimeout(duelOpponentSimTimeout);
         window.dispatchEvent(new CustomEvent('close-modal', { detail: 'duel-modal' }));
     }
 
@@ -1349,6 +1485,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    const botQuestionTextEl = document.getElementById('bot-question-text');
+    const botQuestionOptionsEl = document.getElementById('bot-question-options');
+    const botQuestionFeedbackEl = document.getElementById('bot-question-feedback');
+
+    function showBotQuestion(soal, jawabanRobot, benar, kunciJawaban) {
+        if (!botQuestionTextEl) return;
+        botQuestionTextEl.textContent = soal.pertanyaan;
+        botQuestionOptionsEl.innerHTML = '';
+        botQuestionFeedbackEl.classList.add('hidden');
+
+        Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.disabled = true;
+            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 cursor-default';
+            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+            button.dataset.kunci = kunci;
+            botQuestionOptionsEl.appendChild(button);
+        });
+
+        window.dispatchEvent(new CustomEvent('open-modal', { detail: 'bot-question-modal' }));
+
+        // Show answer feedback after a short delay
+        setTimeout(() => {
+            const selectedBtn = Array.from(botQuestionOptionsEl.children).find(b => b.dataset.kunci?.toUpperCase() === jawabanRobot?.toUpperCase());
+            const correctBtn = Array.from(botQuestionOptionsEl.children).find(b => b.dataset.kunci?.toUpperCase() === kunciJawaban?.toUpperCase());
+
+            if (selectedBtn) {
+                if (benar) {
+                    selectedBtn.classList.remove('border-slate-200', 'text-slate-700');
+                    selectedBtn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                } else {
+                    selectedBtn.classList.remove('border-slate-200', 'text-slate-700');
+                    selectedBtn.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                    if (correctBtn && correctBtn !== selectedBtn) {
+                        correctBtn.classList.remove('border-slate-200', 'text-slate-700');
+                        correctBtn.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                    }
+                }
+            }
+
+            botQuestionFeedbackEl.textContent = benar ? '✅ Bot menjawab benar!' : '❌ Bot menjawab salah!';
+            botQuestionFeedbackEl.classList.remove('hidden');
+        }, 800);
+    }
+
+    function hideBotQuestion() {
+        window.dispatchEvent(new CustomEvent('close-modal', { detail: 'bot-question-modal' }));
+    }
+
     async function playRobotTurns(robotTurns, session, startFromPosisi) {
         if (!robotTurns || robotTurns.length === 0) return;
 
@@ -1361,7 +1547,14 @@ document.addEventListener('DOMContentLoaded', () => {
             await delay(500);
             await animateDiceRoll(turn.nilai_dadu ?? 1);
             logTurnResult({ ...robot }, turn);
-            if (turn.type === 'answered' || turn.benar !== undefined) {
+
+            // Show bot question modal if this turn has a soal
+            if (turn.soal) {
+                showBotQuestion(turn.soal, turn.jawaban_robot, turn.benar, turn.kunci_jawaban);
+                await delay(2500);
+                hideBotQuestion();
+                await delay(300);
+            } else if (turn.type === 'answered' || turn.benar !== undefined) {
                 logAnswerResult(robot, turn.benar);
             }
 
@@ -1409,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTileGlow(latestSession?.status === 'playing' ? latestSession.players.find((p) => p.id === latestSession.current_turn_game_player_id)?.posisi_pion : null);
     }
 
-    async function submitDuelAnswer(soalId, jawaban, timeTakenMs) {
+    async function submitDuelAnswer(soalId, jawaban, timeTakenMs, selectedButtonEl = null) {
         clearInterval(duelCountdownInterval);
 
         try {
@@ -1421,6 +1614,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? 'Jawaban benar!'
                     : `Jawaban salah. ${result.pembahasan ?? ''}`;
                 duelFeedbackEl.classList.remove('hidden');
+
+                if (selectedButtonEl) {
+                    if (result.benar) {
+                        selectedButtonEl.classList.remove('border-slate-200', 'hover:border-rose-400', 'hover:bg-rose-50', 'text-slate-700');
+                        selectedButtonEl.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                    } else {
+                        selectedButtonEl.classList.remove('border-slate-200', 'hover:border-rose-400', 'hover:bg-rose-50', 'text-slate-700');
+                        selectedButtonEl.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                        
+                        if (result.kunci_jawaban) {
+                            const correctButton = Array.from(duelOptionsEl.children).find(b => b.dataset.kunci && b.dataset.kunci.toUpperCase() === result.kunci_jawaban.toUpperCase());
+                            if (correctButton) {
+                                correctButton.classList.remove('border-slate-200', 'hover:border-rose-400', 'hover:bg-rose-50', 'text-slate-700');
+                                correctButton.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                            }
+                        }
+                    }
+                }
+
+                Array.from(duelOptionsEl.children).forEach(b => {
+                    b.disabled = true;
+                    b.classList.remove('hover:-translate-y-0.5');
+                });
 
                 await delay(1800);
                 
@@ -1444,6 +1660,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     knownPositions.set(loser.id, loser.posisi_pion);
                 }
 
+                // Capture robotFromPosisi AFTER loser animation so if bot was loser,
+                // its knownPosition is already updated to the post-penalty position.
                 const robot = result.session.players.find((p) => p.is_robot);
                 const robotFromPosisi = robot ? (knownPositions.get(robot.id) ?? robot.posisi_pion) : 0;
                 const skipIds = new Set([myGamePlayerId, robot?.id].filter((id) => id !== undefined && id !== null));
@@ -1460,7 +1678,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function submitAnswer(soalId, jawaban) {
+    async function submitAnswer(soalId, jawaban, selectedButtonEl = null) {
         const robotBefore = latestSession?.players.find((p) => p.is_robot);
         const robotFromPosisi = robotBefore ? (knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
         const meBefore = latestSession?.players.find((p) => p.id === myGamePlayerId);
@@ -1473,6 +1691,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? 'Jawaban benar!'
                 : `Jawaban salah. ${result.pembahasan ?? ''}`;
             questionFeedbackEl.classList.remove('hidden');
+
+            if (selectedButtonEl) {
+                if (result.benar) {
+                    selectedButtonEl.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
+                    selectedButtonEl.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                } else {
+                    selectedButtonEl.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
+                    selectedButtonEl.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                    
+                    if (result.kunci_jawaban) {
+                        const correctButton = Array.from(questionOptionsEl.children).find(b => b.dataset.kunci && b.dataset.kunci.toUpperCase() === result.kunci_jawaban.toUpperCase());
+                        if (correctButton) {
+                            correctButton.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
+                            correctButton.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                        }
+                    }
+                }
+            }
+
+            Array.from(questionOptionsEl.children).forEach(b => {
+                b.disabled = true;
+                b.classList.remove('hover:-translate-y-0.5');
+            });
 
             const actingPlayer = result.session.players.find((p) => p.id === myGamePlayerId);
             if (actingPlayer) {
