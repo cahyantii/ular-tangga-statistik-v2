@@ -84,13 +84,3 @@
     <div id="pawn-layer" class="pointer-events-none absolute inset-0 z-[25]" style="grid-row: 1 / -1; grid-column: 1 / -1;"></div>
 </div>
 
-{{-- Legenda jenis kotak --}}
-<div class="mt-4 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-primary-500"></span> Soal</span>
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-accent-500"></span> Bonus</span>
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-violet-500"></span> Mystery</span>
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-rose-600"></span> Ular</span>
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-secondary-200"></span> Tangga</span>
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-rose-300"></span> Penalti</span>
-    <span class="flex items-center gap-1.5"><span class="h-3 w-3 rounded bg-gradient-to-br from-violet-600 to-amber-400"></span> Finish</span>
-</div>

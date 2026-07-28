@@ -63,11 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const logListEl = document.getElementById('game-log-list');
     const logEmptyEl = document.getElementById('game-log-empty');
 
-    const progressPosisiEl = document.getElementById('progress-posisi');
-    const progressTotalEl = document.getElementById('progress-total');
-    const progressPercentEl = document.getElementById('progress-percent');
-    const progressBarEl = document.getElementById('progress-bar');
-    progressTotalEl.textContent = jumlahPetak;
 
     const questionTextEl = document.getElementById('question-text');
     const questionOptionsEl = document.getElementById('question-options');
@@ -352,9 +347,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function initDiceSize() {
-        if (!diceCube) return;
-        const half = diceCube.parentElement.offsetWidth / 2;
-        diceCube.style.setProperty('--dice-half', `${half}px`);
+        const diceCubes = document.querySelectorAll('.dice-3d');
+        diceCubes.forEach((cube) => {
+            if (cube && cube.parentElement) {
+                const half = cube.parentElement.offsetWidth / 2;
+                cube.style.setProperty('--dice-half', `${half}px`);
+            }
+        });
     }
 
     async function animateDiceRoll(finalValue) {
@@ -392,10 +391,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const startRect = diceWrap.getBoundingClientRect();
         const boardRect = board.getBoundingClientRect();
         
-        const startX = startRect.left;
-        const startY = startRect.top;
-        const endX = boardRect.left + boardRect.width / 2 - startRect.width / 2;
-        const endY = boardRect.top + boardRect.height / 2 - startRect.height / 2;
+        const startX = startRect.left + startRect.width / 2 - 40;
+        const startY = startRect.top + startRect.height / 2 - 40;
+        const endX = boardRect.left + boardRect.width / 2 - 40;
+        const endY = boardRect.top + boardRect.height / 2 - 40;
         
         const dx = endX - startX;
         const dy = endY - startY;
@@ -407,12 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const target = FACE_ROTATIONS[finalValue] ?? FACE_ROTATIONS[1];
         const spins = 2; // putaran ekstra penuh supaya terasa "dilempar"
         
-        // Hitung target akhir dengan mengakumulasi putaran (seperti kode lama) agar tidak bentrok
         const targetX = diceRotation.x + spins * 360 + (target.x - (diceRotation.x % 360));
         const targetY = diceRotation.y + spins * 360 + (target.y - (diceRotation.y % 360));
-        const targetZ = Math.floor(2 + Math.random() * 2) * 360; // Hanya untuk efek putaran liar saat terbang
+        const targetZ = Math.floor(2 + Math.random() * 2) * 360;
         
-        // Konfigurasi tinggi pantulan (parabola steps)
         const bounces = [
             { t: 0.60, height: -180 }, // Terbang awal (puncak)
             { t: 0.80, height: -50 },  // Pantulan 1
@@ -424,12 +421,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let lastBounceIdx = 0;
             
             function frame(now) {
-                let p = (now - startTime) / duration;
-                if (p > 1) p = 1;
-                
-                // Easing gerak maju (X dan Y base) - makin melambat (easeOutQuart)
+                const elapsed = now - startTime;
+                let p = Math.min(elapsed / duration, 1);
                 const easeOutQuart = 1 - Math.pow(1 - p, 4);
-                const currentX = startX + dx * easeOutQuart;
+                let currentX = startX + dx * easeOutQuart;
                 let currentY = startY + dy * easeOutQuart;
                 
                 // Skala dasar dadu mengecil dari 100% ke 50% selama terbang
@@ -508,11 +503,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Beri efek glow pada wrapper clone agar tidak merusak preserve-3d innerCube
                     clone.classList.add('tile-glow-bonus');
                     
-                    // Kembalikan sinkronisasi rotasi pada dadu asli
                     diceRotation.x = targetX;
                     diceRotation.y = targetY;
-                    diceCube.style.transition = 'none';
-                    diceCube.style.transform = `rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg)`;
+                    
+                    document.querySelectorAll('.dice-3d').forEach((cube) => {
+                        cube.style.transition = 'none';
+                        cube.style.transform = `rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg)`;
+                    });
                     
                     // Tunggu 2000ms supaya hasil terlihat lebih lama sebelum memindahkan pion
                     setTimeout(() => {
@@ -752,35 +749,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderMyProgress(session) {
-        const me = session.players.find((p) => p.id === myGamePlayerId);
-        if (!me) return;
-
-        const pct = jumlahPetak > 0 ? Math.min(100, Math.max(0, Math.round((me.posisi_pion / jumlahPetak) * 100))) : 0;
-        progressPosisiEl.textContent = me.posisi_pion;
-        progressPercentEl.textContent = `${pct}%`;
-        progressBarEl.style.width = `${pct}%`;
-    }
 
     function updateTurnIndicator(session) {
         const currentPlayer = session.players.find((p) => p.id === session.current_turn_game_player_id);
         const isMyTurn = currentPlayer && !currentPlayer.is_robot && myGamePlayerId === currentPlayer.id;
+
+        const turnActiveDotEl = document.getElementById('turn-active-dot');
+        const turnAvatarRingEl = document.getElementById('turn-avatar-ring');
+        const diceGlowWrapEl = document.getElementById('dice-glow-wrap');
 
         if (session.status !== 'playing') {
             turnIndicatorEl.textContent = '';
             turnSubtextEl.textContent = '';
             turnAvatarEl.textContent = '';
             rollButton.classList.add('hidden');
+            if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+            if (turnAvatarRingEl) {
+                turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
+                turnAvatarRingEl.classList.add('opacity-0');
+            }
+            if (diceGlowWrapEl) diceGlowWrapEl.classList.remove('animate-float', 'drop-shadow-lg');
             setTileGlow(null);
             return;
         }
 
         turnAvatarEl.textContent = currentPlayer ? (currentPlayer.is_robot ? '\u{1F916}' : initials(currentPlayer.nama)) : '?';
-        turnAvatarEl.className = `flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold text-white ${currentPlayer?.is_robot ? 'bg-slate-700' : 'bg-primary-500'}`;
+        turnAvatarEl.className = `relative z-10 flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
 
-        turnIndicatorEl.textContent = isMyTurn
-            ? 'Giliran Anda'
-            : `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
+        if (isMyTurn) {
+            turnIndicatorEl.innerHTML = `Giliran Anda`; // The dot is now handled separately below
+            if (turnActiveDotEl) {
+                turnActiveDotEl.classList.remove('hidden');
+                turnActiveDotEl.classList.add('flex');
+            }
+            if (turnAvatarRingEl) {
+                turnAvatarRingEl.classList.remove('opacity-0');
+                turnAvatarRingEl.classList.add('animate-ping-slow', 'opacity-100');
+            }
+        } else {
+            turnIndicatorEl.textContent = `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
+            if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+            if (turnAvatarRingEl) {
+                turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
+                turnAvatarRingEl.classList.add('opacity-0');
+            }
+        }
 
         turnSubtextEl.textContent = currentPlayer
             ? `Posisi: ${currentPlayer.posisi_pion} • Skor: ${currentPlayer.skor}`
@@ -1403,7 +1416,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderPlayerPanels(session);
-        renderMyProgress(session);
         updateTurnIndicator(session);
         renderPaused(session);
 
@@ -1785,6 +1797,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     rollButton?.addEventListener('click', rollDice);
+
+    // Tambahan untuk fullscreen: buat area dadu bisa diklik langsung
+    if (diceGlowWrap && rollButton) {
+        diceGlowWrap.addEventListener('click', () => {
+            if (!rollButton.disabled) rollButton.click();
+        });
+        diceGlowWrap.title = 'Klik untuk melempar dadu';
+        
+        const syncDiceGlowCursor = () => {
+            diceGlowWrap.style.cursor = rollButton.disabled ? 'not-allowed' : 'pointer';
+        };
+        new MutationObserver(syncDiceGlowCursor).observe(rollButton, { attributes: true, attributeFilter: ['disabled'] });
+        syncDiceGlowCursor();
+    }
     window.addEventListener('resize', initDiceSize);
 
     /**
@@ -1847,6 +1873,48 @@ document.addEventListener('DOMContentLoaded', () => {
             event.returnValue = '';
         }
     });
+
+    // ---------------------------------------------------------------
+    // FULLSCREEN TOGGLE (CSS-only: avoids browser fullscreen API
+    // which hides elements teleported outside the fullscreen element,
+    // like Alpine x-teleport modals, dice animation backdrop, etc.)
+    // ---------------------------------------------------------------
+    const fullscreenBtn = document.getElementById('toggle-fullscreen-btn');
+    const fullscreenContainer = document.getElementById('game-fullscreen-container');
+
+    const EXPAND_ICON = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>`;
+    const SHRINK_ICON = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 14h4v4m0-4l-5 5m15-1v-4h-4m4 0l-5-5M4 10h4V6m-4 4l-5-5m15-1v4h-4m4 0l-5 5" /></svg>`;
+
+    if (fullscreenBtn && fullscreenContainer) {
+        let isFullscreen = false;
+
+        const enterFullscreen = () => {
+            isFullscreen = true;
+            document.body.classList.add('game-fullscreen-active');
+            fullscreenContainer.classList.add('is-fullscreen');
+            fullscreenBtn.innerHTML = SHRINK_ICON;
+            fullscreenBtn.setAttribute('title', 'Keluar Mode Layar Penuh');
+            showToast('Mode Layar Penuh Aktif — tekan tombol pojok kanan atas untuk keluar', 'info');
+        };
+
+        const exitFullscreen = () => {
+            isFullscreen = false;
+            document.body.classList.remove('game-fullscreen-active');
+            fullscreenContainer.classList.remove('is-fullscreen');
+            fullscreenBtn.innerHTML = EXPAND_ICON;
+            fullscreenBtn.setAttribute('title', 'Mode Layar Penuh');
+        };
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (isFullscreen) exitFullscreen();
+            else enterFullscreen();
+        });
+
+        // ESC key to exit fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isFullscreen) exitFullscreen();
+        });
+    }
 
     loadInitialState();
 });

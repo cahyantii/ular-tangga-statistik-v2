@@ -12,8 +12,4 @@
         </p>
         <p class="text-sm font-bold text-primary-600" id="progress-percent">0%</p>
     </div>
-
-    <div class="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
-        <div id="progress-bar" class="h-2.5 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-700 ease-out" style="width: 0%"></div>
-    </div>
 </div>

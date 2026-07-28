@@ -81,6 +81,7 @@ export default {
                 'scale-in': 'scaleIn 0.35s ease-out both',
                 float: 'float 4s ease-in-out infinite',
                 'fade-in-right': 'fadeInRight 0.5s ease-out both',
+                'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
             },
         },
     },
