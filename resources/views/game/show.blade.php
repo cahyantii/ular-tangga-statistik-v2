@@ -50,7 +50,7 @@
            tombol Keluar disembunyikan inline (`max-xl:hidden`) karena sudah
            terwakili tombol "Keluar" di FAB.
     --}}
-    <div class="grid grid-cols-1 gap-5 xl:grid-cols-4 xl:gap-6">
+    <div class="grid grid-cols-1 gap-5 xl:grid-cols-4 xl:gap-6 items-start">
         {{-- Kolom 1 (desktop saja): Pemain --}}
         <div
             x-data="{ open: false }"
@@ -102,7 +102,7 @@
 
         {{-- Kolom 2-3: Papan --}}
         <div class="max-xl:order-2 space-y-5 xl:col-start-2 xl:col-span-2 xl:row-start-1 xl:space-y-6">
-            <div class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm sm:p-5">
+            <div class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm sm:p-5 mx-auto w-full" style="max-height: 80vh; max-width: 80vh; aspect-ratio: 1 / 1;">
                 {{--
                     Toggle tema visual ular/perosotan - PURE client-side
                     (localStorage, lihat board-visuals.js initBoardThemeToggle()
@@ -147,12 +147,19 @@
                         Lempar Dadu
                     </button>
                     <p class="text-[11px] text-slate-400">Klik untuk melempar dadu</p>
+
+                    @if(app()->environment('local'))
+                        <div class="mt-2 text-center border-t border-slate-100 pt-2 w-full">
+                            <label class="text-[10px] text-slate-500 block mb-1 uppercase font-bold tracking-wider">Dev Cheat: Force Roll</label>
+                            <input type="number" id="forced-roll-input" min="1" max="100" class="w-20 rounded-md border border-slate-300 py-1 px-2 text-center text-sm" placeholder="Auto">
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
         {{-- Kolom 4: Tips, di bawah Giliran+Dadu --}}
-        <x-game.tips-card :papan="$papan" class="max-xl:order-3 xl:col-start-4 xl:row-start-2" />
+        <x-game.tips-card :papan="$papan" class="max-xl:order-3 xl:col-start-4 xl:row-start-2 max-h-[40vh] overflow-y-auto" />
 
         {{-- Kolom 4: Keluar, di bawah Tips (mobile: disembunyikan, sudah terwakili tombol Keluar di FAB) --}}
         <button
@@ -236,6 +243,24 @@
         <p id="question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
     </x-player.modal>
 
+    {{-- Modal Duel --}}
+    <x-player.modal name="duel-modal">
+        <div class="mb-4 flex flex-col items-center justify-center">
+            <h3 class="flex items-center gap-2 text-xl font-black text-rose-600 uppercase tracking-widest mb-1">
+                <x-player.icon name="swords" class="h-6 w-6" />
+                Duel!
+            </h3>
+            <p id="duel-status-text" class="text-sm font-medium text-slate-500">Pertanyaan <span id="duel-question-number">1</span> dari 3</p>
+        </div>
+        <div class="mb-4 flex items-center justify-between">
+            <h4 class="text-md font-bold text-slate-800">Soal Duel</h4>
+            <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600"></span>
+        </div>
+        <p id="duel-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
+        <div id="duel-options" class="space-y-2"></div>
+        <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></div>
+    </x-player.modal>
+
     {{-- Modal Hasil Akhir --}}
     <x-player.modal name="game-finished-modal">
         <div class="text-center">
@@ -281,7 +306,7 @@
                 <x-player.icon name="info" class="h-7 w-7 text-slate-500" />
             </div>
             <h3 class="text-lg font-bold text-slate-800">Preview Petak Khusus</h3>
-            <p id="preview-tile-text" class="mt-2 text-sm leading-relaxed text-slate-600"></p>
+            <p id="preview-tile-text" class="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-line"></p>
             <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal'))" class="mt-6 w-full rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-600">Tutup</button>
         </div>
     </x-player.modal>
@@ -289,25 +314,29 @@
     <script>
         window.addEventListener('preview-tile', function (e) {
             const data = e.detail;
-            let message = `Ini adalah petak ${data.jenis.toUpperCase()} di posisi ${data.posisi}. `;
+            let message = `Ini adalah petak ${data.jenis.toUpperCase()} di posisi ${data.posisi}.\n\n`;
             
-            switch (data.jenis) {
-                case 'soal':
-                    message += 'Jika Anda mendarat di petak ini, Anda harus menjawab pertanyaan dengan benar untuk mendapatkan poin.';
-                    break;
-                case 'bonus':
-                    message += 'Anda akan mendapatkan bonus poin jika berhenti di petak ini.';
-                    break;
-                case 'penalti':
-                    message += 'Poin Anda akan dikurangi jika berhenti di petak ini.';
-                    break;
-                case 'ular':
-                case 'tangga':
-                    message += `Petak ini adalah jalur ${data.jenis}.`;
-                    break;
-                case 'mystery':
-                    message += 'Petak misteri bisa memberikan Anda bonus poin atau penalti!';
-                    break;
+            if (data.text) {
+                message += data.text;
+            } else {
+                switch (data.jenis) {
+                    case 'soal':
+                        message += 'Jika Anda mendarat di petak ini, Anda harus menjawab pertanyaan dengan benar untuk mendapatkan poin.';
+                        break;
+                    case 'bonus':
+                        message += 'Anda akan mendapatkan bonus poin jika berhenti di petak ini.';
+                        break;
+                    case 'penalti':
+                        message += 'Poin Anda akan dikurangi jika berhenti di petak ini.';
+                        break;
+                    case 'ular':
+                    case 'tangga':
+                        message += `Petak ini adalah jalur ${data.jenis}.`;
+                        break;
+                    case 'mystery':
+                        message += 'Petak misteri bisa memberikan Anda bonus poin atau penalti!';
+                        break;
+                }
             }
             
             document.getElementById('preview-tile-text').textContent = message;

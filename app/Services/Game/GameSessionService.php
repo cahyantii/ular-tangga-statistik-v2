@@ -60,6 +60,7 @@ class GameSessionService
         private readonly ScoreService $score,
         private readonly WinConditionService $winCondition,
         private readonly TurnService $turn,
+        private readonly DuelService $duel,
         private readonly GameLogService $gameLog,
         private readonly GameSettingsRepository $settings,
         private readonly PlayerStatsService $playerStats,
@@ -149,14 +150,14 @@ class GameSessionService
     /**
      * @return array{type: string, session: GameSession, player: GamePlayer, nilai_dadu?: int, effect?: array, soal?: Soal, robot_turns: array}
      */
-    public function rollDice(GameSession $gameSession, GamePlayer $gamePlayer): array
+    public function rollDice(GameSession $gameSession, GamePlayer $gamePlayer, ?int $forcedRoll = null): array
     {
-        [$result, $events] = DB::transaction(function () use ($gameSession, $gamePlayer) {
+        [$result, $events] = DB::transaction(function () use ($gameSession, $gamePlayer, $forcedRoll) {
             $gameSession = GameSession::query()->lockForUpdate()->findOrFail($gameSession->id);
             $this->assertPlayable($gameSession, $gamePlayer);
 
             $events = [];
-            $result = $this->executeRoll($gameSession, $gamePlayer, $events);
+            $result = $this->executeRoll($gameSession, $gamePlayer, $events, $forcedRoll);
             $robotOutcome = $this->playRobotTurnsIfNeeded($gameSession, $events);
             $result['robot_turns'] = $robotOutcome['robot_turns'];
             $result['_achievements_by_player'] = array_replace($result['_achievements_by_player'] ?? [], $robotOutcome['achievements_by_player']);
@@ -200,6 +201,37 @@ class GameSessionService
         return $result;
     }
 
+    public function submitDuelAnswer(GameSession $gameSession, GamePlayer $gamePlayer, int $soalId, ?string $jawaban, int $timeTakenMs): array
+    {
+        [$result, $events] = DB::transaction(function () use ($gameSession, $gamePlayer, $soalId, $jawaban, $timeTakenMs) {
+            $gameSession = GameSession::query()->lockForUpdate()->findOrFail($gameSession->id);
+
+            if ($gameSession->status !== GameStatus::Duel) {
+                abort(403, 'Permainan tidak sedang dalam mode duel.');
+            }
+
+            $events = [];
+            $result = $this->duel->submitDuelAnswer($gameSession, $gamePlayer, $soalId, $jawaban, $timeTakenMs);
+
+            if ($result['type'] === 'duel_finished') {
+                $robotOutcome = $this->playRobotTurnsIfNeeded($gameSession, $events);
+                $result['robot_turns'] = $robotOutcome['robot_turns'];
+                $result['_achievements_by_player'] = $robotOutcome['achievements_by_player'] ?? [];
+            }
+
+            $result['session'] = $gameSession->fresh();
+            $result['player'] = $gamePlayer->fresh();
+
+            return [$result, $events];
+        });
+
+        $this->dispatchEvents($events);
+        $this->flushNotifications();
+        $this->extractNewlyUnlockedAchievements($result, $gamePlayer);
+
+        return $result;
+    }
+
     /**
      * Achievement baru yang terbuka untuk SATU game_player tertentu dievaluasi
      * synchronous di dalam finishSession() (bukan hanya lewat job terjadwal —
@@ -224,11 +256,16 @@ class GameSessionService
      *
      * @return array{type: string, session: GameSession, player: GamePlayer, nilai_dadu: int, soal?: Soal}
      */
-    private function executeRoll(GameSession $gameSession, GamePlayer $gamePlayer, array &$events): array
+    private function executeRoll(GameSession $gameSession, GamePlayer $gamePlayer, array &$events, ?int $forcedRoll = null): array
     {
         $papan = $gameSession->papan;
 
-        $nilaiDadu = $this->dice->roll($gameSession);
+        if (app()->environment('local') && $forcedRoll !== null && $forcedRoll >= 1 && $forcedRoll <= 100) {
+            $nilaiDadu = $forcedRoll;
+        } else {
+            $nilaiDadu = $this->dice->roll($gameSession);
+        }
+        
         $events[] = new DiceRolled($gameSession, $gamePlayer, $nilaiDadu);
         $this->gameLog->log($gameSession, GameLogEventType::DiceRolled, $gamePlayer->user_id, $gameSession->total_turn, [
             'nilai' => $nilaiDadu,
@@ -253,16 +290,6 @@ class GameSessionService
             'posisi_sesudah' => $move['posisi_sesudah'],
         ]);
 
-        if ($move['konektor']) {
-            $konektor = $move['konektor'];
-            $events[] = new ConnectorApplied($gameSession, $gamePlayer, $konektor->jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
-            $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
-                'jenis' => $konektor->jenis->value,
-                'posisi_awal' => $konektor->posisi_awal,
-                'posisi_akhir' => $konektor->posisi_akhir,
-            ]);
-        }
-
         if ($this->winCondition->hasWon($gamePlayer, $papan)) {
             $achievementsByPlayer = $this->finishSession($gameSession, $gamePlayer, WinReason::Finish, $events);
 
@@ -276,25 +303,37 @@ class GameSessionService
         }
 
         $petak = Petak::query()->where('papan_id', $papan->id)->where('posisi', $move['posisi_sesudah'])->firstOrFail();
-        $effect = $this->tileResolver->resolve($gameSession, $gamePlayer, $petak);
 
-        if ($effect['type'] === 'soal') {
+        if ($move['konektor']) {
+            $konektor = $move['konektor'];
             $soal = $this->question->selectQuestion($gameSession, $petak);
 
             if ($soal) {
                 $waktu = $this->settings->getInt('question_timer_seconds');
+                $gameSession->update([
+                    'active_question_id' => $soal->id,
+                    'active_question_expires_at' => now()->addSeconds($waktu),
+                ]);
+
                 $events[] = new QuestionPresented($gameSession, $gamePlayer, $soal, $waktu);
                 $this->gameLog->log($gameSession, GameLogEventType::QuestionPresented, $gamePlayer->user_id, $gameSession->total_turn, [
                     'soal_id' => $soal->id,
                 ]);
 
                 return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'soal' => $soal];
+            } else {
+                // Jika tidak ada soal tersisa, langsung terapkan konektor
+                $events[] = new ConnectorApplied($gameSession, $gamePlayer, $konektor->jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
+                $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
+                    'jenis' => $konektor->jenis->value,
+                    'posisi_awal' => $konektor->posisi_awal,
+                    'posisi_akhir' => $konektor->posisi_akhir,
+                ]);
+                $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
             }
-
-            // Pool soal kategori ini habis dalam sesi ini -> diperlakukan seperti petak biasa.
-            $effect = ['type' => 'none'];
-            $toast = 'Tidak ada soal tersisa untuk kategori ini! Petak diperlakukan seperti petak biasa.';
         }
+
+        $effect = $this->tileResolver->resolve($gameSession, $gamePlayer, $petak);
 
         if (in_array($effect['type'], ['bonus', 'penalti', 'mystery'], true)) {
             $scoreEventType = match ($effect['type']) {
@@ -310,12 +349,14 @@ class GameSessionService
             ]);
         }
 
+        $activeDuel = $this->duel->checkAndStartDuel($gameSession, $gamePlayer, $events);
+        if ($activeDuel) {
+            return ['type' => 'duel', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'duel' => $activeDuel];
+        }
+
         $this->turn->advance($gameSession);
 
-        $response = ['type' => $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
-        if (isset($toast)) {
-            $response['toast'] = $toast;
-        }
+        $response = ['type' => $effect['type'] === 'none' ? 'normal' : $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu];
         
         return $response;
     }
@@ -363,15 +404,46 @@ class GameSessionService
 
         $gameSession->update(['active_question_id' => null, 'active_question_expires_at' => null]);
 
-        $this->turn->advance($gameSession);
+        $konektor_applied = false;
+        $konektor = \App\Models\PapanKonektor::query()
+            ->where('papan_id', $gameSession->papan_id)
+            ->where('posisi_awal', $gamePlayer->posisi_pion)
+            ->first();
+
+        if ($konektor) {
+            $jenis = $konektor->jenis;
+            if (($isCorrect && $jenis->value === 'tangga') || (!$isCorrect && $jenis->value === 'ular')) {
+                $events[] = new ConnectorApplied($gameSession, $gamePlayer, $jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
+                $this->gameLog->log($gameSession, GameLogEventType::ConnectorApplied, $gamePlayer->user_id, $gameSession->total_turn, [
+                    'jenis' => $jenis->value,
+                    'posisi_awal' => $konektor->posisi_awal,
+                    'posisi_akhir' => $konektor->posisi_akhir,
+                ]);
+                $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
+                $konektor_applied = true;
+            }
+        }
+
+        $activeDuel = $this->duel->checkAndStartDuel($gameSession, $gamePlayer, $events);
+
+        if (!$activeDuel) {
+            $this->turn->advance($gameSession);
+        }
 
         return [
-            'type' => 'answered',
+            'type' => $activeDuel ? 'duel' : 'answered',
+            'duel' => $activeDuel,
             'session' => $gameSession->fresh(),
             'player' => $gamePlayer->fresh(),
             'benar' => $isCorrect,
             'pembahasan' => $soal->pembahasan,
             'kunci_jawaban' => $soal->kunci_jawaban,
+            'konektor_applied' => $konektor_applied,
+            'konektor_info' => $konektor ? [
+                'jenis' => $konektor->jenis->value,
+                'posisi_awal' => $konektor->posisi_awal,
+                'posisi_akhir' => $konektor->posisi_akhir,
+            ] : null,
         ];
     }
 
@@ -413,6 +485,8 @@ class GameSessionService
                 $jawaban = $this->deciderFor($current)->decideAnswer($gameSession, $current, $rollResult['soal']);
                 $answerResult = $this->executeAnswer($gameSession, $current, $rollResult['soal']->id, $jawaban, $events);
                 $turnSummary['benar'] = $answerResult['benar'];
+                $turnSummary['konektor_applied'] = $answerResult['konektor_applied'] ?? false;
+                $turnSummary['konektor_info'] = $answerResult['konektor_info'] ?? null;
                 $achievementsByPlayer = array_replace($achievementsByPlayer, $answerResult['_achievements_by_player'] ?? []);
             }
 

@@ -56,9 +56,12 @@ class GameController extends Controller
     public function roll(Request $request, GameSession $gameSession): JsonResponse
     {
         Gate::authorize('rollDice', $gameSession);
-
         $player = $this->resolvePlayer($gameSession, $request);
-        $result = $this->gameSessionService->rollDice($gameSession, $player);
+
+        $forcedRoll = $request->input('forced_roll');
+        $forcedRoll = is_numeric($forcedRoll) ? (int) $forcedRoll : null;
+
+        $result = $this->gameSessionService->rollDice($gameSession, $player, $forcedRoll);
 
         return response()->json($this->formatTurnResult($result));
     }
@@ -73,6 +76,29 @@ class GameController extends Controller
             $player,
             $request->integer('soal_id'),
             $request->input('jawaban')
+        );
+
+        return response()->json($this->formatTurnResult($result));
+    }
+
+    public function duelAnswer(Request $request, GameSession $gameSession): JsonResponse
+    {
+        Gate::authorize('duelAnswer', $gameSession);
+
+        $request->validate([
+            'soal_id' => 'required|integer',
+            'jawaban' => 'nullable|string',
+            'time_taken_ms' => 'required|integer|min:0',
+        ]);
+
+        $player = $this->resolvePlayer($gameSession, $request);
+        
+        $result = $this->gameSessionService->submitDuelAnswer(
+            $gameSession,
+            $player,
+            $request->integer('soal_id'),
+            $request->input('jawaban'),
+            $request->integer('time_taken_ms')
         );
 
         return response()->json($this->formatTurnResult($result));
@@ -133,6 +159,21 @@ class GameController extends Controller
             $response['benar'] = $result['benar'];
             $response['pembahasan'] = $result['pembahasan'];
             $response['kunci_jawaban'] = $result['kunci_jawaban'];
+            $response['konektor_applied'] = $result['konektor_applied'] ?? false;
+            $response['konektor_info'] = $result['konektor_info'] ?? null;
+        }
+
+        if (isset($result['duel'])) {
+            $response['duel'] = $result['duel']->toArray();
+            if ($result['duel']->relationLoaded('questions')) {
+                $response['duel']['questions'] = $result['duel']->questions->map(function ($q) {
+                    return [
+                        'id' => $q->id,
+                        'order' => $q->order,
+                        'soal' => new SoalPublicResource($q->soal)
+                    ];
+                });
+            }
         }
 
         $response['robot_turns'] = $result['robot_turns'] ?? [];

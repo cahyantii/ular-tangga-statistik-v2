@@ -9,10 +9,14 @@
     ];
 @endphp
 
+@php
+    $isGameShow = request()->routeIs('game.show');
+@endphp
+
 <aside
     x-cloak
-    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
-    class="fixed inset-y-0 left-0 z-40 h-screen w-[280px] shrink-0 overflow-hidden text-white transition-transform duration-300 ease-in-out lg:sticky lg:inset-y-auto lg:top-0 lg:left-auto lg:h-screen lg:w-[260px] lg:translate-x-0 xl:w-[280px]"
+    :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full {{ $isGameShow ? '' : 'lg:translate-x-0' }}'"
+    class="fixed inset-y-0 left-0 z-40 h-screen w-[280px] shrink-0 overflow-hidden text-white transition-transform duration-300 ease-in-out {{ $isGameShow ? '' : 'lg:sticky lg:inset-y-auto lg:top-0 lg:left-auto lg:h-screen lg:w-[260px] lg:translate-x-0 xl:w-[280px]' }}"
 >
     {{-- Background artwork: harus mengisi seluruh sidebar tanpa celah --}}
     <img
@@ -46,7 +50,7 @@
             <button
                 @click="sidebarOpen = false"
                 aria-label="Tutup menu"
-                class="rounded-lg p-1.5 text-white/80 transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 lg:hidden"
+                class="rounded-lg p-1.5 text-white/80 transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 {{ $isGameShow ? '' : 'lg:hidden' }}"
             >
                 <x-player.icon name="close" class="h-6 w-6" />
             </button>
@@ -86,5 +90,5 @@
     x-show="sidebarOpen"
     x-transition.opacity
     @click="sidebarOpen = false"
-    class="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
+    class="fixed inset-0 z-30 bg-slate-900/40 {{ $isGameShow ? '' : 'lg:hidden' }}"
 ></div>

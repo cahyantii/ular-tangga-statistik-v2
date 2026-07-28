@@ -32,5 +32,6 @@ Route::get('/{gameSession}', [GameController::class, 'show'])->name('show');
 Route::get('/{gameSession}/state', [GameController::class, 'state'])->name('state');
 Route::post('/{gameSession}/roll', [GameController::class, 'roll'])->name('roll');
 Route::post('/{gameSession}/answer', [GameController::class, 'answer'])->name('answer');
+Route::post('/{gameSession}/duel-answer', [GameController::class, 'duelAnswer'])->name('duel-answer');
 Route::post('/{gameSession}/leave', [GameController::class, 'leave'])->name('leave');
 Route::post('/{gameSession}/heartbeat', [GameController::class, 'heartbeat'])->name('heartbeat');

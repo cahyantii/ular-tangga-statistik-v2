@@ -6,7 +6,7 @@
         x-show="open"
         x-cloak
         @open-modal.window="if ($event.detail === '{{ $name }}') open = true"
-        @close-modal.window="open = false"
+        @close-modal.window="if (!$event.detail || $event.detail === '{{ $name }}') open = false"
         @keydown.escape.window="open = false"
         class="fixed inset-0 z-50 flex items-center justify-center p-4"
     >

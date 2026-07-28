@@ -6,7 +6,7 @@
 
 <header class="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-slate-100 bg-white/80 px-4 py-3 backdrop-blur-md sm:px-6 lg:px-8">
     <div class="flex min-w-0 items-center gap-3">
-        <button @click="sidebarOpen = true" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden">
+        <button @click="sidebarOpen = true" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 {{ request()->routeIs('game.show') ? '' : 'lg:hidden' }}">
             <x-player.icon name="menu" class="h-6 w-6" />
         </button>
 

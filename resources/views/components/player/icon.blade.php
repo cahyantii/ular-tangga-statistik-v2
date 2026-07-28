@@ -484,6 +484,17 @@
         </svg>
         @break
 
+    @case('swords')
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" class="{{ $classes }}">
+            <path d="M14.5 17.5L3 6V3h3l11.5 11.5" />
+            <path d="M13 19l6-6" />
+            <path d="M16 16l4 4" />
+            <path d="M19 21l2-2" />
+            <path d="M14.5 6.5L21 13v3h-3L6.5 4.5" />
+            <path d="M5 5l14 14" />
+        </svg>
+        @break
+
     @default
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="{{ $classes }}">
             <circle cx="12" cy="12" r="8.5" />

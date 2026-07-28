@@ -44,7 +44,7 @@ class TileResolverService
                 'delta' => $this->scoreService->apply($gamePlayer, ScoreEventType::TilePenalty),
             ],
             TileType::Mystery => $this->resolveMystery($gameSession, $gamePlayer),
-            TileType::Soal => ['type' => 'soal'],
+            TileType::Soal => ['type' => 'none'],
             default => ['type' => 'none'],
         };
     }

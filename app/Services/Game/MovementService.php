@@ -22,32 +22,24 @@ class MovementService
     public function move(GamePlayer $gamePlayer, int $nilaiDadu, PapanPermainan $papan): array
     {
         $posisiSebelum = $gamePlayer->posisi_pion;
-        $sisaLangkah = $papan->jumlah_petak - $posisiSebelum;
-
-        if ($nilaiDadu > $sisaLangkah) {
-            return [
-                'posisi_sebelum' => $posisiSebelum,
-                'posisi_sesudah' => $posisiSebelum,
-                'blocked' => true,
-                'konektor' => null,
-            ];
-        }
-
         $posisiSetelahLangkah = $posisiSebelum + $nilaiDadu;
+
+        if ($posisiSetelahLangkah > $papan->jumlah_petak) {
+            $sisa = $posisiSetelahLangkah - $papan->jumlah_petak;
+            $posisiSetelahLangkah = $papan->jumlah_petak - $sisa;
+        }
 
         $konektor = PapanKonektor::query()
             ->where('papan_id', $papan->id)
             ->where('posisi_awal', $posisiSetelahLangkah)
             ->first();
 
-        $posisiAkhir = $konektor?->posisi_akhir ?? $posisiSetelahLangkah;
-
-        $gamePlayer->posisi_pion = $posisiAkhir;
+        $gamePlayer->posisi_pion = $posisiSetelahLangkah;
         $gamePlayer->save();
 
         return [
             'posisi_sebelum' => $posisiSebelum,
-            'posisi_sesudah' => $posisiAkhir,
+            'posisi_sesudah' => $posisiSetelahLangkah,
             'blocked' => false,
             'konektor' => $konektor,
         ];

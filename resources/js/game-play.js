@@ -74,6 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const questionTimerEl = document.getElementById('question-timer');
     const questionFeedbackEl = document.getElementById('question-feedback');
 
+    const duelStatusTextEl = document.getElementById('duel-status-text');
+    const duelQuestionNumberEl = document.getElementById('duel-question-number');
+    const duelTextEl = document.getElementById('duel-text');
+    const duelOptionsEl = document.getElementById('duel-options');
+    const duelTimerEl = document.getElementById('duel-timer');
+    const duelFeedbackEl = document.getElementById('duel-feedback');
+
     const playerCardTemplate = document.getElementById('player-card-template');
     const robotCardTemplate = document.getElementById('robot-card-template');
 
@@ -81,6 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let latestSession = null;
     let knownPositions = new Map(); // game_player_id -> posisi_pion (untuk animasi diff)
     let questionCountdownInterval = null;
+    let duelCountdownInterval = null;
     let pausedCountdownInterval = null;
     let heartbeatIntervalId = null;
     let presenceChannel = null;
@@ -285,6 +293,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------------------------------------------------------------
     // Dadu 3D
     // ---------------------------------------------------------------
+    // ---------------------------------------------------------------
+    // Audio Synth (Web Audio API) untuk Sound Effects
+    // ---------------------------------------------------------------
+    let audioCtx = null;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+    
+    function playRollSound() {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+    }
+    
+    function playHitSound(vol = 0.2) {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
+        
+        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    // ---------------------------------------------------------------
+    // Dadu 3D
+    // ---------------------------------------------------------------
     const FACE_ROTATIONS = {
         1: { x: 0, y: 0 },
         2: { x: 0, y: -90 },
@@ -302,23 +359,172 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function animateDiceRoll(finalValue) {
         if (!diceCube) return;
+        
+        const diceWrap = document.getElementById('dice-3d-wrap');
+        const board = document.getElementById('game-board');
+        if (!diceWrap || !board) return;
 
         diceGlowWrap?.classList.add('ring-4', 'ring-accent-300', 'animate-pulse');
-        diceCube.classList.add('dice-rolling');
+        
+        // Sembunyikan dadu asli selama animasi (seolah terlempar)
+        diceCube.style.opacity = '0';
 
-        await delay(650);
+        // Buat clone dadu untuk dianimasikan terbang
+        const clone = diceWrap.cloneNode(true);
+        clone.id = 'dice-clone';
+        clone.classList.add('dice-clone-wrap');
+        
+        // Hapus disabled overlay di clone jika ada
+        const overlay = clone.querySelector('#dice-3d-disabled-overlay');
+        if (overlay) overlay.remove();
 
-        diceCube.classList.remove('dice-rolling');
+        const innerCube = clone.querySelector('.dice-3d');
+        innerCube.style.transition = 'none';
+        innerCube.style.opacity = '1'; // Pastikan clone tidak tersembunyi
+
+        // Tambah dynamic shadow
+        const shadow = document.createElement('div');
+        shadow.className = 'dice-dynamic-shadow';
+        clone.appendChild(shadow);
+        
+        document.body.appendChild(clone);
+        
+        const startRect = diceWrap.getBoundingClientRect();
+        const boardRect = board.getBoundingClientRect();
+        
+        const startX = startRect.left;
+        const startY = startRect.top;
+        const endX = boardRect.left + boardRect.width / 2 - startRect.width / 2;
+        const endY = boardRect.top + boardRect.height / 2 - startRect.height / 2;
+        
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        const duration = 1400; // 1.4 detik total sesuai permintaan
+        const startTime = performance.now();
+        playRollSound();
 
         const target = FACE_ROTATIONS[finalValue] ?? FACE_ROTATIONS[1];
         const spins = 2; // putaran ekstra penuh supaya terasa "dilempar"
-        diceRotation.x += spins * 360 + (target.x - (diceRotation.x % 360));
-        diceRotation.y += spins * 360 + (target.y - (diceRotation.y % 360));
+        
+        // Hitung target akhir dengan mengakumulasi putaran (seperti kode lama) agar tidak bentrok
+        const targetX = diceRotation.x + spins * 360 + (target.x - (diceRotation.x % 360));
+        const targetY = diceRotation.y + spins * 360 + (target.y - (diceRotation.y % 360));
+        const targetZ = Math.floor(2 + Math.random() * 2) * 360; // Hanya untuk efek putaran liar saat terbang
+        
+        // Konfigurasi tinggi pantulan (parabola steps)
+        const bounces = [
+            { t: 0.60, height: -180 }, // Terbang awal (puncak)
+            { t: 0.80, height: -50 },  // Pantulan 1
+            { t: 0.92, height: -15 },  // Pantulan 2
+            { t: 1.00, height: 0 }     // Berhenti
+        ];
 
-        diceCube.style.transform = `rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg)`;
+        return new Promise((resolve) => {
+            let lastBounceIdx = 0;
+            
+            function frame(now) {
+                let p = (now - startTime) / duration;
+                if (p > 1) p = 1;
+                
+                // Easing gerak maju (X dan Y base) - makin melambat (easeOutQuart)
+                const easeOutQuart = 1 - Math.pow(1 - p, 4);
+                const currentX = startX + dx * easeOutQuart;
+                let currentY = startY + dy * easeOutQuart;
+                
+                // Skala dasar dadu mengecil dari 100% ke 50% selama terbang
+                // memberi efek 3D "menjauh" masuk ke dalam papan
+                const baseScale = 1.0 - 0.5 * easeOutQuart;
+                
+                let yOffset = 0;
+                let scaleY = baseScale;
+                let scaleX = baseScale;
 
-        await delay(800);
-        diceGlowWrap?.classList.remove('ring-4', 'ring-accent-300', 'animate-pulse');
+                let segStartT = 0;
+                let segEndT = bounces[0].t;
+                let segHeight = bounces[0].height;
+                let bIdx = 0;
+                
+                for (let i = 0; i < bounces.length; i++) {
+                    if (p <= bounces[i].t) {
+                        segEndT = bounces[i].t;
+                        segHeight = bounces[i].height;
+                        bIdx = i;
+                        break;
+                    }
+                    segStartT = bounces[i].t;
+                }
+                
+                const segP = (p - segStartT) / (segEndT - segStartT);
+                // Rumus Parabola 4 * h * t * (1 - t)
+                yOffset = 4 * segHeight * segP * (1 - segP);
+                
+                // Sound dan particle debu saat menyentuh papan
+                if (bIdx > lastBounceIdx) {
+                    playHitSound(0.4 / bIdx); // Volume berkurang ditiap pantulan
+                    spawnParticles(clone, 'dust', Math.max(3, 8 - bIdx * 2));
+                    lastBounceIdx = bIdx;
+                }
+                
+                // Efek Squash & Stretch (kamera feel)
+                if (segP > 0.85 && bIdx > 0) {
+                    const squashAmt = (segP - 0.85) * (1 / 0.15) * (1 / bIdx);
+                    scaleY = baseScale * (1 - 0.25 * squashAmt);
+                    scaleX = baseScale * (1 + 0.15 * squashAmt);
+                } else if (segP < 0.15 && bIdx > 0) {
+                    const stretchAmt = (0.15 - segP) * (1 / 0.15) * (1 / bIdx);
+                    scaleY = baseScale * (1 + 0.15 * stretchAmt);
+                    scaleX = baseScale * (1 - 0.1 * stretchAmt);
+                }
+                
+                currentY += yOffset;
+                
+                // Dinamika Bayangan
+                const shadowScale = 1 - (yOffset / -250);
+                const shadowBlur = 4 + (yOffset / -15);
+                shadow.style.transform = `scale(${Math.max(0.3, shadowScale)})`;
+                shadow.style.filter = `blur(${Math.max(2, shadowBlur)}px)`;
+                shadow.style.opacity = Math.max(0.1, shadowScale);
+                
+                clone.style.left = `${currentX}px`;
+                clone.style.top = `${currentY}px`;
+                clone.style.transform = `scale(${scaleX}, ${scaleY})`;
+                
+                // Rotasi melambat (ease-out cubic)
+                const rotP = 1 - Math.pow(1 - p, 3);
+                
+                // Interpolasi mulus dari rotasi sebelumnya ke target akhir
+                const rotCurrentX = diceRotation.x + (targetX - diceRotation.x) * rotP;
+                const rotCurrentY = diceRotation.y + (targetY - diceRotation.y) * rotP;
+                
+                // Putaran Z liar di udara, tapi memudar menjadi 0 saat mendarat agar tidak merusak orientasi wajah dadu
+                const currentZ = targetZ * Math.max(0, 1 - Math.pow(p, 1.5));
+
+                innerCube.style.transform = `rotateX(${rotCurrentX}deg) rotateY(${rotCurrentY}deg) rotateZ(${currentZ}deg)`;
+                
+                if (p < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    // Beri efek glow pada wrapper clone agar tidak merusak preserve-3d innerCube
+                    clone.classList.add('tile-glow-bonus');
+                    
+                    // Kembalikan sinkronisasi rotasi pada dadu asli
+                    diceRotation.x = targetX;
+                    diceRotation.y = targetY;
+                    diceCube.style.transition = 'none';
+                    diceCube.style.transform = `rotateX(${diceRotation.x}deg) rotateY(${diceRotation.y}deg)`;
+                    
+                    // Tunggu 2000ms supaya hasil terlihat lebih lama sebelum memindahkan pion
+                    setTimeout(() => {
+                        clone.remove();
+                        diceCube.style.opacity = '1';
+                        diceGlowWrap?.classList.remove('ring-4', 'ring-accent-300', 'animate-pulse');
+                        resolve();
+                    }, 2000);
+                }
+            }
+            requestAnimationFrame(frame);
+        });
     }
 
     // ---------------------------------------------------------------
@@ -418,7 +624,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const landingPosisi = Math.min(fromPosisi + nilaiDadu, jumlahPetak);
+        const landingPosisi = Math.min(fromPosisi + (nilaiDadu > 0 ? nilaiDadu : 0), jumlahPetak);
+
+        if (nilaiDadu < 0) {
+            const finalPosisiTarget = Math.max(fromPosisi + nilaiDadu, 1);
+            for (let step = fromPosisi - 1; step >= finalPosisiTarget; step--) {
+                const stackIndex = step === finalPosisiTarget ? stackIndexAt(step, player.id, result.session?.players) : 0;
+                
+                el.classList.remove('pawn-hop');
+                void el.offsetWidth;
+                el.classList.add('pawn-hop');
+                
+                placePawnAt(el, step, stackIndex);
+                await delay(400);
+            }
+            el.classList.remove('pawn-hop');
+            return;
+        }
 
         for (let step = fromPosisi + 1; step <= landingPosisi; step++) {
             // Langkah terakhir = posisi mendarat sungguhan (kalau tidak ada
@@ -438,34 +660,53 @@ document.addEventListener('DOMContentLoaded', () => {
         el.classList.remove('pawn-hop');
 
         if (finalPosisi !== landingPosisi) {
-            // Konektor diterapkan: tangga (naik) atau ular (turun). Ambil jenis
-            // konektor sesungguhnya dari data papan (bukan ditebak dari arah
-            // gerak) supaya jalur animasi (lurus/bezier) selalu tepat sesuai SVG.
-            const konektor = konektorByStart.get(landingPosisi);
-            const jenis = konektor?.jenis ?? (finalPosisi > landingPosisi ? 'tangga' : 'ular');
-            const isNaik = jenis === 'tangga';
+            const isBounce = landingPosisi === jumlahPetak && !konektorByStart.get(landingPosisi) && finalPosisi < landingPosisi;
 
-            await delay(120);
-
-            if (isNaik) {
-                // Efek visual tangga (glow+sparkle) — best-effort, lihat catatan di atas file.
-                await window.BoardVisuals?.reactLadder?.(landingPosisi);
-                await animateAlongConnector(el, landingPosisi, finalPosisi, 'tangga', 900);
-                spawnParticles(el, 'sparkle', 10);
-                el.classList.add('pawn-climb');
-                setTimeout(() => el.classList.remove('pawn-climb'), 650);
+            if (isBounce) {
+                await delay(120);
+                for (let step = landingPosisi - 1; step >= finalPosisi; step--) {
+                    const stackIndex = step === finalPosisi ? stackIndexAt(step, player.id, result.session?.players) : 0;
+                    el.classList.remove('pawn-hop');
+                    void el.offsetWidth;
+                    el.classList.add('pawn-hop');
+                    
+                    placePawnAt(el, step, stackIndex);
+                    // eslint-disable-next-line no-await-in-loop
+                    await delay(400);
+                }
+                el.classList.remove('pawn-hop');
+                placePawnAt(el, finalPosisi, stackIndexAt(finalPosisi, player.id, result.session?.players));
+                await delay(200);
             } else {
-                // Efek "ular menggigit" (glow+lidah+kepala bergerak) SEBELUM pion
-                // meluncur turun — best-effort, lihat catatan di atas file.
-                await window.BoardVisuals?.reactSnake?.(landingPosisi);
-                boardEl.classList.add('board-shake');
-                await animateAlongConnector(el, landingPosisi, finalPosisi, 'ular', 900);
-                spawnParticles(el, 'dust', 8);
-                setTimeout(() => boardEl.classList.remove('board-shake'), 400);
-            }
+                // Konektor diterapkan: tangga (naik) atau ular (turun). Ambil jenis
+                // konektor sesungguhnya dari data papan (bukan ditebak dari arah
+                // gerak) supaya jalur animasi (lurus/bezier) selalu tepat sesuai SVG.
+                const konektor = konektorByStart.get(landingPosisi);
+                const jenis = konektor?.jenis ?? (finalPosisi > landingPosisi ? 'tangga' : 'ular');
+                const isNaik = jenis === 'tangga';
 
-            placePawnAt(el, finalPosisi, stackIndexAt(finalPosisi, player.id, result.session?.players));
-            await delay(200);
+                await delay(120);
+
+                if (isNaik) {
+                    // Efek visual tangga (glow+sparkle) — best-effort, lihat catatan di atas file.
+                    await window.BoardVisuals?.reactLadder?.(landingPosisi);
+                    await animateAlongConnector(el, landingPosisi, finalPosisi, 'tangga', 900);
+                    spawnParticles(el, 'sparkle', 10);
+                    el.classList.add('pawn-climb');
+                    setTimeout(() => el.classList.remove('pawn-climb'), 650);
+                } else {
+                    // Efek "ular menggigit" (glow+lidah+kepala bergerak) SEBELUM pion
+                    // meluncur turun — best-effort, lihat catatan di atas file.
+                    await window.BoardVisuals?.reactSnake?.(landingPosisi);
+                    boardEl.classList.add('board-shake');
+                    await animateAlongConnector(el, landingPosisi, finalPosisi, 'ular', 900);
+                    spawnParticles(el, 'dust', 8);
+                    setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+                }
+
+                placePawnAt(el, finalPosisi, stackIndexAt(finalPosisi, player.id, result.session?.players));
+                await delay(200);
+            }
         }
     }
 
@@ -548,8 +789,15 @@ document.addEventListener('DOMContentLoaded', () => {
         setTileGlow(currentPlayer?.posisi_pion);
 
         const questionPending = !!session.active_question;
-        rollButton.classList.toggle('hidden', !isMyTurn || questionPending);
-        rollButton.classList.toggle('flex', isMyTurn && !questionPending);
+        const canRoll = isMyTurn && !questionPending;
+        rollButton.classList.toggle('hidden', !canRoll);
+        rollButton.classList.toggle('flex', canRoll);
+
+        const disabledOverlay = document.getElementById('dice-3d-disabled-overlay');
+        if (disabledOverlay) {
+            disabledOverlay.classList.toggle('hidden', canRoll);
+            disabledOverlay.classList.toggle('flex', !canRoll);
+        }
     }
 
     function renderFinished(session) {
@@ -639,7 +887,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function hideQuestion() {
         clearInterval(questionCountdownInterval);
-        window.dispatchEvent(new CustomEvent('close-modal'));
+        window.dispatchEvent(new CustomEvent('close-modal', { detail: 'question-modal' }));
+    }
+
+    // ---------------------------------------------------------------
+    // Modal Duel
+    // ---------------------------------------------------------------
+    function startDuelCountdown(duration, soalId, startedAt) {
+        clearInterval(duelCountdownInterval);
+
+        const update = () => {
+            const elapsed = Date.now() - startedAt;
+            const remaining = Math.max(0, Math.floor((duration - elapsed) / 1000));
+            duelTimerEl.textContent = `${remaining}s`;
+
+            if (remaining <= 0) {
+                clearInterval(duelCountdownInterval);
+                submitDuelAnswer(soalId, null, duration);
+            }
+        };
+
+        update();
+        duelCountdownInterval = setInterval(update, 1000);
+    }
+
+    let duelStartTime = null;
+
+    function showDuel(duel) {
+        if (!myGamePlayerId || (duel.challenger_id !== myGamePlayerId && duel.opponent_id !== myGamePlayerId)) {
+            // Not part of duel
+            return;
+        }
+
+        // Find the first question we haven't answered yet
+        const myAnswers = duel.answers.filter(a => a.game_player_id === myGamePlayerId);
+        const answeredSoalIds = new Set(myAnswers.map(a => a.soal_id));
+        
+        const nextQuestion = duel.questions.find(q => !answeredSoalIds.has(q.soal.id));
+
+        if (!nextQuestion) {
+            // Waiting for opponent
+            duelStatusTextEl.textContent = 'Menunggu lawan selesai...';
+            duelTextEl.textContent = 'Anda telah menjawab semua soal. Harap tunggu.';
+            duelOptionsEl.innerHTML = '';
+            duelTimerEl.textContent = '';
+            clearInterval(duelCountdownInterval);
+            window.dispatchEvent(new CustomEvent('open-modal', { detail: 'duel-modal' }));
+            return;
+        }
+
+        const soal = nextQuestion.soal;
+        duelStatusTextEl.textContent = `Pertanyaan ${nextQuestion.order} dari 3`;
+        duelFeedbackEl.classList.add('hidden');
+        duelTextEl.textContent = soal.pertanyaan;
+        duelOptionsEl.innerHTML = '';
+
+        duelStartTime = Date.now();
+
+        Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-rose-400 hover:bg-rose-50';
+            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+            button.addEventListener('click', () => {
+                const timeTaken = Date.now() - duelStartTime;
+                submitDuelAnswer(soal.id, kunci, timeTaken);
+            });
+            duelOptionsEl.appendChild(button);
+        });
+
+        window.dispatchEvent(new CustomEvent('open-modal', { detail: 'duel-modal' }));
+        startDuelCountdown(20000, soal.id, duelStartTime); // 20s
+    }
+
+    function hideDuel() {
+        clearInterval(duelCountdownInterval);
+        window.dispatchEvent(new CustomEvent('close-modal', { detail: 'duel-modal' }));
     }
 
     // ---------------------------------------------------------------
@@ -814,6 +1137,12 @@ document.addEventListener('DOMContentLoaded', () => {
             hideQuestion();
         }
 
+        if (session.active_duel) {
+            showDuel(session.active_duel);
+        } else {
+            hideDuel();
+        }
+
         if (newlyUnlockedAchievements.length > 0) {
             // Jeda singkat supaya modal Achievement muncul SETELAH modal hasil
             // akhir (game-finished-modal) sempat terlihat, bukan tabrakan.
@@ -914,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.getElementById('achievement-unlock-next')?.addEventListener('click', () => {
-        window.dispatchEvent(new CustomEvent('close-modal'));
+        window.dispatchEvent(new CustomEvent('close-modal', { detail: 'achievement-unlock-modal' }));
         if (achievementQueue.length > 0) {
             setTimeout(() => showNextAchievementUnlock(), 250);
         }
@@ -985,7 +1314,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const robotFromPosisi = robotBefore ? (knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
 
         try {
-            const result = await postJson(rollUrl);
+            const forcedRollEl = document.getElementById('forced-roll-input');
+            const forcedRoll = forcedRollEl ? forcedRollEl.value : null;
+            const body = forcedRoll ? { forced_roll: parseInt(forcedRoll, 10) } : {};
+            const result = await postJson(rollUrl, body);
 
             await animateDiceRoll(result.nilai_dadu ?? 1);
 
@@ -1037,16 +1369,95 @@ document.addEventListener('DOMContentLoaded', () => {
             // sudah final di titik ini); turn di tengah diasumsikan tidak
             // memindahkan posisi lebih lanjut (server memainkan robot secara
             // berurutan dalam satu putaran, lihat GameSessionService).
-            const isLast = turn === robotTurns[robotTurns.length - 1];
-            const toPosisi = isLast ? robot.posisi_pion : fromPosisi;
+            let toPosisi = turn === robotTurns[robotTurns.length - 1] ? robot.posisi_pion : fromPosisi;
+            if (turn.konektor_applied && turn.konektor_info) {
+                // Posisi pion asli robot sebelum animasi connector dijalankan
+                toPosisi = turn.konektor_info.posisi_awal;
+            }
 
             // eslint-disable-next-line no-await-in-loop
             await animatePlayerTurn(robot, fromPosisi, { ...turn, posisi_pion: toPosisi });
             fromPosisi = toPosisi;
+            
+            if (turn.konektor_applied && turn.konektor_info) {
+                const el = getOrCreatePawnEl(robot);
+                const info = turn.konektor_info;
+                const isNaik = info.jenis === 'tangga';
+
+                await delay(120);
+                if (isNaik) {
+                    await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
+                    await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
+                    spawnParticles(el, 'sparkle', 10);
+                    el.classList.add('pawn-climb');
+                    setTimeout(() => el.classList.remove('pawn-climb'), 650);
+                } else {
+                    await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
+                    boardEl.classList.add('board-shake');
+                    await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
+                    spawnParticles(el, 'dust', 8);
+                    setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+                }
+                
+                fromPosisi = info.posisi_akhir;
+                placePawnAt(el, fromPosisi, stackIndexAt(fromPosisi, robot.id, session?.players));
+                await delay(200);
+            }
         }
 
         knownPositions.set(robot.id, robot.posisi_pion);
         setTileGlow(latestSession?.status === 'playing' ? latestSession.players.find((p) => p.id === latestSession.current_turn_game_player_id)?.posisi_pion : null);
+    }
+
+    async function submitDuelAnswer(soalId, jawaban, timeTakenMs) {
+        clearInterval(duelCountdownInterval);
+
+        try {
+            const duelAnswerUrl = answerUrl.replace('/answer', '/duel-answer');
+            const result = await postJson(duelAnswerUrl, { soal_id: soalId, jawaban, time_taken_ms: timeTakenMs });
+
+            if (result.type === 'duel_answered') {
+                duelFeedbackEl.textContent = result.benar
+                    ? 'Jawaban benar!'
+                    : `Jawaban salah. ${result.pembahasan ?? ''}`;
+                duelFeedbackEl.classList.remove('hidden');
+
+                await delay(1800);
+                
+                // Refresh state to show next question or wait screen
+                applySessionState(result.session);
+            } else if (result.type === 'duel_finished') {
+                duelFeedbackEl.textContent = 'Semua soal telah dijawab. Memproses hasil duel...';
+                duelFeedbackEl.classList.remove('hidden');
+
+                await delay(1500);
+                hideDuel();
+
+                const duel = result.duel;
+                const loser = result.session.players.find(p => p.id === duel.loser_id);
+
+                if (loser) {
+                    showToast(`Duel selesai! ${duel.winner?.nama || 'Pemain'} menang. ${loser.nama || 'Pemain'} terlempar mundur ${duel.loser_penalty_roll} langkah.`);
+                    await animateDiceRoll(duel.loser_penalty_roll);
+                    const loserFromPosisi = knownPositions.get(loser.id) ?? 1;
+                    await animatePlayerTurn(loser, loserFromPosisi, { type: 'normal', nilai_dadu: -duel.loser_penalty_roll });
+                    knownPositions.set(loser.id, loser.posisi_pion);
+                }
+
+                const robot = result.session.players.find((p) => p.is_robot);
+                const robotFromPosisi = robot ? (knownPositions.get(robot.id) ?? robot.posisi_pion) : 0;
+                const skipIds = new Set([myGamePlayerId, robot?.id].filter((id) => id !== undefined && id !== null));
+                
+                applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
+
+                await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
+                finalizeOutcome(result.session, result.newly_unlocked_achievements ?? []);
+            }
+
+        } catch (error) {
+            showToast(error.message);
+            hideDuel();
+        }
     }
 
     async function submitAnswer(soalId, jawaban) {
@@ -1071,10 +1482,31 @@ document.addEventListener('DOMContentLoaded', () => {
             await delay(1800);
             hideQuestion();
 
-            // Jawaban bisa memindahkan pion penjawab (mis. efek soal khusus) —
-            // animasikan selisih posisi sebelum -> sesudah menjawab, bukan
-            // langsung memindahkan.
-            if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
+            // Jawaban bisa memicu konektor (ular/tangga)
+            if (actingPlayer && result.konektor_applied && result.konektor_info) {
+                const el = getOrCreatePawnEl(actingPlayer);
+                const info = result.konektor_info;
+                const isNaik = info.jenis === 'tangga';
+
+                await delay(120);
+
+                if (isNaik) {
+                    await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
+                    await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
+                    spawnParticles(el, 'sparkle', 10);
+                    el.classList.add('pawn-climb');
+                    setTimeout(() => el.classList.remove('pawn-climb'), 650);
+                } else {
+                    await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
+                    boardEl.classList.add('board-shake');
+                    await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
+                    spawnParticles(el, 'dust', 8);
+                    setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+                }
+
+                placePawnAt(el, info.posisi_akhir, stackIndexAt(info.posisi_akhir, actingPlayer.id, result.session?.players));
+                await delay(200);
+            } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
             }
             if (actingPlayer) {

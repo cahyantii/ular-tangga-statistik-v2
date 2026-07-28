@@ -28,6 +28,12 @@ class GameSessionPolicy
             && $gameSession->status === GameStatus::Playing;
     }
 
+    public function duelAnswer(User $user, GameSession $gameSession): bool
+    {
+        return $this->isParticipant($user, $gameSession)
+            && $gameSession->status === GameStatus::Duel;
+    }
+
     public function resume(User $user, GameSession $gameSession): bool
     {
         return $this->isParticipant($user, $gameSession)

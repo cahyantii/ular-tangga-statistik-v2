@@ -37,6 +37,33 @@ class GameSessionResource extends JsonResource
                     ->addSeconds(app(GameSettingsRepository::class)->getInt('reconnect_timeout_seconds'))
                     ->toIso8601String()
             ),
+            'active_duel' => $this->when(
+                $this->status === GameStatus::Duel,
+                fn () => tap(\App\Models\GameDuel::with(['questions.soal', 'answers'])
+                    ->where('game_session_id', $this->id)
+                    ->where('status', 'waiting')
+                    ->first(), function ($duel) {
+                        return $duel ? [
+                            'id' => $duel->id,
+                            'challenger_id' => $duel->challenger_id,
+                            'opponent_id' => $duel->opponent_id,
+                            'status' => $duel->status,
+                            'questions' => $duel->questions->map(function ($q) {
+                                return [
+                                    'id' => $q->id,
+                                    'order' => $q->order,
+                                    'soal' => new SoalPublicResource($q->soal)
+                                ];
+                            }),
+                            'answers' => $duel->answers->map(function ($a) {
+                                return [
+                                    'game_player_id' => $a->game_player_id,
+                                    'soal_id' => $a->soal_id,
+                                ];
+                            })
+                        ] : null;
+                    })
+            ),
             'players' => GamePlayerResource::collection($this->whenLoaded('players')),
         ];
     }

@@ -25,21 +25,17 @@ class QuestionService
 
     public function selectQuestion(GameSession $gameSession, Petak $petak): ?Soal
     {
-        if ($petak->kategori_id === null) {
-            return null;
-        }
-
         $usedIds = GameQuestionUsed::query()
             ->where('game_session_id', $gameSession->id)
             ->pluck('soal_id');
 
-        $availableIds = Soal::query()
-            ->active()
-            ->where('kategori_id', $petak->kategori_id)
-            ->whereNotIn('id', $usedIds)
-            ->orderBy('id')
-            ->pluck('id')
-            ->values();
+        $query = Soal::query()->active()->whereNotIn('id', $usedIds);
+
+        if ($petak->kategori_id !== null) {
+            $query->where('kategori_id', $petak->kategori_id);
+        }
+
+        $availableIds = $query->orderBy('id')->pluck('id')->values();
 
         if ($availableIds->isEmpty()) {
             return null;

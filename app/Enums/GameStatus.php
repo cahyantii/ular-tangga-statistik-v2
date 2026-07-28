@@ -9,6 +9,7 @@ enum GameStatus: string
     case Paused = 'paused';
     case Finished = 'finished';
     case Abandoned = 'abandoned';
+    case Duel = 'duel';
 
     public function label(): string
     {
@@ -18,6 +19,7 @@ enum GameStatus: string
             self::Paused => 'Dijeda',
             self::Finished => 'Selesai',
             self::Abandoned => 'Dibatalkan',
+            self::Duel => 'Duel',
         };
     }
 }
