@@ -2007,18 +2007,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 placePawnAt(el, info.posisi_akhir, stackIndexAt(info.posisi_akhir, actingPlayer.id, result.session?.players));
                 await delay(200);
-
-                // Cek apakah mendarat di mystery tile setelah konektor
-                if (result.mystery_after_konektor && actingPlayer.id === myGamePlayerId) {
-                    // Inject session ke objek mystery agar showGachaModal bisa cek inventory
-                    const mysteryWithSession = { ...result.mystery_after_konektor, session: result.session };
-                    await showGachaModal(mysteryWithSession);
-                    if (result.mystery_after_konektor.item_id === 'whirlwind') {
-                        await animateWhirlwind(actingPlayer.id);
-                    }
-                }
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
+                // Fallback jika berubah posisi tapi bukan konektor
+                const el = getOrCreatePawnEl(actingPlayer);
+                placePawnAt(el, actingPlayer.posisi_pion, stackIndexAt(actingPlayer.posisi_pion, actingPlayer.id, result.session?.players));
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
+            }
+
+            // Jika respons adalah 'soal', berarti butuh menjawab soal lagi (misal menginjak misteri setelah konektor)
+            if (result.type === 'soal') {
+                showQuestion(result.soal, 15);
+                return; // Hentikan alur di sini, tunggu pemain submit jawaban lagi
+            }
+
+            // Cek apakah misteri diterapkan
+            if (result.mystery_applied && actingPlayer && actingPlayer.id === myGamePlayerId) {
+                const mysteryWithSession = { ...result.mystery_effect, session: result.session };
+                await showGachaModal(mysteryWithSession);
+                if (result.mystery_effect && result.mystery_effect.item_id === 'whirlwind') {
+                    await animateWhirlwind(actingPlayer.id);
+                }
             }
             if (actingPlayer) {
                 knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
