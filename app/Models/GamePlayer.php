@@ -25,7 +25,6 @@ class GamePlayer extends Model
         'accuracy',
         'status',
         'last_heartbeat_at',
-        'inventory',
         'active_buffs',
     ];
 
@@ -39,7 +38,6 @@ class GamePlayer extends Model
             'accuracy' => 'decimal:2',
             'status' => PlayerStatus::class,
             'last_heartbeat_at' => 'datetime',
-            'inventory' => 'array',
             'active_buffs' => 'array',
         ];
     }

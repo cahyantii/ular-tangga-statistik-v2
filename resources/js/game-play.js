@@ -727,6 +727,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+    }
+
     function showGachaModal(result) {
         return new Promise((resolve) => {
             const itemImages = {
@@ -740,10 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const gachaName = document.getElementById('gacha-item-name');
             const gachaDesc = document.getElementById('gacha-item-desc');
             const normalActions = document.getElementById('gacha-actions-normal');
-            const resolveActions = document.getElementById('gacha-actions-resolve');
             const klaimBtn = document.getElementById('gacha-klaim-btn');
-            const keepBtn = document.getElementById('gacha-keep-btn');
-            const discardBtn = document.getElementById('gacha-discard-btn');
             
             if (!gachaImg || !gachaName || !gachaDesc) {
                 resolve();
@@ -752,73 +751,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
             gachaImg.src = itemImages[result.item_id] || itemImages['double_dice'];
             gachaName.textContent = result.item_name || 'Item Misteri';
-            gachaDesc.textContent = result.item_type === 'immediate' ? '(Efek Langsung)' : '(Disimpan ke Inventory)';
+            gachaDesc.textContent = result.item_description || '(Efek Langsung)';
             
             // Reset animasi
             gachaImg.style.transform = 'scale(0)';
             gachaName.classList.remove('opacity-100');
             gachaDesc.classList.remove('opacity-100');
-            normalActions.classList.remove('opacity-100');
-            resolveActions.classList.remove('opacity-100');
-            
-            // Cek apakah inventory penuh (lebih dari 3, di mana item ke-4 adalah ini)
-            const updatedPlayer = result.session?.players.find(p => p.id === myGamePlayerId);
-            const inventory = updatedPlayer?.inventory || [];
-            
-            // Menentukan state tombol
-            let requireResolve = false;
-            if (result.item_type === 'hold' && inventory.length >= 4) {
-                requireResolve = true;
-                normalActions.classList.add('hidden');
-                resolveActions.classList.remove('hidden');
-                resolveActions.classList.add('flex');
-            } else {
-                normalActions.classList.remove('hidden');
-                resolveActions.classList.add('hidden');
-                resolveActions.classList.remove('flex');
-            }
+            if (normalActions) normalActions.classList.remove('opacity-100');
             
             const cleanupAndClose = () => {
-                klaimBtn.onclick = null;
-                keepBtn.onclick = null;
-                discardBtn.onclick = null;
+                if (klaimBtn) klaimBtn.onclick = null;
                 window.dispatchEvent(new CustomEvent('close-modal', {detail: 'gacha-modal'}));
                 resolve();
             };
 
-            klaimBtn.onclick = () => {
-                cleanupAndClose();
-            };
-
-            keepBtn.onclick = async () => {
-                keepBtn.disabled = true;
-                discardBtn.disabled = true;
-                try {
-                    const resolveUrl = rollUrl.replace('/roll', '/inventory/resolve');
-                    await postJson(resolveUrl, { action: 'keep' });
+            if (klaimBtn) {
+                klaimBtn.onclick = () => {
                     cleanupAndClose();
-                    await loadState();
-                } catch (err) {
-                    showToast(err.message || 'Gagal resolve inventory');
-                    keepBtn.disabled = false;
-                    discardBtn.disabled = false;
-                }
-            };
-
-            discardBtn.onclick = async () => {
-                keepBtn.disabled = true;
-                discardBtn.disabled = true;
-                try {
-                    const resolveUrl = rollUrl.replace('/roll', '/inventory/resolve');
-                    await postJson(resolveUrl, { action: 'discard' });
-                    cleanupAndClose();
-                    await loadState();
-                } catch (err) {
-                    showToast(err.message || 'Gagal resolve inventory');
-                    keepBtn.disabled = false;
-                    discardBtn.disabled = false;
-                }
-            };
+                };
+            }
 
             window.dispatchEvent(new CustomEvent('open-modal', {detail: 'gacha-modal'}));
             
@@ -827,16 +778,9 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => gachaName.classList.add('opacity-100'), 400);
             setTimeout(() => gachaDesc.classList.add('opacity-100'), 600);
             setTimeout(() => {
-                if (requireResolve) {
-                    resolveActions.classList.add('opacity-100');
-                    keepBtn.disabled = false;
-                    discardBtn.disabled = false;
-                } else {
-                    normalActions.classList.add('opacity-100');
-                }
+                if (normalActions) normalActions.classList.add('opacity-100');
             }, 900);
         });
-    }
     }
 
     // ---------------------------------------------------------------
@@ -1524,6 +1468,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function animateWhirlwind(triggerPlayerId) {
+        const promises = [];
+        for (const p of latestSession.players) {
+            if (p.id === triggerPlayerId) continue;
+            const prev = knownPositions.get(p.id);
+            if (prev === undefined) continue;
+            
+            const newPos = Math.max(1, prev - 3);
+            if (prev > newPos) {
+                const el = getOrCreatePawnEl(p);
+                el.classList.add('pawn-slide');
+                promises.push(delay(450).then(() => {
+                    el.classList.remove('pawn-slide');
+                    placePawnAt(el, newPos, stackIndexAt(newPos, p.id, latestSession.players));
+                    knownPositions.set(p.id, newPos);
+                }));
+            }
+        }
+        if (promises.length > 0) {
+            await Promise.all(promises);
+            await delay(200);
+        }
+    }
+
     function syncKnownPositions(session) {
         session.players.forEach((p) => knownPositions.set(p.id, p.posisi_pion));
     }
@@ -1748,6 +1716,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 logTurnResult(actingPlayer, result);
                 await animatePlayerTurn(actingPlayer, fromPosisi, result);
                 knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
+                
+                if (result.type === 'mystery' && result.item_id === 'whirlwind') {
+                    await animateWhirlwind(actingPlayer.id);
+                }
             }
 
             if (result.type === 'answered') {
@@ -1755,10 +1727,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const robot = result.session.players.find((p) => p.is_robot);
+            const finalRobotFromPosisi = robot ? (knownPositions.get(robot.id) ?? robot.posisi_pion) : 0;
             const skipIds = new Set([myGamePlayerId, robot?.id].filter((id) => id !== undefined && id !== null));
             applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
 
-            await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
+            await playRobotTurns(result.robot_turns, result.session, finalRobotFromPosisi);
             finalizeOutcome(result.session, result.newly_unlocked_achievements ?? []);
         } catch (error) {
             showToast(error.message);
@@ -1853,6 +1826,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // eslint-disable-next-line no-await-in-loop
             await animatePlayerTurn(robot, fromPosisi, { ...turn, posisi_pion: toPosisi });
             fromPosisi = toPosisi;
+            
+            if (turn.type === 'mystery' && turn.item_id === 'whirlwind') {
+                await animateWhirlwind(robot.id);
+                fromPosisi = knownPositions.get(robot.id) ?? robot.posisi_pion;
+            }
             
             if (turn.konektor_applied && turn.konektor_info) {
                 const el = getOrCreatePawnEl(robot);
@@ -2035,6 +2013,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Inject session ke objek mystery agar showGachaModal bisa cek inventory
                     const mysteryWithSession = { ...result.mystery_after_konektor, session: result.session };
                     await showGachaModal(mysteryWithSession);
+                    if (result.mystery_after_konektor.item_id === 'whirlwind') {
+                        await animateWhirlwind(actingPlayer.id);
+                    }
                 }
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
@@ -2044,10 +2025,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const robot = result.session.players.find((p) => p.is_robot);
+            const finalRobotFromPosisi = robot ? (knownPositions.get(robot.id) ?? robot.posisi_pion) : 0;
             const skipIds = new Set([myGamePlayerId, robot?.id].filter((id) => id !== undefined && id !== null));
             applySessionState(result.session, { pawnMode: 'skip', skipPawnIds: skipIds, deferOutcome: true });
 
-            await playRobotTurns(result.robot_turns, result.session, robotFromPosisi);
+            await playRobotTurns(result.robot_turns, result.session, finalRobotFromPosisi);
             finalizeOutcome(result.session, result.newly_unlocked_achievements ?? []);
         } catch (error) {
             showToast(error.message);

@@ -35,5 +35,3 @@ Route::post('/{gameSession}/answer', [GameController::class, 'answer'])->name('a
 Route::post('/{gameSession}/duel-answer', [GameController::class, 'duelAnswer'])->name('duel-answer');
 Route::post('/{gameSession}/leave', [GameController::class, 'leave'])->name('leave');
 Route::post('/{gameSession}/heartbeat', [GameController::class, 'heartbeat'])->name('heartbeat');
-Route::post('/{gameSession}/powerup', [GameController::class, 'usePowerUp'])->name('powerup');
-Route::post('/{gameSession}/inventory/resolve', [GameController::class, 'resolveInventory'])->name('inventory.resolve');

@@ -53,19 +53,12 @@ class TileResolverService
         
         $itemDetail = PowerUpService::getAvailablePowerUps()[$obtainedItem];
 
-        // Jika item HOLD, masukkan ke inventory
-        if ($itemDetail['type'] === 'hold') {
-            $inventory = $gamePlayer->inventory ?? [];
-            $inventory[] = $obtainedItem;
-            $gamePlayer->inventory = $inventory;
-            $gamePlayer->save();
-        }
-
         return [
             'type' => 'mystery', 
             'item_id' => $obtainedItem, 
             'item_name' => $itemDetail['name'],
-            'item_type' => $itemDetail['type']
+            'item_type' => $itemDetail['type'],
+            'item_description' => $itemDetail['description']
         ];
     }
 }
