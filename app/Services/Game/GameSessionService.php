@@ -357,6 +357,13 @@ class GameSessionService
                     'posisi_akhir' => $konektor->posisi_akhir,
                 ]);
                 $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
+                
+                $response['konektor_applied'] = true;
+                $response['konektor_info'] = [
+                    'jenis' => $konektor->jenis->value,
+                    'posisi_awal' => $konektor->posisi_awal,
+                    'posisi_akhir' => $konektor->posisi_akhir,
+                ];
             }
         }
 

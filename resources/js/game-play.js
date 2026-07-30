@@ -1429,6 +1429,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     diceRollPromise = animateDiceRoll(message.raw_nilai_dadu ?? message.nilai_dadu ?? 1, message.double_dice_active ?? false);
                     return; // Tunggu event pawn-moved untuk me-loadState
                 }
+                
+                if (eventName === 'mystery-applied') {
+                    showToast(`${resolveActorName(actorId)} mendapatkan item Misteri: ${message.item_name ?? 'Item'}!`);
+                    pushLog('info', `${resolveActorName(actorId)} mendapatkan power-up!`);
+                    // We let it continue to loadState() so the pawn movement syncs
+                }
 
                 if (REALTIME_EVENT_LABELS[eventName]) {
                     const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
@@ -1504,47 +1510,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            if (p.posisi_pion > prev && p.posisi_pion - prev <= 6) {
+            const naik = p.posisi_pion > prev;
+            // Cek apakah ada konektor yang menghubungkan posisi sebelumnya (prev) dengan posisi baru (p.posisi_pion)
+            // Ini untuk mendeteksi apakah pergerakan (walaupun jaraknya dekat <= 6) sebenarnya adalah karena naik tangga / turun ular
+            const konektor = Array.from(konektorByStart.values())
+                .find((k) => k.posisi_awal === prev && k.posisi_akhir === p.posisi_pion && (naik ? k.jenis === 'tangga' : k.jenis === 'ular'));
+
+            if (konektor) {
+                await delay(100);
+                if (naik) {
+                    await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
+                    await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
+                    spawnParticles(el, 'sparkle', 10);
+                    el.classList.add('pawn-climb');
+                    setTimeout(() => el.classList.remove('pawn-climb'), 650);
+                } else {
+                    await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
+                    boardEl.classList.add('board-shake');
+                    await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
+                    spawnParticles(el, 'dust', 8);
+                    setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+                }
+            } else if (p.posisi_pion > prev && p.posisi_pion - prev <= 6) {
                 // eslint-disable-next-line no-await-in-loop
                 for (let step = prev + 1; step <= p.posisi_pion; step++) {
                     const stackIndex = step === p.posisi_pion ? stackIndexAt(step, p.id, session.players) : 0;
+                    
+                    el.classList.remove('pawn-hop');
+                    void el.offsetWidth;
+                    el.classList.add('pawn-hop');
+                    
                     placePawnAt(el, step, stackIndex);
                     // eslint-disable-next-line no-await-in-loop
-                    await delay(180);
+                    await delay(400);
                 }
+                el.classList.remove('pawn-hop');
             } else {
-                // Lawan/robot melompat konektor lewat sinyal realtime (kita tidak
-                // tahu nilai dadu mereka) — cari konektor asli yang berakhir tepat
-                // di posisi baru supaya jalurnya tetap mengikuti kurva sesungguhnya,
-                // bukan cuma tebakan arah naik/turun.
-                const naik = p.posisi_pion > prev;
-                const konektor = Array.from(konektorByStart.values())
-                    .find((k) => k.posisi_akhir === p.posisi_pion && (naik ? k.jenis === 'tangga' : k.jenis === 'ular'));
-
-                await delay(100);
-
-                if (konektor) {
-                    if (naik) {
-                        await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
-                        await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
-                        spawnParticles(el, 'sparkle', 10);
-                        el.classList.add('pawn-climb');
-                        setTimeout(() => el.classList.remove('pawn-climb'), 650);
-                    } else {
-                        await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
-                        boardEl.classList.add('board-shake');
-                        await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
-                        spawnParticles(el, 'dust', 8);
-                        setTimeout(() => boardEl.classList.remove('board-shake'), 400);
-                    }
-                } else {
-                    el.classList.add(naik ? 'pawn-climb' : 'pawn-slide');
-                    await delay(450);
-                    el.classList.remove('pawn-climb', 'pawn-slide');
-                }
-
-                placePawnAt(el, p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
+                // Pergerakan jauh tapi bukan konektor dari posisi awal (misal efek teleport misteri, atau konektor tapi posisi awalnya sudah kita lewatkan karena animasi dadu)
+                el.classList.add(naik ? 'pawn-climb' : 'pawn-slide');
+                await delay(450);
+                el.classList.remove('pawn-climb', 'pawn-slide');
             }
+
+            placePawnAt(el, p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
         }
     }
 
@@ -2048,7 +2056,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await postJson(answerUrl, { soal_id: soalId, jawaban });
 
             if (colyseusRoom) {
-                colyseusRoom.send("broadcast_event", { event: 'score-updated', actor: myGamePlayerId });
+                if (result.mystery_applied) {
+                    colyseusRoom.send("broadcast_event", { 
+                        event: 'mystery-applied', 
+                        actor: myGamePlayerId,
+                        item_id: result.mystery_effect?.item_id,
+                        item_name: result.mystery_effect?.item_name
+                    });
+                } else {
+                    colyseusRoom.send("broadcast_event", { event: 'score-updated', actor: myGamePlayerId });
+                }
             }
 
             questionFeedbackEl.textContent = result.benar
@@ -2113,13 +2130,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(200);
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 // Fallback jika berubah posisi tapi bukan konektor
-                const el = getOrCreatePawnEl(actingPlayer);
-                placePawnAt(el, actingPlayer.posisi_pion, stackIndexAt(actingPlayer.posisi_pion, actingPlayer.id, result.session?.players));
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
             }
 
             // Jika respons adalah 'soal', berarti butuh menjawab soal lagi (misal menginjak misteri setelah konektor)
             if (result.type === 'soal') {
+                latestSession = result.session;
                 showQuestion(
                     result.soal, 
                     new Date(Date.now() + 15000).toISOString(),
