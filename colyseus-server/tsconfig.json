@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "outDir": "lib",
+    "module": "commonjs",
+    "lib": ["es6", "dom"],
+    "target": "es2017",
+    "declaration": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "strict": false,
+    "esModuleInterop": true
+  },
+  "include": [
+    "src"
+  ]
+}

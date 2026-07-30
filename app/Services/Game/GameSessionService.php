@@ -10,6 +10,7 @@ use App\Enums\PlayerStatus;
 use App\Enums\ScoreEventType;
 use App\Enums\TileType;
 use App\Enums\WinReason;
+use App\Enums\TileType;
 use App\Events\Game\ConnectorApplied;
 use App\Events\Game\DiceRolled;
 use App\Events\Game\GameFinished;
@@ -281,7 +282,7 @@ class GameSessionService
                 $gamePlayer->save();
             }
 
-            \Log::debug('[executeRoll] player_id='.$gamePlayer->id.' raw_dice='.$rawNilaiDadu.' double_dice_active='.($doubleDiceActive ? 'true' : 'false'));
+            \Log::info("🎲 [LEMPAR DADU] Pemain '{$gamePlayer->nama}' melempar dadu dan mendapat angka {$rawNilaiDadu}." . ($doubleDiceActive ? " (Double Dice Aktif: Total {$nilaiDadu})" : ""));
         }
         
         $events[] = new DiceRolled($gameSession, $gamePlayer, $nilaiDadu);
@@ -290,6 +291,7 @@ class GameSessionService
         ]);
 
         $move = $this->movement->move($gamePlayer, $nilaiDadu, $papan);
+        \Log::info("🚶 [PION BERGERAK] Pion '{$gamePlayer->nama}' bergerak ke posisi " . ($move['blocked'] ? "TIDAK VALID (Terlalu jauh)" : $move['posisi_sesudah']));
 
         if ($move['blocked']) {
             $events[] = new MovementBlocked($gameSession, $gamePlayer, $nilaiDadu);
@@ -299,7 +301,7 @@ class GameSessionService
 
             $this->turn->advance($gameSession);
 
-            return ['type' => 'blocked', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false];
+            return ['type' => 'blocked', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive];
         }
 
         $events[] = new PawnMoved($gameSession, $gamePlayer, $move['posisi_sebelum'], $move['posisi_sesudah']);
@@ -307,8 +309,8 @@ class GameSessionService
             'posisi_sebelum' => $move['posisi_sebelum'],
             'posisi_sesudah' => $move['posisi_sesudah'],
         ]);
-
         if ($this->winCondition->hasWon($gamePlayer, $papan)) {
+            \Log::info("🏆 [MENANG] Pemain '{$gamePlayer->nama}' mencapai garis akhir (Petak {$move['posisi_sesudah']})!");
             $achievementsByPlayer = $this->finishSession($gameSession, $gamePlayer, WinReason::Finish, $events);
 
             return [
@@ -317,7 +319,7 @@ class GameSessionService
                 'player' => $gamePlayer->fresh(),
                 'nilai_dadu' => $nilaiDadu,
                 'raw_nilai_dadu' => $rawNilaiDadu,
-                'double_dice_active' => $doubleDiceActive ?? false,
+                'double_dice_active' => $doubleDiceActive,
                 '_achievements_by_player' => $achievementsByPlayer,
             ];
         }
@@ -326,6 +328,12 @@ class GameSessionService
 
         if ($move['konektor']) {
             $konektor = $move['konektor'];
+            \Log::info("🐍🪜 [KONEKTOR] Pemain '{$gamePlayer->nama}' menginjak {$konektor->jenis->value} di posisi {$konektor->posisi_awal}.");
+            $this->gameLog->log($gameSession, GameLogEventType::ConnectorLanded, $gamePlayer->user_id, $gameSession->total_turn, [
+                'posisi_awal' => $konektor->posisi_awal,
+                'jenis' => $konektor->jenis,
+                'posisi_akhir' => $konektor->posisi_akhir,
+            ]);
             $soal = $this->question->selectQuestion($gameSession, $petak);
 
             if ($soal) {
@@ -340,7 +348,7 @@ class GameSessionService
                     'soal_id' => $soal->id,
                 ]);
 
-                return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false, 'soal' => $soal];
+                return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive, 'soal' => $soal];
             } else {
                 // Jika tidak ada soal tersisa, langsung terapkan konektor
                 $events[] = new ConnectorApplied($gameSession, $gamePlayer, $konektor->jenis, $konektor->posisi_awal, $konektor->posisi_akhir);
@@ -350,6 +358,13 @@ class GameSessionService
                     'posisi_akhir' => $konektor->posisi_akhir,
                 ]);
                 $gamePlayer->update(['posisi_pion' => $konektor->posisi_akhir]);
+                
+                $response['konektor_applied'] = true;
+                $response['konektor_info'] = [
+                    'jenis' => $konektor->jenis->value,
+                    'posisi_awal' => $konektor->posisi_awal,
+                    'posisi_akhir' => $konektor->posisi_akhir,
+                ];
             }
         }
 
@@ -369,7 +384,7 @@ class GameSessionService
                     'soal_id' => $soal->id,
                 ]);
 
-                return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false, 'soal' => $soal];
+                return ['type' => 'soal', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive, 'soal' => $soal];
             } else {
                 // Fallback jika tidak ada soal tersisa, langsung berikan efek
                 $this->applyMysteryEffect($gameSession, $gamePlayer, $papan, $effect, $events);
@@ -391,12 +406,12 @@ class GameSessionService
 
         $activeDuel = $this->duel->checkAndStartDuel($gameSession, $gamePlayer, $events);
         if ($activeDuel) {
-            return ['type' => 'duel', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false, 'duel' => $activeDuel];
+            return ['type' => 'duel', 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive, 'duel' => $activeDuel];
         }
 
         $this->turn->advance($gameSession);
 
-        $response = ['type' => $effect['type'] === 'none' ? 'normal' : $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive ?? false];
+        $response = ['type' => $effect['type'] === 'none' ? 'normal' : $effect['type'], 'session' => $gameSession->fresh(), 'player' => $gamePlayer->fresh(), 'nilai_dadu' => $nilaiDadu, 'raw_nilai_dadu' => $rawNilaiDadu, 'double_dice_active' => $doubleDiceActive];
         
         if ($effect['type'] === 'mystery') {
             $response['item_id'] = $effect['item_id'] ?? null;
@@ -430,6 +445,8 @@ class GameSessionService
 
         $scoreEventType = $isCorrect ? ScoreEventType::CorrectAnswer : ScoreEventType::WrongAnswer;
         $delta = $this->score->apply($gamePlayer, $scoreEventType);
+
+        \Log::info("📝 [MENJAWAB SOAL] Pemain '{$gamePlayer->nama}' menjawab '{$jawaban}' (Kunci: '{$soal->kunci_jawaban}'). Status: " . ($isCorrect ? 'BENAR ✅' : 'SALAH ❌'));
 
         $this->gameLog->log($gameSession, GameLogEventType::AnswerSubmitted, $gamePlayer->user_id, $gameSession->total_turn, [
             'soal_id' => $soal->id,

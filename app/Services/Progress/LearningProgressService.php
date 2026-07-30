@@ -42,7 +42,10 @@ class LearningProgressService
                 $totalKategoriAktif = KategoriMateri::query()->active()->count();
 
                 $rows = $user->learningProgress()->get();
-                $kategoriDenganProgress = $rows->filter(fn ($row) => $row->total_dijawab > 0)->count();
+                $kategoriDenganProgress = $rows->filter(function ($row) {
+                    /** @var \App\Models\LearningProgress $row */
+                    return $row->total_dijawab > 0;
+                })->count();
                 $totalDijawab = (int) $rows->sum('total_dijawab');
                 $totalBenar = (int) $rows->sum('total_benar');
                 $akurasiKeseluruhan = $totalDijawab > 0
@@ -81,6 +84,7 @@ class LearningProgressService
             ->orderBy('urutan')
             ->get()
             ->map(function (KategoriMateri $kategori) use ($progressByKategori) {
+                /** @var \App\Models\LearningProgress|null $progress */
                 $progress = $progressByKategori->get($kategori->id);
                 $totalDijawab = $progress->total_dijawab ?? 0;
                 $totalSoal = $kategori->soal_count;

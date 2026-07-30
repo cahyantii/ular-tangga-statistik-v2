@@ -218,7 +218,7 @@ class MatchmakingService
         if (in_array($color, $avoid, true)) {
             $fallback = collect(PawnColor::cases())->first(fn (PawnColor $c) => ! in_array($c->value, $avoid, true));
 
-            return $fallback?->value ?? $color;
+            return $fallback ? $fallback->value : $color;
         }
 
         return $color;

@@ -30,7 +30,7 @@ class UpdateGameSettingsRequest extends FormRequest
             $rules["settings.{$id}.value"] = match ($setting->type) {
                 SettingType::Integer => ['required', 'integer'],
                 SettingType::Boolean => ['required', Rule::in(['0', '1'])],
-                SettingType::String => ['required', 'string', 'max:255'],
+                default => ['required', 'string', 'max:255'],
             };
         }
 

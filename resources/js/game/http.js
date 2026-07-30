@@ -8,6 +8,7 @@ import { hideDuel, showDuel } from './modalDuel.js';
 import { updateTurnIndicator } from './panel.js';
 import { queueAchievementUnlocks } from './achievement.js';
 import { showToast } from './utils.js';
+import { colyseusRoom } from './multiplayer.js';
 
     // ---------------------------------------------------------------
     // HTTP
@@ -41,6 +42,13 @@ import { showToast } from './utils.js';
         // menimpa state.knownPositions dengan posisi akhirnya (lihat playRobotTurns).
         const robotBefore = state.latestSession?.players.find((p) => p.is_robot);
         const robotFromPosisi = robotBefore ? (state.knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
+
+        // Route through Colyseus if active
+        if (colyseusRoom) {
+            colyseusRoom.send("roll_dice", { forced_roll: document.getElementById('forced-roll-input')?.value });
+            dom.rollButton.disabled = false; // Reset manually since there's no await
+            return;
+        }
 
         try {
             const forcedRollEl = document.getElementById('forced-roll-input');
@@ -286,6 +294,13 @@ import { showToast } from './utils.js';
         const robotFromPosisi = robotBefore ? (state.knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
         const meBefore = state.latestSession?.players.find((p) => p.id === state.myGamePlayerId);
         const myFromPosisi = meBefore ? meBefore.posisi_pion : 1;
+
+        // Route through Colyseus if active
+        if (colyseusRoom) {
+            colyseusRoom.send("answer_question", { soal_id: soalId, jawaban });
+            hideQuestion();
+            return;
+        }
 
         try {
             const result = await postJson(config.answerUrl, { soal_id: soalId, jawaban });

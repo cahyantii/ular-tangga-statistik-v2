@@ -13,7 +13,6 @@ class DuelService
 {
     public function __construct(
         private readonly DiceService $dice,
-        private readonly MovementService $movement,
         private readonly TurnService $turn
     ) {}
 

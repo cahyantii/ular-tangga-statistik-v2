@@ -1,4 +1,5 @@
 import { CoordinateHelper } from './board/CoordinateHelper.js';
+import * as Colyseus from 'colyseus.js';
 
 /**
  * Kontroler gameplay Vs Robot & Multiplayer — presentasi visual (papan modern,
@@ -555,6 +556,11 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.height = `${(100 / totalRows) * 0.8}%`;
         
         el.innerHTML = `
+            <div class="active-indicator hidden absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" stroke="#b45309" stroke-width="2" class="drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22L2 6h20L12 22z" stroke-linejoin="round" />
+                </svg>
+            </div>
             <div class="pawn-body">
                 <svg viewBox="0 0 100 150" class="pawn-svg">
                     <!-- Base Shadow -->
@@ -1008,6 +1014,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTileGlow(currentPlayer?.posisi_pion);
 
+        // Update Active Indicator on all pawns
+        session.players.forEach(p => {
+            const pawnEl = document.querySelector(`.game-pawn[data-pawn-id="${p.id}"]`);
+            if (pawnEl) {
+                const indicator = pawnEl.querySelector('.active-indicator');
+                if (indicator) {
+                    if (p.id === session.current_turn_game_player_id && session.status === 'playing') {
+                        indicator.classList.remove('hidden');
+                    } else {
+                        indicator.classList.add('hidden');
+                    }
+                }
+            }
+        });
+
         const questionPending = !!session.active_question;
         const canRoll = isMyTurn && !questionPending;
         rollButton.classList.toggle('hidden', !canRoll);
@@ -1070,7 +1091,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------------------------------------------------------------
     // Modal Soal
     // ---------------------------------------------------------------
-    function startQuestionCountdown(expiresAtIso, soalId) {
+    function startQuestionCountdown(expiresAtIso, soalId, isMyTurn) {
         clearInterval(questionCountdownInterval);
 
         const update = () => {
@@ -1079,7 +1100,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (remaining <= 0) {
                 clearInterval(questionCountdownInterval);
-                submitAnswer(soalId, null);
+                if (isMyTurn) {
+                    submitAnswer(soalId, null);
+                }
             }
         };
 
@@ -1087,23 +1110,36 @@ document.addEventListener('DOMContentLoaded', () => {
         questionCountdownInterval = setInterval(update, 1000);
     }
 
-    function showQuestion(soal, expiresAtIso) {
+    function showQuestion(soal, expiresAtIso, isMyTurn = true, activePlayerName = 'Pemain') {
         questionFeedbackEl.classList.add('hidden');
         questionTextEl.textContent = soal.pertanyaan;
         questionOptionsEl.innerHTML = '';
 
+        const titleEl = document.getElementById('question-title-text');
+        if (titleEl) {
+            titleEl.textContent = isMyTurn ? 'Soal' : `${activePlayerName} sedang menjawab soal...`;
+        }
+
         Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50';
+            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150';
             button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
             button.dataset.kunci = kunci;
-            button.addEventListener('click', () => submitAnswer(soal.id, kunci, button));
+            
+            if (isMyTurn) {
+                button.classList.add('hover:-translate-y-0.5', 'hover:border-primary-400', 'hover:bg-primary-50');
+                button.addEventListener('click', () => submitAnswer(soal.id, kunci, button));
+            } else {
+                button.disabled = true;
+                button.classList.add('opacity-60', 'cursor-not-allowed');
+            }
+            
             questionOptionsEl.appendChild(button);
         });
 
         window.dispatchEvent(new CustomEvent('open-modal', { detail: 'question-modal' }));
-        startQuestionCountdown(expiresAtIso, soal.id);
+        startQuestionCountdown(expiresAtIso, soal.id, isMyTurn);
     }
 
     function hideQuestion() {
@@ -1348,36 +1384,86 @@ document.addEventListener('DOMContentLoaded', () => {
         return actor.is_robot ? 'Robot' : (actor.nama ?? 'Pemain lain');
     }
 
-    function joinRealtimeChannel(session) {
-        if (session.mode !== 'multiplayer' || !session.room_id || presenceChannel || !window.Echo) {
+    let colyseusClient = null;
+    let colyseusRoom = null;
+    let isJoiningColyseus = false;
+
+    async function joinRealtimeChannel(session) {
+        if (session.mode !== 'multiplayer' || colyseusRoom || isJoiningColyseus) {
             return;
         }
 
-        presenceChannel = window.Echo.join(`room.${session.room_id}`);
+        isJoiningColyseus = true;
 
-        Object.keys(REALTIME_EVENT_LABELS).forEach((eventName) => {
-            presenceChannel.listen(`.${eventName}`, (payload) => {
-                const actorId = payload.game_player_id ?? null;
+        if (!colyseusClient) {
+            colyseusClient = new Colyseus.Client('ws://localhost:2567');
+        }
+
+        try {
+            colyseusRoom = await colyseusClient.joinOrCreate("game_room", { 
+                token: csrfToken,
+                session_id: session.id,
+                player_id: myGamePlayerId
+            });
+
+            console.log("Joined Colyseus room successfully", colyseusRoom.roomId);
+
+            let diceRollPromise = Promise.resolve();
+
+            colyseusRoom.onMessage("state_changed", (message) => {
+                const eventName = message.event;
+                const actorId = message.actor ?? null;
+                
                 if (actorId !== null && actorId === myGamePlayerId) {
-                    return;
+                    return; // Ignore our own broadcasts
                 }
 
-                const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
-                showToast(label);
-                pushLog('info', label);
-                loadState();
+                if (eventName === 'dice-rolled') {
+                    // Animasi dadu dijalankan dan disimpan promisenya
+                    diceRollPromise = animateDiceRoll(message.raw_nilai_dadu ?? message.nilai_dadu ?? 1, message.double_dice_active ?? false);
+                    return; // Tunggu event pawn-moved untuk me-loadState
+                }
+                
+                if (eventName === 'mystery-applied') {
+                    showToast(`${resolveActorName(actorId)} mendapatkan item Misteri: ${message.item_name ?? 'Item'}!`);
+                    pushLog('info', `${resolveActorName(actorId)} mendapatkan power-up!`);
+                    // We let it continue to loadState() so the pawn movement syncs
+                }
+
+                if (REALTIME_EVENT_LABELS[eventName]) {
+                    const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
+                    showToast(label);
+                    pushLog('info', label);
+                }
+                
+                diceRollPromise.then(() => {
+                    loadState();
+                });
             });
-        });
+
+            colyseusRoom.onMessage("error", (msg) => {
+                showToast(msg);
+                pushLog('error', msg);
+            });
+
+        } catch (e) {
+            console.error("Colyseus JOIN ERROR", e);
+        } finally {
+            isJoiningColyseus = false;
+        }
     }
 
     function leaveRealtimeChannel(session) {
-        if (presenceChannel && window.Echo && session.room_id) {
-            window.Echo.leave(`room.${session.room_id}`);
-            presenceChannel = null;
+        if (colyseusRoom) {
+            colyseusRoom.leave();
+            colyseusRoom = null;
         }
     }
 
     function startHeartbeat(session) {
+        // MATIKAN SEMENTARA untuk keperluan debugging agar Debugbar tidak penuh
+        return; 
+
         if (session.mode !== 'multiplayer' || heartbeatIntervalId) {
             return;
         }
@@ -1418,47 +1504,49 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            if (p.posisi_pion > prev && p.posisi_pion - prev <= 6) {
+            const naik = p.posisi_pion > prev;
+            // Cek apakah ada konektor yang menghubungkan posisi sebelumnya (prev) dengan posisi baru (p.posisi_pion)
+            // Ini untuk mendeteksi apakah pergerakan (walaupun jaraknya dekat <= 6) sebenarnya adalah karena naik tangga / turun ular
+            const konektor = Array.from(konektorByStart.values())
+                .find((k) => k.posisi_awal === prev && k.posisi_akhir === p.posisi_pion && (naik ? k.jenis === 'tangga' : k.jenis === 'ular'));
+
+            if (konektor) {
+                await delay(100);
+                if (naik) {
+                    await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
+                    await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
+                    spawnParticles(el, 'sparkle', 10);
+                    el.classList.add('pawn-climb');
+                    setTimeout(() => el.classList.remove('pawn-climb'), 650);
+                } else {
+                    await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
+                    boardEl.classList.add('board-shake');
+                    await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
+                    spawnParticles(el, 'dust', 8);
+                    setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+                }
+            } else if (p.posisi_pion > prev && p.posisi_pion - prev <= 6) {
                 // eslint-disable-next-line no-await-in-loop
                 for (let step = prev + 1; step <= p.posisi_pion; step++) {
                     const stackIndex = step === p.posisi_pion ? stackIndexAt(step, p.id, session.players) : 0;
+                    
+                    el.classList.remove('pawn-hop');
+                    void el.offsetWidth;
+                    el.classList.add('pawn-hop');
+                    
                     placePawnAt(el, step, stackIndex);
                     // eslint-disable-next-line no-await-in-loop
-                    await delay(180);
+                    await delay(400);
                 }
+                el.classList.remove('pawn-hop');
             } else {
-                // Lawan/robot melompat konektor lewat sinyal realtime (kita tidak
-                // tahu nilai dadu mereka) — cari konektor asli yang berakhir tepat
-                // di posisi baru supaya jalurnya tetap mengikuti kurva sesungguhnya,
-                // bukan cuma tebakan arah naik/turun.
-                const naik = p.posisi_pion > prev;
-                const konektor = Array.from(konektorByStart.values())
-                    .find((k) => k.posisi_akhir === p.posisi_pion && (naik ? k.jenis === 'tangga' : k.jenis === 'ular'));
-
-                await delay(100);
-
-                if (konektor) {
-                    if (naik) {
-                        await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
-                        await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
-                        spawnParticles(el, 'sparkle', 10);
-                        el.classList.add('pawn-climb');
-                        setTimeout(() => el.classList.remove('pawn-climb'), 650);
-                    } else {
-                        await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
-                        boardEl.classList.add('board-shake');
-                        await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
-                        spawnParticles(el, 'dust', 8);
-                        setTimeout(() => boardEl.classList.remove('board-shake'), 400);
-                    }
-                } else {
-                    el.classList.add(naik ? 'pawn-climb' : 'pawn-slide');
-                    await delay(450);
-                    el.classList.remove('pawn-climb', 'pawn-slide');
-                }
-
-                placePawnAt(el, p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
+                // Pergerakan jauh tapi bukan konektor dari posisi awal (misal efek teleport misteri, atau konektor tapi posisi awalnya sudah kita lewatkan karena animasi dadu)
+                el.classList.add(naik ? 'pawn-climb' : 'pawn-slide');
+                await delay(450);
+                el.classList.remove('pawn-climb', 'pawn-slide');
             }
+
+            placePawnAt(el, p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
         }
     }
 
@@ -1511,8 +1599,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function finalizeOutcome(session, newlyUnlockedAchievements = []) {
         renderFinished(session);
 
+        const isMyTurn = session.current_turn_game_player_id === myGamePlayerId;
+        const currentPlayer = session.players.find((p) => p.id === session.current_turn_game_player_id);
+
         if (session.active_question) {
-            showQuestion(session.active_question, session.active_question_expires_at);
+            showQuestion(
+                session.active_question, 
+                session.active_question_expires_at, 
+                isMyTurn, 
+                currentPlayer?.nama ?? 'Pemain'
+            );
         } else {
             hideQuestion();
         }
@@ -1698,6 +1794,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const forcedRoll = forcedRollEl ? forcedRollEl.value : null;
             const body = forcedRoll ? { forced_roll: parseInt(forcedRoll, 10) } : {};
             const result = await postJson(rollUrl, body);
+
+            if (colyseusRoom) {
+                // Beri tahu Colyseus untuk mem-broadcast ke klien lain
+                colyseusRoom.send("broadcast_event", { 
+                    event: 'dice-rolled', 
+                    actor: myGamePlayerId,
+                    nilai_dadu: result.nilai_dadu ?? 1,
+                    raw_nilai_dadu: result.raw_nilai_dadu,
+                    double_dice_active: result.double_dice_active ?? false
+                });
+                colyseusRoom.send("broadcast_event", { event: 'pawn-moved', actor: myGamePlayerId });
+            }
 
             await animateDiceRoll(result.raw_nilai_dadu ?? result.nilai_dadu ?? 1, result.double_dice_active ?? false);
 
@@ -1941,6 +2049,19 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const result = await postJson(answerUrl, { soal_id: soalId, jawaban });
 
+            if (colyseusRoom) {
+                if (result.mystery_applied) {
+                    colyseusRoom.send("broadcast_event", { 
+                        event: 'mystery-applied', 
+                        actor: myGamePlayerId,
+                        item_id: result.mystery_effect?.item_id,
+                        item_name: result.mystery_effect?.item_name
+                    });
+                } else {
+                    colyseusRoom.send("broadcast_event", { event: 'score-updated', actor: myGamePlayerId });
+                }
+            }
+
             questionFeedbackEl.textContent = result.benar
                 ? 'Jawaban benar!'
                 : `Jawaban salah. ${result.pembahasan ?? ''}`;
@@ -2003,14 +2124,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(200);
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 // Fallback jika berubah posisi tapi bukan konektor
-                const el = getOrCreatePawnEl(actingPlayer);
-                placePawnAt(el, actingPlayer.posisi_pion, stackIndexAt(actingPlayer.posisi_pion, actingPlayer.id, result.session?.players));
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
             }
 
             // Jika respons adalah 'soal', berarti butuh menjawab soal lagi (misal menginjak misteri setelah konektor)
             if (result.type === 'soal') {
-                showQuestion(result.soal, 15);
+                latestSession = result.session;
+                showQuestion(
+                    result.soal, 
+                    new Date(Date.now() + 15000).toISOString(),
+                    true,
+                    actingPlayer?.nama ?? 'Pemain'
+                );
                 return; // Hentikan alur di sini, tunggu pemain submit jawaban lagi
             }
 

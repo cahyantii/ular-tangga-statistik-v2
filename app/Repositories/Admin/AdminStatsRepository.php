@@ -163,7 +163,7 @@ class AdminStatsRepository
 
             return [
                 'soal_id' => $soalId,
-                'pertanyaan' => $soal?->pertanyaan ?? '(soal telah dihapus)',
+                'pertanyaan' => $soal ? $soal->pertanyaan : '(soal telah dihapus)',
                 'total_dijawab' => $totalDijawab,
                 'total_salah' => $totalSalah,
                 'tingkat_kesalahan' => $totalDijawab > 0
@@ -194,9 +194,9 @@ class AdminStatsRepository
                 $user = User::withTrashed()->find($row->user_id);
 
                 return [
-                    'nama' => $user?->name ?? '(pengguna dihapus)',
-                    'total_skor' => (int) $row->total_skor,
-                    'total_menang' => (int) $row->total_menang,
+                    'nama' => $user ? $user->name : '(pengguna dihapus)',
+                    'total_skor' => (int) $row->getAttribute('total_skor'),
+                    'total_menang' => (int) $row->getAttribute('total_menang'),
                 ];
             });
     }
@@ -216,8 +216,8 @@ class AdminStatsRepository
             ->limit($limit)
             ->get()
             ->map(fn (UserAchievement $entry) => [
-                'nama_pemain' => $entry->user?->name ?? '(pengguna dihapus)',
-                'nama_achievement' => $entry->achievement?->nama ?? '(achievement dihapus)',
+                'nama_pemain' => $entry->user ? $entry->user->name : '(pengguna dihapus)',
+                'nama_achievement' => $entry->achievement ? $entry->achievement->nama : '(achievement dihapus)',
                 'earned_at' => $entry->earned_at,
             ]);
     }

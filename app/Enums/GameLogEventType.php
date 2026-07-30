@@ -7,6 +7,7 @@ enum GameLogEventType: string
     case DiceRolled = 'dice_rolled';
     case PawnMoved = 'pawn_moved';
     case MovementBlocked = 'movement_blocked';
+    case ConnectorLanded = 'connector_landed';
     case ConnectorApplied = 'connector_applied';
     case QuestionPresented = 'question_presented';
     case AnswerSubmitted = 'answer_submitted';

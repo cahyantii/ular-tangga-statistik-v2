@@ -39,6 +39,7 @@ class PapanPetakImportService
             }
 
             $posisi = (int) ($row['posisi'] ?? 0);
+            /** @var \App\Models\Petak|null $existing */
             $existing = $existingByPosisi->get($posisi);
 
             if (! $existing) {
