@@ -9,8 +9,17 @@
 import { initBoardVisuals, getBoardTheme, setBoardTheme } from './board/BoardRenderer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    initBoardVisuals();
+    const renderer = initBoardVisuals();
     initBoardThemeToggle();
+
+    // Dipicu SETELAH #game-board selesai dirakit (ular/tangga overlay
+    // terpasang) - dipakai halaman lain yang perlu menambahkan sesuatu ke
+    // papan tanpa ikut men-drive init-nya sendiri (lihat
+    // resources/js/admin-board-preview.js, yang menaruh 1 pion contoh
+    // statis di preview papan admin).
+    if (renderer) {
+        window.dispatchEvent(new CustomEvent('board-visuals-ready', { detail: renderer }));
+    }
 });
 
 /**

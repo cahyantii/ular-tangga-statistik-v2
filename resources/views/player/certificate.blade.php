@@ -1,21 +1,21 @@
 <x-player-layout>
     <x-slot name="header">
-        <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Sertifikat Digital</h1>
-        <p class="mt-0.5 text-sm text-slate-500">
-            Lengkapi syarat berikut dan raih <span class="font-semibold text-primary-600">Sertifikat Penguasaan Statistik Dasar!</span>
+        <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl">Sertifikat Digital</h1>
+        <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+            Lengkapi syarat berikut dan raih <span class="font-semibold text-primary-600 dark:text-primary-400">Sertifikat Penguasaan Statistik Dasar!</span>
         </p>
     </x-slot>
 
     @if ($certificate)
-        <div class="mx-auto max-w-lg rounded-3xl border-2 border-secondary-400 bg-secondary-50 p-6 text-center shadow-sm sm:p-8">
+        <div class="mx-auto max-w-lg rounded-3xl border-2 border-secondary-400 bg-secondary-50 p-6 text-center shadow-sm dark:border-secondary-500/40 dark:bg-secondary-500/10 sm:p-8">
             <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-secondary-500 text-white">
                 <x-player.icon name="certificate" class="h-7 w-7" />
             </span>
-            <p class="mt-3 text-sm font-semibold uppercase tracking-wide text-secondary-600">Selamat!</p>
-            <p class="mt-2 text-xl font-bold text-secondary-700">{{ $certificate->judul }}</p>
-            <p class="mt-1 text-sm text-slate-600">Nomor: {{ $certificate->nomor_sertifikat }}</p>
-            <p class="text-sm text-slate-600">Terbit: {{ $certificate->issued_at->translatedFormat('d F Y') }}</p>
-            <p class="mt-1 text-xs text-slate-500">Kode verifikasi: {{ $certificate->verification_code }}</p>
+            <p class="mt-3 text-sm font-semibold uppercase tracking-wide text-secondary-600 dark:text-secondary-400">Selamat!</p>
+            <p class="mt-2 text-xl font-bold text-secondary-700 dark:text-secondary-400">{{ $certificate->judul }}</p>
+            <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Nomor: {{ $certificate->nomor_sertifikat }}</p>
+            <p class="text-sm text-slate-600 dark:text-slate-400">Terbit: {{ $certificate->issued_at->translatedFormat('d F Y') }}</p>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">Kode verifikasi: {{ $certificate->verification_code }}</p>
 
             <x-player.button variant="secondary" :href="route('player.certificate.download', $certificate)" class="mt-5">
                 <x-player.icon name="download" class="h-4 w-4" />
@@ -41,9 +41,9 @@
                     </svg>
 
                     <div class="min-w-0 flex-1">
-                        <p class="text-slate-700">Selesaikan tiga syarat berikut untuk mendapatkan</p>
-                        <p class="text-lg font-bold text-primary-600">Sertifikat Penguasaan Statistik Dasar.</p>
-                        <p class="mt-2 text-sm text-slate-500">Tingkatkan kemampuanmu dan buktikan pencapaianmu!</p>
+                        <p class="text-slate-700 dark:text-slate-300">Selesaikan tiga syarat berikut untuk mendapatkan</p>
+                        <p class="text-lg font-bold text-primary-600 dark:text-primary-400">Sertifikat Penguasaan Statistik Dasar.</p>
+                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Tingkatkan kemampuanmu dan buktikan pencapaianmu!</p>
                     </div>
                 </div>
 
@@ -83,8 +83,8 @@
                         >
 
                         <div class="min-w-0 flex-1 text-center">
-                            <p class="font-bold text-slate-800">Setiap langkah kecil adalah bagian dari pencapaian besar!</p>
-                            <p class="mt-0.5 text-sm text-slate-500">Terus belajar, terus bermain, dan raih sertifikatmu sekarang!</p>
+                            <p class="font-bold text-slate-800 dark:text-slate-100">Setiap langkah kecil adalah bagian dari pencapaian besar!</p>
+                            <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Terus belajar, terus bermain, dan raih sertifikatmu sekarang!</p>
                         </div>
 
                         <img

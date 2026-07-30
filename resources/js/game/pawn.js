@@ -1,44 +1,23 @@
 import { state, dom, config } from './state.js';
 import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from './utils.js';
+import { pawnColorStyle, createPawnElement } from '../board/pawnElement.js';
 
     // ---------------------------------------------------------------
     // Pion & animasi pergerakan
     // ---------------------------------------------------------------
-    function pawnColorStyle(player) {
-        if (player.is_robot) return { bg: '#475569', ring: '#e2e8f0' };
-        return { bg: player.pawn_color === 'red' ? '#e11d48' : (player.pawn_color || '#1d4ed8'), ring: '#ffffff' };
-    }
-
     function getOrCreatePawnEl(player) {
         let el = dom.pawnLayer.querySelector(`[data-pawn-id="${player.id}"]`);
         if (el) return el;
 
         const { bg } = pawnColorStyle(player);
-        el = document.createElement('div');
-        el.dataset.pawnId = String(player.id);
-        el.className = 'game-pawn';
         // Pion 3D lebih tinggi dan ramping
-        el.style.width = `${(100 / config.jumlahKolom) * 0.45}%`;
-        el.style.height = `${(100 / config.totalRows) * 0.8}%`;
-        
-        el.innerHTML = `
-            <div class="pawn-body">
-                <svg viewBox="0 0 100 150" class="pawn-svg">
-                    <!-- Base Shadow -->
-                    <ellipse cx="50" cy="140" rx="35" ry="10" fill="#000000" opacity="0.35" class="pawn-shadow" />
-                    <g class="pawn-shape" transform-origin="50px 140px">
-                        <!-- Body (Base to Neck) -->
-                        <path d="M 22,130 Q 50,150 78,130 L 63,45 L 37,45 Z" fill="${bg}" stroke="#111827" stroke-width="5" stroke-linejoin="round" />
-                        <!-- Head -->
-                        <circle cx="50" cy="35" r="30" fill="${bg}" stroke="#111827" stroke-width="5" />
-                        <!-- Highlights (Glossy 3D) -->
-                        <path d="M 32,20 A 18,18 0 0,0 25,40" stroke="#ffffff" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.75" />
-                        <path d="M 32,120 L 41,55" stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round" opacity="0.5" />
-                    </g>
-                </svg>
-            </div>
-        `;
-        el.title = player.is_robot ? 'Robot' : (player.nama ?? 'Pemain');
+        el = createPawnElement({
+            bg,
+            title: player.is_robot ? 'Robot' : (player.nama ?? 'Pemain'),
+            widthPercent: (100 / config.jumlahKolom) * 0.45,
+            heightPercent: (100 / config.totalRows) * 0.8,
+        });
+        el.dataset.pawnId = String(player.id);
         dom.pawnLayer.appendChild(el);
         return el;
     }

@@ -57,7 +57,7 @@
     data-total-rows="{{ $totalRows }}"
     data-jumlah-petak="{{ $jumlahPetak }}"
     data-konektor="{{ json_encode($konektorForJs) }}"
-    class="relative z-[1] overflow-hidden rounded-2xl bg-gradient-to-b from-app-bg to-white p-1.5 shadow-inner sm:p-2.5"
+    class="relative z-[1] overflow-hidden rounded-2xl bg-gradient-to-b from-app-bg to-white p-1.5 shadow-inner sm:p-2.5 dark:from-slate-900 dark:to-slate-800"
     style="display: grid; grid-template-columns: repeat({{ $jumlahKolom }}, minmax(0, 1fr)); grid-template-rows: repeat({{ $totalRows }}, minmax(0, 1fr)); aspect-ratio: {{ $jumlahKolom }} / {{ $totalRows }};"
 >
     {{-- Kotak papan (di bawah ular & tangga — lihat catatan layering di BoardRenderer.js) --}}

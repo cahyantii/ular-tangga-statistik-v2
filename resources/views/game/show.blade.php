@@ -18,10 +18,10 @@
     <div id="game-fullscreen-container" class="transition-colors duration-300 relative group w-full h-full overflow-y-auto overflow-x-hidden p-0 xl:bg-transparent">
         
         {{-- Toast notifikasi ringan --}}
-        <div id="game-toast" class="fixed left-1/2 top-20 z-50 hidden -translate-x-1/2 animate-fade-in-up rounded-xl border border-accent-200 bg-white px-4 py-3 text-sm font-medium text-accent-700 shadow-soft-lg"></div>
+        <div id="game-toast" class="fixed left-1/2 top-20 z-50 hidden -translate-x-1/2 animate-fade-in-up rounded-xl border border-accent-200 bg-white px-4 py-3 text-sm font-medium text-accent-700 shadow-soft-lg dark:border-accent-500/30 dark:bg-slate-800 dark:text-accent-400"></div>
 
         {{-- Lawan terputus koneksi (Multiplayer): countdown masa tenggang reconnect --}}
-        <div id="game-paused-banner" class="mb-4 hidden items-center gap-2 rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700 w-full max-w-4xl mx-auto">
+        <div id="game-paused-banner" class="mb-4 hidden items-center gap-2 rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700 w-full max-w-4xl mx-auto dark:border-accent-500/30 dark:bg-accent-500/10 dark:text-accent-400">
             <x-player.icon name="clock" class="h-4 w-4 shrink-0" />
             Lawan terputus koneksi. Permainan dijeda &mdash; menunggu reconnect
             <span id="game-paused-timer" class="font-bold"></span>
@@ -33,25 +33,25 @@
             mobile):
         --}}
         <div class="grid grid-cols-1 gap-5 xl:grid-cols-[280px_1fr_280px] xl:gap-4 items-start w-full">
-        {{-- Kolom 1 (desktop saja): Pemain + Log --}}
-        <div class="max-xl:hidden xl:col-start-1 xl:row-start-1 flex flex-col gap-4">
-            {{-- Panel Pemain --}}
+        {{-- Kolom 1: Pemain + Log (desktop: statis; mobile: overlay dibuka lewat FAB Progress/Pemain/Log) --}}
+        <div class="xl:col-start-1 xl:row-start-1 flex flex-col gap-4">
+            {{-- Panel Pemain (juga dibuka oleh tombol FAB "Progress", karena isinya skor/posisi/akurasi tiap pemain) --}}
             <div
                 x-data="{ open: false }"
-                @open-mobile-panel.window="open = ($event.detail === 'pemain')"
+                @open-mobile-panel.window="open = (['pemain', 'progress'].includes($event.detail))"
                 @close-mobile-panel.window="open = false"
             >
                 <div x-show="open" x-cloak @click="open = false" class="fixed inset-x-0 top-0 bottom-24 z-40 bg-slate-900/50 xl:hidden"></div>
                 <div
-                    :class="open ? 'max-xl:fixed max-xl:inset-x-4 max-xl:top-20 max-xl:bottom-24 max-xl:z-40 max-xl:overflow-y-auto' : ''"
-                    class="animate-fade-in-up rounded-3xl bg-white p-4 shadow-sm sm:p-5"
+                    :class="open ? 'max-xl:fixed max-xl:inset-x-4 max-xl:top-20 max-xl:bottom-24 max-xl:z-40 max-xl:overflow-y-auto' : 'max-xl:hidden'"
+                    class="animate-fade-in-up rounded-3xl bg-white p-4 shadow-sm dark:bg-slate-800 sm:p-5"
                 >
                     <div class="mb-2 flex items-center justify-between">
-                        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
                             <x-player.icon name="users" class="h-4 w-4 text-primary-500" />
                             Pemain
                         </h3>
-                        <button @click="open = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 xl:hidden">
+                        <button @click="open = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-700 xl:hidden">
                             <x-player.icon name="close" class="h-4 w-4" />
                         </button>
                     </div>
@@ -59,15 +59,31 @@
                 </div>
             </div>
 
-            {{-- Log Permainan (di bawah Pemain, desktop saja) --}}
-            <div class="animate-fade-in-up">
-                <x-game.log-card />
+            {{-- Log Permainan (desktop: statis; mobile: overlay dibuka oleh tombol FAB "Log") --}}
+            <div
+                x-data="{ open: false }"
+                @open-mobile-panel.window="open = ($event.detail === 'log')"
+                @close-mobile-panel.window="open = false"
+            >
+                <div x-show="open" x-cloak @click="open = false" class="fixed inset-x-0 top-0 bottom-24 z-40 bg-slate-900/50 xl:hidden"></div>
+                <div
+                    :class="open ? 'max-xl:fixed max-xl:inset-x-4 max-xl:top-20 max-xl:bottom-24 max-xl:z-40 max-xl:overflow-y-auto' : 'max-xl:hidden'"
+                    class="animate-fade-in-up"
+                >
+                    <button
+                        @click="open = false"
+                        class="absolute right-3 top-3 z-10 rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:text-slate-500 dark:hover:bg-slate-700 xl:hidden"
+                    >
+                        <x-player.icon name="close" class="h-4 w-4" />
+                    </button>
+                    <x-game.log-card />
+                </div>
             </div>
         </div>
 
         {{-- Kolom 2 (tengah): Papan --}}
         <div class="max-xl:order-2 xl:col-start-2 xl:row-start-1">
-            <div id="board-card" class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm sm:p-4 mx-auto w-full" style="aspect-ratio: 1 / 1;">
+            <div id="board-card" class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm dark:bg-slate-800 sm:p-4 mx-auto w-full" style="aspect-ratio: 1 / 1;">
                 {{--
                     Toggle tema visual ular/perosotan - PURE client-side
                     (localStorage, lihat board-visuals.js initBoardThemeToggle()
@@ -77,14 +93,14 @@
                 --}}
                 <div class="mb-3 relative flex justify-center gap-2 items-center">
                     <div id="board-theme-toggle" class="flex gap-2">
-                        <button type="button" data-board-theme="ular" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150">
+                        <button type="button" data-board-theme="ular" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150 dark:border-slate-600 dark:text-slate-400">
                             🐍 Ular
                         </button>
-                        <button type="button" data-board-theme="perosotan" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150">
+                        <button type="button" data-board-theme="perosotan" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150 dark:border-slate-600 dark:text-slate-400">
                             🛝 Perosotan
                         </button>
                     </div>
-                    <button id="toggle-fullscreen-btn" type="button" class="hidden md:flex absolute right-0 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors duration-150" title="Toggle Fullscreen">
+                    <button id="toggle-fullscreen-btn" type="button" class="hidden md:flex absolute right-0 rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors duration-150 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300" title="Toggle Fullscreen">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                         </svg>
@@ -97,10 +113,10 @@
 
 
         {{-- Kolom 3 (kanan): Giliran+Dadu --}}
-        <div id="turn-dice-card" class="max-xl:order-1 animate-fade-in-up rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-soft-xl p-5 xl:col-start-3 xl:row-start-1 relative overflow-hidden">
+        <div id="turn-dice-card" class="max-xl:hidden animate-fade-in-up rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-soft-xl p-5 xl:col-start-3 xl:row-start-1 relative overflow-hidden dark:bg-slate-800/90 dark:border-slate-700">
             <!-- Dekorasi gradient background ringan -->
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none"></div>
-            
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none dark:bg-primary-500/20"></div>
+
             <div class="flex flex-col items-center gap-5 relative z-10">
                 <div class="flex items-center gap-3 self-start w-full">
                     <div class="relative">
@@ -108,14 +124,14 @@
                         <div id="turn-avatar-ring" class="absolute inset-0 rounded-full border-2 border-primary-400 opacity-0 transition-all duration-700"></div>
                     </div>
                     <div class="flex-1">
-                        <p id="turn-indicator" class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <p id="turn-indicator" class="text-base font-bold text-slate-800 flex items-center gap-2 dark:text-slate-100">
                             Giliran
                             <span id="turn-active-dot" class="hidden relative flex h-2.5 w-2.5">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                             </span>
                         </p>
-                        <p id="turn-subtext" class="text-xs font-medium text-slate-400"></p>
+                        <p id="turn-subtext" class="text-xs font-medium text-slate-400 dark:text-slate-500"></p>
                     </div>
                 </div>
 
@@ -131,21 +147,21 @@
                         <x-player.icon name="dice" class="h-4 w-4" />
                         Lempar Dadu
                     </button>
-                    <p class="text-[11px] text-slate-400">Klik untuk melempar dadu</p>
+                    <p class="text-[11px] text-slate-400 dark:text-slate-500">Klik untuk melempar dadu</p>
 
                     @if(app()->environment('local'))
-                        <div class="mt-2 text-center border-t border-slate-100 pt-2 w-full">
-                            <label class="text-[10px] text-slate-500 block mb-1 uppercase font-bold tracking-wider">Dev Cheat: Force Roll</label>
-                            <input type="number" id="forced-roll-input" min="1" max="100" class="w-20 rounded-md border border-slate-300 py-1 px-2 text-center text-sm" placeholder="Auto">
+                        <div class="mt-2 text-center border-t border-slate-100 pt-2 w-full dark:border-slate-700">
+                            <label class="text-[10px] text-slate-500 block mb-1 uppercase font-bold tracking-wider dark:text-slate-400">Dev Cheat: Force Roll</label>
+                            <input type="number" id="forced-roll-input" min="1" max="100" class="w-20 rounded-md border border-slate-300 py-1 px-2 text-center text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100" placeholder="Auto">
                         </div>
                     @endif
 
                     {{-- UI Inventory --}}
-                    <div id="player-inventory-container" class="mt-4 w-full border-t border-slate-100 pt-3">
-                        <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide text-center">Item Anda</h4>
+                    <div id="player-inventory-container" class="mt-4 w-full border-t border-slate-100 pt-3 dark:border-slate-700">
+                        <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide text-center dark:text-slate-400">Item Anda</h4>
                         <div id="player-inventory-list" class="flex flex-wrap gap-2 justify-center">
                             <!-- Item akan dirender oleh JS -->
-                            <p class="text-xs text-slate-400 italic" id="empty-inventory-text">Kosong</p>
+                            <p class="text-xs text-slate-400 italic dark:text-slate-500" id="empty-inventory-text">Kosong</p>
                         </div>
                     </div>
                 </div>
@@ -159,7 +175,7 @@
         <button
             id="leave-game-button"
             type="button"
-            class="max-xl:hidden flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-600 transition-all duration-200 hover:bg-rose-50 xl:col-start-3 xl:row-start-2"
+            class="max-xl:hidden flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-600 transition-all duration-200 hover:bg-rose-50 dark:border-rose-500/30 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-500/10 xl:col-start-3 xl:row-start-2"
         >
             Keluar dari Permainan
         </button>
@@ -174,12 +190,12 @@
         elemen aslinya masing-masing — FAB ini murni "remote control", tidak
         ada logic yang diduplikasi (lihat initMobileActionFab() di game-play.js).
     --}}
-    <div id="mobile-action-fab" class="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-sm items-end justify-between gap-1 rounded-[28px] bg-white/95 p-2 shadow-soft-lg backdrop-blur-md xl:hidden">
-        <button type="button" data-open-panel="progress" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100">
+    <div id="mobile-action-fab" class="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-sm items-end justify-between gap-1 rounded-[28px] bg-white/95 p-2 shadow-soft-lg backdrop-blur-md dark:bg-slate-800/95 xl:hidden">
+        <button type="button" data-open-panel="progress" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 dark:active:bg-slate-700">
             <x-player.icon name="flag" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">Progress</span>
         </button>
-        <button type="button" data-open-panel="pemain" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100">
+        <button type="button" data-open-panel="pemain" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 dark:active:bg-slate-700">
             <x-player.icon name="users" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">Pemain</span>
         </button>
@@ -190,11 +206,11 @@
         >
             <x-player.icon name="dice" class="h-7 w-7" />
         </button>
-        <button type="button" data-open-panel="log" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100">
+        <button type="button" data-open-panel="log" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 dark:active:bg-slate-700">
             <x-player.icon name="clock" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">Log</span>
         </button>
-        <button id="mobile-fab-leave" type="button" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-rose-500 transition-colors duration-150 hover:bg-rose-50 active:bg-rose-50">
+        <button id="mobile-fab-leave" type="button" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-rose-500 transition-colors duration-150 hover:bg-rose-50 active:bg-rose-50 dark:hover:bg-rose-500/10 dark:active:bg-rose-500/10">
             <x-player.icon name="logout" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">Keluar</span>
         </button>
@@ -219,21 +235,21 @@
                 <img id="gacha-image" src="" alt="Power Up" style="transform: scale(0);" class="relative z-10 w-full h-full object-contain drop-shadow-2xl transition-transform duration-500 delay-200">
             </div>
 
-            <h4 id="gacha-item-name" class="text-lg font-bold text-slate-800 mb-1 opacity-0 transition-opacity duration-500 delay-500"></h4>
-            <p id="gacha-item-desc" class="text-sm text-slate-500 opacity-0 transition-opacity duration-500 delay-700"></p>
-            
+            <h4 id="gacha-item-name" class="text-lg font-bold text-slate-800 mb-1 opacity-0 transition-opacity duration-500 delay-500 dark:text-slate-100"></h4>
+            <p id="gacha-item-desc" class="text-sm text-slate-500 opacity-0 transition-opacity duration-500 delay-700 dark:text-slate-400"></p>
+
             <div id="gacha-actions-normal" class="w-full mt-6 opacity-0 transition-opacity duration-500 delay-1000">
                 <button type="button" id="gacha-klaim-btn" class="w-full rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
                     Klaim
                 </button>
             </div>
-            
+
             <div id="gacha-actions-resolve" class="w-full mt-6 hidden opacity-0 flex-col gap-2 transition-opacity duration-500 delay-1000">
-                <p class="text-xs text-rose-500 font-bold mb-1">Inventory Penuh (Maks 3)!</p>
+                <p class="text-xs text-rose-500 font-bold mb-1 dark:text-rose-400">Inventory Penuh (Maks 3)!</p>
                 <button type="button" id="gacha-keep-btn" class="w-full rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
                     Simpan & Buang Terlama
                 </button>
-                <button type="button" id="gacha-discard-btn" class="w-full rounded-xl border-2 border-rose-500 bg-white px-4 py-2 text-rose-500 font-bold hover:bg-rose-50 transition-colors">
+                <button type="button" id="gacha-discard-btn" class="w-full rounded-xl border-2 border-rose-500 bg-white px-4 py-2 text-rose-500 font-bold hover:bg-rose-50 transition-colors dark:bg-slate-800 dark:hover:bg-rose-500/10">
                     Buang Item Ini
                 </button>
             </div>
@@ -251,11 +267,11 @@
                 <img id="powerup-use-image" src="" alt="Power Up" class="w-full h-full object-contain drop-shadow-lg">
             </div>
 
-            <h4 id="powerup-use-name" class="text-lg font-bold text-slate-800 mb-2"></h4>
-            <p id="powerup-use-desc" class="text-sm text-slate-600 mb-6"></p>
-            
+            <h4 id="powerup-use-name" class="text-lg font-bold text-slate-800 mb-2 dark:text-slate-100"></h4>
+            <p id="powerup-use-desc" class="text-sm text-slate-600 mb-6 dark:text-slate-400"></p>
+
             <div class="w-full flex gap-2">
-                <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal', {detail: 'powerup-use-modal'}))" class="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors">
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal', {detail: 'powerup-use-modal'}))" class="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700">
                     Batal
                 </button>
                 <button type="button" id="powerup-use-btn" class="flex-1 rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
@@ -268,28 +284,28 @@
     {{-- Modal Soal --}}
     <x-player.modal name="question-modal">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="flex items-center gap-2 text-lg font-bold text-slate-800">
+            <h3 class="flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
                 <x-player.icon name="book" class="h-5 w-5 text-primary-500" />
                 Soal
             </h3>
-            <span id="question-timer" class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold text-primary-600"></span>
+            <span id="question-timer" class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold text-primary-600 dark:bg-primary-500/10 dark:text-primary-400"></span>
         </div>
-        <p id="question-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
+        <p id="question-text" class="mb-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300"></p>
         <div id="question-options" class="space-y-2"></div>
-        <p id="question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
+        <p id="question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700 dark:text-slate-300"></p>
     </x-player.modal>
 
     {{-- Modal Soal Bot (spectator view) --}}
     <x-player.modal name="bot-question-modal">
         <div class="mb-4 flex items-center justify-between">
-            <h3 class="flex items-center gap-2 text-lg font-bold text-slate-800">
+            <h3 class="flex items-center gap-2 text-lg font-bold text-slate-800 dark:text-slate-100">
                 <x-player.icon name="bot" class="h-5 w-5 text-violet-500" />
                 Bot Sedang Menjawab
             </h3>
         </div>
-        <p id="bot-question-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
+        <p id="bot-question-text" class="mb-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300"></p>
         <div id="bot-question-options" class="space-y-2"></div>
-        <p id="bot-question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
+        <p id="bot-question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700 dark:text-slate-300"></p>
     </x-player.modal>
 
     {{-- Modal Duel --}}
@@ -299,34 +315,34 @@
                 <x-player.icon name="swords" class="h-6 w-6" />
                 Duel!
             </h3>
-            <p id="duel-status-text" class="text-sm font-medium text-slate-500">Pertanyaan <span id="duel-question-number">1</span> dari 3</p>
+            <p id="duel-status-text" class="text-sm font-medium text-slate-500 dark:text-slate-400">Pertanyaan <span id="duel-question-number">1</span> dari 3</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Kiri (Anda) -->
-            <div class="md:border-r md:border-slate-100 md:pr-6">
+            <div class="md:border-r md:border-slate-100 md:pr-6 dark:md:border-slate-700">
                 <div class="mb-4 flex items-center justify-between">
-                    <h4 class="text-md font-bold text-slate-800">Soal Anda</h4>
-                    <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600"></span>
+                    <h4 class="text-md font-bold text-slate-800 dark:text-slate-100">Soal Anda</h4>
+                    <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"></span>
                 </div>
-                <p id="duel-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
+                <p id="duel-text" class="mb-4 text-sm leading-relaxed text-slate-700 dark:text-slate-300"></p>
                 <div id="duel-options" class="space-y-2"></div>
-                <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></div>
+                <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700 dark:text-slate-300"></div>
             </div>
 
             <!-- Kanan (Lawan) -->
             <div class="md:pl-2">
                 <div class="mb-4 flex items-center justify-between">
-                    <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
+                    <h4 class="text-md font-bold text-slate-800 flex items-center gap-2 dark:text-slate-100">
                         <span id="duel-opponent-name">Lawan</span>
                     </h4>
-                    <span id="duel-opponent-status" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Menjawab...</span>
+                    <span id="duel-opponent-status" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 uppercase tracking-wider dark:bg-slate-700 dark:text-slate-400"></span>
                 </div>
-                
+
                 <div id="duel-opponent-content">
-                    <p id="duel-opponent-text" class="mb-4 text-sm leading-relaxed text-slate-700 text-center italic">Menunggu lawan...</p>
+                    <p id="duel-opponent-text" class="mb-4 text-sm leading-relaxed text-slate-700 text-center italic dark:text-slate-300">Menunggu lawan...</p>
                     <div id="duel-opponent-options" class="space-y-2"></div>
-                    <div id="duel-opponent-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-center font-medium text-slate-700"></div>
+                    <div id="duel-opponent-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-center font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300"></div>
                 </div>
             </div>
         </div>
@@ -339,8 +355,8 @@
             <span id="finished-icon" class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent-500 text-white shadow-soft">
                 <x-player.icon name="trophy" class="h-8 w-8" />
             </span>
-            <p id="finished-title" class="mt-4 text-xl font-bold text-slate-800"></p>
-            <p id="finished-subtitle" class="mt-1 text-sm text-slate-500"></p>
+            <p id="finished-title" class="mt-4 text-xl font-bold text-slate-800 dark:text-slate-100"></p>
+            <p id="finished-subtitle" class="mt-1 text-sm text-slate-500 dark:text-slate-400"></p>
             <a href="{{ route('dashboard') }}" class="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-600">
                 Kembali ke Dashboard
             </a>
@@ -361,9 +377,9 @@
             <p class="text-xs font-bold uppercase tracking-widest text-accent-500">Achievement Terbuka!</p>
             <span id="achievement-unlock-badge" class="relative mx-auto mt-3 flex h-20 w-20 items-center justify-center rounded-2xl text-white shadow-soft"></span>
             <p id="achievement-unlock-kode" class="relative mt-3 text-xs font-bold uppercase tracking-wide"></p>
-            <p id="achievement-unlock-nama" class="relative mt-0.5 text-xl font-bold text-slate-800"></p>
-            <p id="achievement-unlock-deskripsi" class="relative mt-1 text-sm text-slate-500"></p>
-            <p id="achievement-unlock-poin" class="relative mt-3 inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-4 py-1.5 text-sm font-bold text-accent-600"></p>
+            <p id="achievement-unlock-nama" class="relative mt-0.5 text-xl font-bold text-slate-800 dark:text-slate-100"></p>
+            <p id="achievement-unlock-deskripsi" class="relative mt-1 text-sm text-slate-500 dark:text-slate-400"></p>
+            <p id="achievement-unlock-poin" class="relative mt-3 inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-4 py-1.5 text-sm font-bold text-accent-600 dark:bg-accent-500/10 dark:text-accent-400"></p>
             <button id="achievement-unlock-next" type="button"
                     class="relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-600">
                 Lanjut
@@ -374,11 +390,11 @@
     {{-- Modal Preview Petak --}}
     <x-player.modal name="preview-tile-modal">
         <div class="text-center">
-            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 shadow-sm mb-4">
-                <x-player.icon name="info" class="h-7 w-7 text-slate-500" />
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 shadow-sm mb-4 dark:bg-slate-700">
+                <x-player.icon name="info" class="h-7 w-7 text-slate-500 dark:text-slate-400" />
             </div>
-            <h3 class="text-lg font-bold text-slate-800">Preview Petak Khusus</h3>
-            <p id="preview-tile-text" class="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-line"></p>
+            <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Preview Petak Khusus</h3>
+            <p id="preview-tile-text" class="mt-2 text-sm leading-relaxed text-slate-600 whitespace-pre-line dark:text-slate-400"></p>
             <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal'))" class="mt-6 w-full rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-600">Tutup</button>
         </div>
     </x-player.modal>
@@ -392,15 +408,6 @@
                 message += data.text;
             } else {
                 switch (data.jenis) {
-                    case 'soal':
-                        message += 'Jika Anda mendarat di petak ini, Anda harus menjawab pertanyaan dengan benar untuk mendapatkan poin.';
-                        break;
-                    case 'bonus':
-                        message += 'Anda akan mendapatkan bonus poin jika berhenti di petak ini.';
-                        break;
-                    case 'penalti':
-                        message += 'Poin Anda akan dikurangi jika berhenti di petak ini.';
-                        break;
                     case 'ular':
                     case 'tangga':
                         message += `Petak ini adalah jalur ${data.jenis}.`;

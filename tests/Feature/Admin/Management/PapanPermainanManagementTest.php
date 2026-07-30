@@ -101,7 +101,7 @@ class PapanPermainanManagementTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_admin_can_set_a_biasa_petak_to_soal_with_kategori(): void
+    public function test_admin_cannot_set_a_biasa_petak_to_the_removed_soal_type(): void
     {
         $admin = User::factory()->admin()->create();
         $kategori = KategoriMateri::factory()->create();
@@ -109,15 +109,16 @@ class PapanPermainanManagementTest extends TestCase
         $petak = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'biasa']);
         $version = (string) $petak->updated_at->timestamp;
 
+        // "soal" bukan lagi jenis_petak yang valid (lihat App\Enums\TileType) -
+        // soal sekarang dipicu otomatis lewat konektor tangga/ular, bukan lewat
+        // jenis_petak tersendiri.
         $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}/petak/{$petak->id}", [
             '_version' => $version,
             'jenis_petak' => 'soal',
             'kategori_id' => $kategori->id,
-        ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
+        ])->assertSessionHasErrors('jenis_petak');
 
-        $petak->refresh();
-        $this->assertSame('soal', $petak->jenis_petak->value);
-        $this->assertSame($kategori->id, $petak->kategori_id);
+        $this->assertSame('biasa', $petak->fresh()->jenis_petak->value);
     }
 
     public function test_konektor_index_renders_with_existing_connectors_and_their_jenis(): void
@@ -291,23 +292,23 @@ class PapanPermainanManagementTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $papan = PapanPermainan::factory()->create(['jumlah_petak' => 20]);
-        $petak = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'bonus', 'is_active' => true]);
+        $petak = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'mystery', 'is_active' => true]);
         $version = (string) $petak->updated_at->timestamp;
 
         $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}/petak/{$petak->id}", [
             '_version' => $version,
-            'jenis_petak' => 'bonus',
+            'jenis_petak' => 'mystery',
             'is_active' => '0',
         ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
 
         $petak->refresh();
         $this->assertFalse($petak->is_active);
-        $this->assertSame('bonus', $petak->jenis_petak->value, 'jenis_petak tetap tersimpan meski nonaktif');
+        $this->assertSame('mystery', $petak->jenis_petak->value, 'jenis_petak tetap tersimpan meski nonaktif');
 
         $version = (string) $petak->updated_at->timestamp;
         $this->actingAs($admin)->put("/admin/management/papan-permainan/{$papan->id}/petak/{$petak->id}", [
             '_version' => $version,
-            'jenis_petak' => 'bonus',
+            'jenis_petak' => 'mystery',
             'is_active' => '1',
         ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
 

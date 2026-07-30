@@ -36,79 +36,6 @@ class TileResolverServiceTest extends TestCase
         $this->assertSame(0, $player->fresh()->skor);
     }
 
-    public function test_bonus_tile_adds_bonus_point(): void
-    {
-        $session = GameSession::factory()->create();
-        $player = GamePlayer::factory()->create(['skor' => 0]);
-        $petak = Petak::factory()->create(['jenis_petak' => 'bonus']);
-
-        $result = $this->makeService()->resolve($session, $player, $petak);
-
-        $this->assertSame('bonus', $result['type']);
-        $this->assertSame(20, $result['delta']);
-        $this->assertSame(20, $player->fresh()->skor);
-    }
-
-    public function test_penalti_tile_subtracts_tile_penalty_point(): void
-    {
-        $session = GameSession::factory()->create();
-        $player = GamePlayer::factory()->create(['skor' => 20]);
-        $petak = Petak::factory()->create(['jenis_petak' => 'penalti']);
-
-        $result = $this->makeService()->resolve($session, $player, $petak);
-
-        $this->assertSame('penalti', $result['type']);
-        $this->assertSame(-7, $result['delta']);
-        $this->assertSame(13, $player->fresh()->skor);
-    }
-
-    public function test_soal_tile_returns_soal_type_without_score_side_effect(): void
-    {
-        $session = GameSession::factory()->create();
-        $player = GamePlayer::factory()->create(['skor' => 0]);
-        $petak = Petak::factory()->create(['jenis_petak' => 'soal']);
-
-        $result = $this->makeService()->resolve($session, $player, $petak);
-
-        $this->assertSame('soal', $result['type']);
-        $this->assertSame(0, $player->fresh()->skor);
-    }
-
-    public function test_inactive_bonus_tile_has_no_effect(): void
-    {
-        $session = GameSession::factory()->create();
-        $player = GamePlayer::factory()->create(['skor' => 0]);
-        $petak = Petak::factory()->create(['jenis_petak' => 'bonus', 'is_active' => false]);
-
-        $result = $this->makeService()->resolve($session, $player, $petak);
-
-        $this->assertSame('none', $result['type']);
-        $this->assertSame(0, $player->fresh()->skor);
-    }
-
-    public function test_inactive_penalti_tile_has_no_effect(): void
-    {
-        $session = GameSession::factory()->create();
-        $player = GamePlayer::factory()->create(['skor' => 20]);
-        $petak = Petak::factory()->create(['jenis_petak' => 'penalti', 'is_active' => false]);
-
-        $result = $this->makeService()->resolve($session, $player, $petak);
-
-        $this->assertSame('none', $result['type']);
-        $this->assertSame(20, $player->fresh()->skor);
-    }
-
-    public function test_inactive_soal_tile_does_not_trigger_question(): void
-    {
-        $session = GameSession::factory()->create();
-        $player = GamePlayer::factory()->create(['skor' => 0]);
-        $petak = Petak::factory()->create(['jenis_petak' => 'soal', 'is_active' => false]);
-
-        $result = $this->makeService()->resolve($session, $player, $petak);
-
-        $this->assertSame('none', $result['type']);
-    }
-
     public function test_inactive_mystery_tile_has_no_effect(): void
     {
         $session = GameSession::factory()->create();
@@ -134,8 +61,10 @@ class TileResolverServiceTest extends TestCase
         $playerB = GamePlayer::factory()->create(['skor' => 0]);
         $resultB = $service->resolve($sessionB, $playerB, $petak);
 
-        $this->assertSame($resultA['hasil'], $resultB['hasil']);
-        $this->assertSame($resultA['delta'], $resultB['delta']);
-        $this->assertContains($resultA['hasil'], ['bonus', 'penalti']);
+        $this->assertSame('mystery', $resultA['type']);
+        $this->assertSame($resultA['item_id'], $resultB['item_id']);
+        $this->assertSame($resultA['item_name'], $resultB['item_name']);
+        $this->assertSame($resultA['item_type'], $resultB['item_type']);
+        $this->assertSame($resultA['item_description'], $resultB['item_description']);
     }
 }

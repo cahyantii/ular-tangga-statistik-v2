@@ -30,9 +30,9 @@
             x-transition:leave="transition ease-in duration-150"
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
-            class="relative w-full {{ $maxWidth }} rounded-3xl bg-white p-6 shadow-soft-lg"
+            class="relative w-full {{ $maxWidth }} rounded-3xl bg-white p-6 shadow-soft-lg dark:bg-slate-800"
         >
-            <button @click="open = false" class="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+            <button @click="open = false" class="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300">
                 <x-player.icon name="close" class="h-5 w-5" />
             </button>
 

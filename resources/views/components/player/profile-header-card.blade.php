@@ -1,6 +1,6 @@
 @props(['user', 'summary'])
 
-<div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm sm:p-8">
+<div class="relative overflow-hidden rounded-3xl bg-white p-6 shadow-sm dark:bg-slate-800 dark:shadow-none sm:p-8">
     <div
         class="pointer-events-none absolute inset-0 select-none bg-cover bg-right"
         style="background-image: url('{{ asset('images/brand/logo-back.png') }}');"

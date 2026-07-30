@@ -1,12 +1,12 @@
 <section id="avatar-picker">
-    <h3 class="text-base font-bold text-slate-800">Avatar</h3>
-    <p class="mt-1 text-sm text-slate-500">Pilih avatar yang kamu suka atau unggah foto sendiri.</p>
+    <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Avatar</h3>
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Pilih avatar yang kamu suka atau unggah foto sendiri.</p>
 
     <div class="mt-5 grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] justify-items-center gap-4">
         <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data">
             @csrf
             @method('patch')
-            <label class="group flex h-[90px] w-[90px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-primary-200 bg-primary-50/50 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50">
+            <label class="group flex h-[90px] w-[90px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-primary-200 bg-primary-50/50 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50 dark:border-primary-500/30 dark:bg-primary-500/10 dark:text-primary-400 dark:hover:border-primary-400/60 dark:hover:bg-primary-500/15">
                 <input
                     type="file"
                     name="avatar"
@@ -40,7 +40,7 @@
                     >
 
                     @if ($active)
-                        <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-white ring-2 ring-white">
+                        <span class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#2563EB] text-white ring-2 ring-white dark:ring-slate-800">
                             <x-player.icon name="check" class="h-3 w-3" />
                         </span>
                     @endif
@@ -50,7 +50,7 @@
     </div>
 
     @error('avatar', 'avatar')
-        <p class="mt-3 text-xs font-medium text-rose-500">{{ $message }}</p>
+        <p class="mt-3 text-xs font-medium text-rose-500 dark:text-rose-400">{{ $message }}</p>
     @enderror
 
     @if (session('status') === 'avatar-updated')
@@ -59,7 +59,7 @@
             x-show="show"
             x-transition
             x-init="setTimeout(() => show = false, 2500)"
-            class="mt-3 text-xs font-medium text-secondary-600"
+            class="mt-3 text-xs font-medium text-secondary-600 dark:text-secondary-400"
         >Avatar berhasil diperbarui.</p>
     @endif
 </section>

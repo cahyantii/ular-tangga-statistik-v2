@@ -29,7 +29,7 @@ class QuestionServiceTest extends TestCase
         $kategori = KategoriMateri::factory()->create();
         Soal::factory()->count(3)->create(['kategori_id' => $kategori->id]);
         $session = GameSession::factory()->create();
-        $petak = Petak::factory()->create(['jenis_petak' => 'soal', 'kategori_id' => $kategori->id]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'tangga', 'kategori_id' => $kategori->id]);
 
         $soal = $this->makeService()->selectQuestion($session, $petak);
 
@@ -44,7 +44,7 @@ class QuestionServiceTest extends TestCase
         $kategori = KategoriMateri::factory()->create();
         $soalList = Soal::factory()->count(3)->create(['kategori_id' => $kategori->id]);
         $session = GameSession::factory()->create();
-        $petak = Petak::factory()->create(['jenis_petak' => 'soal', 'kategori_id' => $kategori->id]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'tangga', 'kategori_id' => $kategori->id]);
 
         $service = $this->makeService();
         $seenIds = [];
@@ -64,7 +64,7 @@ class QuestionServiceTest extends TestCase
         $kategori = KategoriMateri::factory()->create();
         $soal = Soal::factory()->create(['kategori_id' => $kategori->id]);
         $session = GameSession::factory()->create();
-        $petak = Petak::factory()->create(['jenis_petak' => 'soal', 'kategori_id' => $kategori->id]);
+        $petak = Petak::factory()->create(['jenis_petak' => 'tangga', 'kategori_id' => $kategori->id]);
 
         GameQuestionUsed::create([
             'game_session_id' => $session->id,
@@ -77,8 +77,13 @@ class QuestionServiceTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function test_returns_null_when_petak_has_no_kategori(): void
+    public function test_returns_null_when_no_active_soal_exists_at_all(): void
     {
+        // kategori_id null TIDAK berarti "tanpa soal" - itu justru artinya
+        // "acak dari semua kategori aktif" (lihat selectQuestion(): filter
+        // kategori_id cuma diterapkan kalau petak->kategori_id !== null).
+        // Null di sini cuma sengaja tidak ada satupun baris Soal aktif di DB
+        // sama sekali, supaya pool-nya benar-benar kosong.
         $session = GameSession::factory()->create();
         $petak = Petak::factory()->create(['jenis_petak' => 'biasa', 'kategori_id' => null]);
 

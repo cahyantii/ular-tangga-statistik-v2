@@ -8,6 +8,7 @@ use App\Enums\GameStatus;
 use App\Enums\PawnColor;
 use App\Enums\PlayerStatus;
 use App\Enums\ScoreEventType;
+use App\Enums\TileType;
 use App\Enums\WinReason;
 use App\Events\Game\ConnectorApplied;
 use App\Events\Game\DiceRolled;

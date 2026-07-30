@@ -6,8 +6,8 @@
 
 <x-player-layout>
     <x-slot name="header">
-        <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Achievement</h1>
-        <p class="mt-0.5 text-sm text-slate-500">Kumpulkan semua pencapaian dan jadi master statistik! &#127942;</p>
+        <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl">Achievement</h1>
+        <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Kumpulkan semua pencapaian dan jadi master statistik! &#127942;</p>
     </x-slot>
 
     <div class="space-y-6">
@@ -58,8 +58,8 @@
             </div>
         @endif
 
-        <div class="flex flex-col gap-4 rounded-2xl border border-primary-100 bg-primary-50 p-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-5">
-            <p class="text-primary-700 sm:flex-1">
+        <div class="flex flex-col gap-4 rounded-2xl border border-primary-100 bg-primary-50 p-4 text-sm dark:border-primary-500/20 dark:bg-primary-500/10 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:p-5">
+            <p class="text-primary-700 dark:text-primary-400 sm:flex-1">
                 <span class="font-bold">Tips:</span>
                 Semakin banyak achievement yang kamu raih, semakin banyak poin yang bisa kamu kumpulkan!
             </p>

@@ -265,12 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'blocked':
                 pushLog('info', `${nama}: langkah terlalu jauh, giliran dilewati`);
                 break;
-            case 'bonus':
-                pushLog('bonus', `${nama} mendapat petak Bonus`);
-                break;
-            case 'penalti':
-                pushLog('penalti', `${nama} kena petak Penalti`);
-                break;
             case 'mystery':
                 const itemName = result.item_name || 'Power-Up';
                 pushLog('mystery', `${nama} mendapat ${itemName} dari Tile Misteri`);

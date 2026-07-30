@@ -1,11 +1,11 @@
 <section>
     <header class="flex items-start gap-3">
-        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 dark:bg-violet-500/10 dark:text-violet-400">
             <x-player.icon name="lock" class="h-5 w-5" />
         </span>
         <div>
-            <h3 class="text-base font-bold text-slate-800">Ubah Password</h3>
-            <p class="mt-1 text-sm text-slate-500">Pastikan akun kamu menggunakan password yang kuat dan tidak mudah ditebak.</p>
+            <h3 class="text-base font-bold text-slate-800 dark:text-slate-100">Ubah Password</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Pastikan akun kamu menggunakan password yang kuat dan tidak mudah ditebak.</p>
         </div>
     </header>
 
@@ -52,7 +52,7 @@
                     x-show="show"
                     x-transition
                     x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm font-medium text-secondary-600"
+                    class="text-sm font-medium text-secondary-600 dark:text-secondary-400"
                 >Tersimpan.</p>
             @endif
         </div>

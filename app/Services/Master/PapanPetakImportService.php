@@ -3,7 +3,6 @@
 namespace App\Services\Master;
 
 use App\Imports\PapanPetakImport;
-use App\Models\KategoriMateri;
 use App\Models\PapanPermainan;
 use App\Models\Petak;
 use Illuminate\Support\Facades\DB;
@@ -17,14 +16,13 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class PapanPetakImportService
 {
-    private const EDITABLE_JENIS = ['biasa', 'soal', 'bonus', 'penalti', 'mystery'];
+    private const EDITABLE_JENIS = ['biasa', 'mystery'];
 
     public function parseAndValidate(PapanPermainan $papan, string $absolutePath): array
     {
         $import = new PapanPetakImport();
         Excel::import($import, $absolutePath);
 
-        $kategoriByNama = KategoriMateri::query()->active()->get()->keyBy(fn ($k) => strtolower($k->nama));
         $existingByPosisi = $papan->petak()->get()->keyBy('posisi');
 
         $valid = [];
@@ -55,15 +53,6 @@ class PapanPetakImportService
             }
 
             $kategoriId = null;
-            if ($jenis === 'soal') {
-                $kategoriNama = trim((string) ($row['kategori'] ?? ''));
-                $kategori = $kategoriByNama->get(strtolower($kategoriNama));
-                if (! $kategori) {
-                    $errors[] = "Kategori \"{$kategoriNama}\" tidak ditemukan atau tidak aktif.";
-                } else {
-                    $kategoriId = $kategori->id;
-                }
-            }
 
             if ($errors !== []) {
                 $invalid[] = ['row_number' => $rowNumber, 'raw' => $row, 'errors' => $errors];

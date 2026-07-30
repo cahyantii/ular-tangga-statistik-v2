@@ -10,9 +10,9 @@
     };
 
     $cardTone = match ($rank) {
-        1 => 'bg-gradient-to-b from-accent-100 to-accent-50 border-accent-200',
-        2 => 'bg-gradient-to-b from-primary-50 to-white border-primary-100',
-        default => 'bg-gradient-to-b from-orange-100 to-orange-50 border-orange-200',
+        1 => 'bg-gradient-to-b from-accent-100 to-accent-50 border-accent-200 dark:from-accent-500/15 dark:to-accent-500/5 dark:border-accent-500/30',
+        2 => 'bg-gradient-to-b from-primary-50 to-white border-primary-100 dark:from-primary-500/10 dark:to-slate-800 dark:border-primary-500/20',
+        default => 'bg-gradient-to-b from-orange-100 to-orange-50 border-orange-200 dark:from-orange-500/15 dark:to-orange-500/5 dark:border-orange-500/30',
     };
 
     $avatarUser = (object) ['name' => $row['nama'], 'avatar_url' => $row['avatar_url']];
@@ -39,13 +39,13 @@
         </span>
     </div>
 
-    <p class="mt-3 max-w-full truncate font-bold text-slate-800 {{ $isFirst ? 'text-lg' : 'text-base' }}">
+    <p class="mt-3 max-w-full truncate font-bold text-slate-800 dark:text-slate-100 {{ $isFirst ? 'text-lg' : 'text-base' }}">
         {{ $row['nama'] }}
     </p>
 
     <x-player.badge :label="$row['badge']" :color="$row['badge_color']" class="mt-1.5" />
 
-    <p class="mt-3 flex items-center gap-1.5 font-extrabold {{ $isFirst ? 'text-2xl text-accent-600' : 'text-xl text-slate-700' }}">
+    <p class="mt-3 flex items-center gap-1.5 font-extrabold {{ $isFirst ? 'text-2xl text-accent-600 dark:text-accent-400' : 'text-xl text-slate-700 dark:text-slate-200' }}">
         <x-player.icon name="star" class="{{ $isFirst ? 'h-5 w-5' : 'h-4 w-4' }} text-accent-500" />
         {{ number_format($row['total_skor'], 0, ',', '.') }}
     </p>

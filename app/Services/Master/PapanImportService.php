@@ -4,7 +4,6 @@ namespace App\Services\Master;
 
 use App\Enums\ConnectorType;
 use App\Http\Requests\Admin\StorePapanPermainanRequest;
-use App\Models\KategoriMateri;
 use App\Models\PapanPermainan;
 use App\Models\Petak;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +18,7 @@ use Illuminate\Support\Facades\Validator;
  */
 class PapanImportService
 {
-    private const VALID_JENIS = ['start', 'finish', 'biasa', 'soal', 'bonus', 'penalti', 'mystery', 'tangga', 'ular'];
+    private const VALID_JENIS = ['start', 'finish', 'biasa', 'mystery', 'tangga', 'ular'];
 
     public function parseAndValidate(string $absoluteJsonPath): array
     {
@@ -59,21 +58,15 @@ class PapanImportService
                 'is_active' => $papanData['is_active'] ?? true,
             ]);
 
-            $kategoriByNama = KategoriMateri::query()->active()->get()->keyBy(fn ($k) => strtolower($k->nama));
             $now = now();
             $rows = [];
 
             foreach ($parsed['petak'] as $row) {
-                $kategoriId = null;
-                if (($row['jenis_petak'] ?? null) === 'soal' && ! empty($row['kategori_nama'])) {
-                    $kategoriId = $kategoriByNama->get(strtolower($row['kategori_nama']))?->id;
-                }
-
                 $rows[] = [
                     'papan_id' => $papan->id,
                     'posisi' => $row['posisi'],
                     'jenis_petak' => $row['jenis_petak'],
-                    'kategori_id' => $kategoriId,
+                    'kategori_id' => null,
                     'label' => $row['label'] ?? null,
                     'icon' => $row['icon'] ?? null,
                     'warna' => $row['warna'] ?? null,
@@ -111,7 +104,6 @@ class PapanImportService
             return $errors;
         }
 
-        $kategoriByNama = KategoriMateri::query()->active()->get()->keyBy(fn ($k) => strtolower($k->nama));
         $posisiSeen = [];
 
         foreach ($petakRows as $index => $row) {
@@ -139,13 +131,6 @@ class PapanImportService
 
             if ($posisi === $jumlahPetak && $jenis !== 'finish') {
                 $errors[] = "Posisi {$jumlahPetak} harus berjenis finish.";
-            }
-
-            if ($jenis === 'soal') {
-                $kategoriNama = $row['kategori_nama'] ?? null;
-                if (! $kategoriNama || ! $kategoriByNama->has(strtolower($kategoriNama))) {
-                    $errors[] = "Baris petak posisi {$posisi}: kategori \"{$kategoriNama}\" tidak ditemukan atau tidak aktif.";
-                }
             }
         }
 

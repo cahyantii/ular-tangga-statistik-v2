@@ -1,17 +1,17 @@
 <x-auth-message-layout title="Verifikasi Email">
-    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
         <x-player.icon name="mail" class="h-7 w-7" />
     </span>
 
-    <h1 class="mt-5 text-2xl font-bold text-slate-900">Verifikasi Email Kamu</h1>
-    <p class="mt-2 text-sm leading-relaxed text-slate-500">
+    <h1 class="mt-5 text-2xl font-bold text-slate-900 dark:text-slate-100">Verifikasi Email Kamu</h1>
+    <p class="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
         Silakan verifikasi email Anda. Kami sudah mengirim link verifikasi ke
-        <span class="font-semibold text-slate-700">{{ auth()->user()->email }}</span>.
+        <span class="font-semibold text-slate-700 dark:text-slate-300">{{ auth()->user()->email }}</span>.
         Buka email tersebut dan klik tombol verifikasi untuk mulai bermain.
     </p>
 
     @if (session('status') == 'verification-link-sent')
-        <p class="mt-4 rounded-xl bg-secondary-50 px-4 py-3 text-sm font-medium text-secondary-700">
+        <p class="mt-4 rounded-xl bg-secondary-50 px-4 py-3 text-sm font-medium text-secondary-700 dark:bg-secondary-500/10 dark:text-secondary-400">
             Link verifikasi baru sudah dikirim ke email kamu.
         </p>
     @endif
@@ -35,7 +35,7 @@
     <form method="POST" action="{{ route('logout') }}" class="mt-4">
         @csrf
 
-        <button type="submit" class="text-sm font-semibold text-slate-500 underline hover:text-slate-700">
+        <button type="submit" class="text-sm font-semibold text-slate-500 underline hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">
             Keluar
         </button>
     </form>

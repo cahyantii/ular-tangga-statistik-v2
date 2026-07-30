@@ -538,6 +538,15 @@
     background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
 }
 
+.dark .cert-card {
+    border-color: rgba(148, 163, 184, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.dark .cert-card--white {
+    background: linear-gradient(180deg, #1e293b 0%, #1a2332 100%);
+}
+
 .cert-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 45px rgba(37, 99, 235, 0.12);
@@ -560,8 +569,16 @@
     background: linear-gradient(180deg, #fff7ed, #fffdf8);
 }
 
+.dark .cert-card--cream {
+    background: linear-gradient(180deg, #2b2013, #201a15);
+}
+
 .cert-card--progress {
     background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+.dark .cert-card--progress {
+    background: linear-gradient(180deg, #1e293b, #1a2332);
 }
 
 .cert-card--reward {
@@ -605,6 +622,10 @@
     background: #f8fafc;
 }
 
+.dark .avatar-option {
+    background: #1e293b;
+}
+
 .avatar-option:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 25px rgba(37, 99, 235, 0.15);
@@ -613,6 +634,10 @@
 
 .avatar-option--active {
     background: linear-gradient(180deg, #eff6ff, #dbeafe);
+}
+
+.dark .avatar-option--active {
+    background: linear-gradient(180deg, rgba(37, 99, 235, 0.25), rgba(37, 99, 235, 0.15));
 }
 
 /* ------------------------------------------------------------------ */
@@ -682,6 +707,11 @@
         isolation: isolate;
     }
 
+    .dark .admin-sidebar {
+        background-color: #0f172a;
+        border-right-color: rgba(255, 255, 255, 0.08);
+    }
+
     /*
      * Dekorasi latar sidebar (mengisi ruang kosong di bagian bawah): satu
      * pseudo-element yang menempel di seluruh kotak .admin-sidebar, gambar
@@ -732,6 +762,12 @@
         border-bottom: 1px solid rgba(255, 255, 255, 0.3);
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
     }
+
+    .dark .admin-header-glass {
+        background: rgba(30, 41, 59, 0.75);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
 }
 
 /* ------------------------------------------------------------------ */
@@ -767,10 +803,19 @@
     -webkit-backdrop-filter: blur(16px);
 }
 
+.dark .notif-dropdown-glass {
+    background: rgba(30, 41, 59, 0.95);
+}
+
 .notif-skeleton-line {
     background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 37%, #f1f5f9 63%);
     background-size: 400% 100%;
     animation: notif-skeleton-kf 1.4s ease infinite;
+}
+
+.dark .notif-skeleton-line {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 37%, #1e293b 63%);
+    background-size: 400% 100%;
 }
 
 @keyframes notif-skeleton-kf {

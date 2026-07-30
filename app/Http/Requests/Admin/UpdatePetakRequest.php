@@ -11,6 +11,13 @@ use Illuminate\Validation\Rule;
  * agar `petak.jenis_petak` selalu sinkron dengan baris `papan_konektor` terkait.
  * "start"/"finish" juga tidak termasuk karena posisinya tetap (petak pertama
  * dan terakhir papan) dan tidak bisa diubah jenisnya.
+ *
+ * "soal"/"bonus"/"penalti" juga sengaja tidak termasuk — App\Enums\TileType
+ * sudah tidak punya case untuk ketiganya (dikonversi ke "mystery" via
+ * migration implement_powerup_system). Soal sekarang dipicu otomatis saat
+ * mendarat di petak asal konektor tangga/ular (lihat
+ * GameSessionService::executeRoll()/executeAnswer()), bukan lewat jenis_petak
+ * tersendiri.
  */
 class UpdatePetakRequest extends FormRequest
 {
@@ -22,9 +29,9 @@ class UpdatePetakRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'jenis_petak' => ['required', Rule::in(['biasa', 'soal', 'bonus', 'penalti', 'mystery'])],
+            'jenis_petak' => ['required', Rule::in(['biasa', 'mystery'])],
             'is_active' => ['boolean'],
-            'kategori_id' => ['nullable', 'integer', 'exists:kategori_materi,id', 'required_if:jenis_petak,soal'],
+            'kategori_id' => ['nullable', 'integer', 'exists:kategori_materi,id'],
             'label' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:255'],
             'warna' => ['nullable', 'string', 'max:255'],

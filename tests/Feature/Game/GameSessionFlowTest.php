@@ -2,12 +2,14 @@
 
 namespace Tests\Feature\Game;
 
+use App\Enums\ConnectorType;
 use App\Enums\GameStatus;
 use App\Enums\PlayerStatus;
 use App\Models\GamePlayer;
 use App\Models\GameSession;
 use App\Models\GameSetting;
 use App\Models\KategoriMateri;
+use App\Models\PapanKonektor;
 use App\Models\PapanPermainan;
 use App\Models\Petak;
 use App\Models\Soal;
@@ -139,31 +141,28 @@ class GameSessionFlowTest extends TestCase
         $this->assertDatabaseHas('game_logs', ['game_session_id' => $sesi->id, 'event_type' => 'movement_blocked']);
     }
 
-    public function test_landing_on_bonus_tile_adds_points_and_advances_turn(): void
-    {
-        $nilai = $this->diceValueFor('seed-bonus', 0);
-        $papan = $this->makeBoardWithTile($nilai, 'bonus');
-        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-bonus', 'total_turn' => 0]);
-        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 0, 'skor' => 0]);
-        $p2 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
-        $sesi->update(['current_turn_game_player_id' => $p1->id]);
-
-        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll");
-
-        $response->assertOk();
-        $response->assertJsonPath('type', 'bonus');
-        $this->assertSame(20, $p1->fresh()->skor);
-        $this->assertSame($p2->id, $sesi->fresh()->current_turn_game_player_id);
-    }
-
-    public function test_landing_on_soal_tile_presents_question_without_advancing_turn(): void
+    /**
+     * Mekanik saat ini (lihat GameSessionService::executeRoll()/executeAnswer()):
+     * mendarat di petak asal konektor (tangga/ular) memicu soal, BUKAN
+     * menerapkan konektor langsung. Konektor baru diterapkan setelah dijawab,
+     * dan hanya jika (benar & tangga) atau (salah & ular) - lihat 4 test di
+     * bawah. Jenis petak "soal"/"bonus"/"penalti" berdiri sendiri sudah
+     * dihapus dari TileType; soal sekarang murni dipicu oleh konektor.
+     */
+    public function test_landing_on_ladder_foot_presents_question_without_advancing_turn(): void
     {
         $kategori = KategoriMateri::factory()->create();
         Soal::factory()->create(['kategori_id' => $kategori->id, 'kunci_jawaban' => 'B']);
 
-        $nilai = $this->diceValueFor('seed-soal', 0);
-        $papan = $this->makeBoardWithTile($nilai, 'soal', $kategori->id);
-        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-soal', 'total_turn' => 0]);
+        $nilai = $this->diceValueFor('seed-tangga-benar-2', 0);
+        $papan = $this->makeBoardWithTile($nilai, 'tangga');
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => ConnectorType::Tangga,
+            'posisi_awal' => $nilai,
+            'posisi_akhir' => $nilai + 10,
+        ]);
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-tangga-benar-2', 'total_turn' => 0]);
         $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 0]);
         $p2 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
         $sesi->update(['current_turn_game_player_id' => $p1->id]);
@@ -173,9 +172,138 @@ class GameSessionFlowTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('type', 'soal');
         $response->assertJsonMissingPath('soal.kunci_jawaban');
+        // Pion berhenti di kaki tangga - konektor BELUM diterapkan.
+        $this->assertSame($nilai, $p1->fresh()->posisi_pion);
         // Giliran TIDAK berpindah - masih menunggu jawaban.
         $this->assertSame($p1->id, $sesi->fresh()->current_turn_game_player_id);
         $this->assertNotNull($sesi->fresh()->active_question_id);
+    }
+
+    public function test_answering_correctly_on_a_ladder_foot_climbs_the_ladder(): void
+    {
+        $kategori = KategoriMateri::factory()->create();
+        $soal = Soal::factory()->create(['kategori_id' => $kategori->id, 'kunci_jawaban' => 'B']);
+
+        $nilai = $this->diceValueFor('seed-tangga-benar-2', 0);
+        $papan = $this->makeBoardWithTile($nilai, 'tangga');
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => ConnectorType::Tangga,
+            'posisi_awal' => $nilai,
+            'posisi_akhir' => $nilai + 10,
+        ]);
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-tangga-benar-2', 'total_turn' => 0]);
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 0, 'skor' => 0]);
+        $p2 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
+        $sesi->update(['current_turn_game_player_id' => $p1->id]);
+        $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll")->assertOk();
+
+        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/answer", [
+            'soal_id' => $soal->id,
+            'jawaban' => 'B',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('benar', true);
+        $response->assertJsonPath('konektor_applied', true);
+        $this->assertSame($nilai + 10, $p1->fresh()->posisi_pion);
+        $this->assertSame($p2->id, $sesi->fresh()->current_turn_game_player_id);
+    }
+
+    public function test_answering_wrongly_on_a_ladder_foot_does_not_climb(): void
+    {
+        $kategori = KategoriMateri::factory()->create();
+        $soal = Soal::factory()->create(['kategori_id' => $kategori->id, 'kunci_jawaban' => 'B']);
+
+        $nilai = $this->diceValueFor('seed-tangga-salah-2', 0);
+        $papan = $this->makeBoardWithTile($nilai, 'tangga');
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => ConnectorType::Tangga,
+            'posisi_awal' => $nilai,
+            'posisi_akhir' => $nilai + 10,
+        ]);
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-tangga-salah-2', 'total_turn' => 0]);
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 0]);
+        $p2 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
+        $sesi->update(['current_turn_game_player_id' => $p1->id]);
+        $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll")->assertOk();
+
+        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/answer", [
+            'soal_id' => $soal->id,
+            'jawaban' => 'A',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('benar', false);
+        $response->assertJsonPath('konektor_applied', false);
+        // Tetap di kaki tangga - TIDAK naik.
+        $this->assertSame($nilai, $p1->fresh()->posisi_pion);
+        $this->assertSame($p2->id, $sesi->fresh()->current_turn_game_player_id);
+    }
+
+    public function test_answering_correctly_on_a_snake_head_avoids_the_bite(): void
+    {
+        $kategori = KategoriMateri::factory()->create();
+        $soal = Soal::factory()->create(['kategori_id' => $kategori->id, 'kunci_jawaban' => 'B']);
+
+        $nilai = $this->diceValueFor('seed-ular-benar', 0);
+        $papan = $this->makeBoardWithTile($nilai + 10, 'ular');
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => ConnectorType::Ular,
+            'posisi_awal' => $nilai + 10,
+            'posisi_akhir' => $nilai,
+        ]);
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-ular-benar', 'total_turn' => 0]);
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 10, 'skor' => 0]);
+        $p2 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
+        $sesi->update(['current_turn_game_player_id' => $p1->id]);
+        $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll")->assertOk();
+
+        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/answer", [
+            'soal_id' => $soal->id,
+            'jawaban' => 'B',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('benar', true);
+        $response->assertJsonPath('konektor_applied', false);
+        // Tetap di kepala ular - berhasil menghindar.
+        $this->assertSame($nilai + 10, $p1->fresh()->posisi_pion);
+        $this->assertSame($p2->id, $sesi->fresh()->current_turn_game_player_id);
+    }
+
+    public function test_answering_wrongly_on_a_snake_head_gets_bitten(): void
+    {
+        $kategori = KategoriMateri::factory()->create();
+        $soal = Soal::factory()->create(['kategori_id' => $kategori->id, 'kunci_jawaban' => 'B']);
+
+        $nilai = $this->diceValueFor('seed-ular-salah', 0);
+        $papan = $this->makeBoardWithTile($nilai + 10, 'ular');
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => ConnectorType::Ular,
+            'posisi_awal' => $nilai + 10,
+            'posisi_akhir' => $nilai,
+        ]);
+        $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-ular-salah', 'total_turn' => 0]);
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 10]);
+        $p2 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 2]);
+        $sesi->update(['current_turn_game_player_id' => $p1->id]);
+        $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/roll")->assertOk();
+
+        $response = $this->actingAs($p1->user)->postJson("/main/{$sesi->id}/answer", [
+            'soal_id' => $soal->id,
+            'jawaban' => 'A',
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('benar', false);
+        $response->assertJsonPath('konektor_applied', true);
+        // Digigit ular - turun ke posisi_akhir.
+        $this->assertSame($nilai, $p1->fresh()->posisi_pion);
+        $this->assertSame($p2->id, $sesi->fresh()->current_turn_game_player_id);
     }
 
     public function test_submitting_correct_answer_awards_points_and_advances_turn(): void
@@ -436,17 +564,23 @@ class GameSessionFlowTest extends TestCase
         ]);
     }
 
-    public function test_robot_answers_a_soal_tile_immediately_without_a_separate_request(): void
+    public function test_robot_answers_a_question_from_a_connector_tile_immediately_without_a_separate_request(): void
     {
         $kategori = KategoriMateri::factory()->create();
         Soal::factory()->create(['kategori_id' => $kategori->id, 'kunci_jawaban' => 'B']);
 
         $nilaiRobot = $this->diceValueFor('seed-robot-soal', 1);
-        $papan = $this->makeBoardWithTile($nilaiRobot, 'soal', $kategori->id);
+        $papan = $this->makeBoardWithTile($nilaiRobot, 'tangga');
+        PapanKonektor::factory()->create([
+            'papan_id' => $papan->id,
+            'jenis' => ConnectorType::Tangga,
+            'posisi_awal' => $nilaiRobot,
+            'posisi_akhir' => $nilaiRobot + 10,
+        ]);
         $sesi = GameSession::factory()->create(['papan_id' => $papan->id, 'status' => GameStatus::Playing, 'random_seed' => 'seed-robot-soal', 'total_turn' => 0]);
 
-        // Pemain manusia dimulai jauh dari petak soal supaya tidak ikut mendarat di sana.
-        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 20]);
+        // Pemain manusia dimulai jauh dari petak konektor supaya tidak ikut mendarat di sana.
+        $p1 = GamePlayer::factory()->create(['game_session_id' => $sesi->id, 'turn_order' => 1, 'posisi_pion' => 30]);
         $robot = GamePlayer::factory()->robot()->create(['game_session_id' => $sesi->id, 'turn_order' => 2, 'posisi_pion' => 0]);
         $sesi->update(['current_turn_game_player_id' => $p1->id]);
 
@@ -457,7 +591,9 @@ class GameSessionFlowTest extends TestCase
         $response->assertJsonPath('robot_turns.0.type', 'soal');
         $this->assertIsBool($response->json('robot_turns.0.benar'));
 
-        $this->assertSame($nilaiRobot, $robot->fresh()->posisi_pion);
+        // Robot berhenti di kaki tangga (jika salah) atau naik ke posisi_akhir (jika benar) -
+        // yang penting robot TIDAK menunggu request /answer terpisah (auto-jawab di server).
+        $this->assertContains($robot->fresh()->posisi_pion, [$nilaiRobot, $nilaiRobot + 10]);
         $this->assertSame($p1->id, $sesi->fresh()->current_turn_game_player_id);
         $this->assertNull($sesi->fresh()->active_question_id);
         $this->assertDatabaseHas('game_logs', [

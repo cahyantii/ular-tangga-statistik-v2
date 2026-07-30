@@ -10,10 +10,10 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 /**
  * Export petak satu papan untuk diedit massal lewat spreadsheet lalu diimpor
- * kembali (round-trip). Hanya petak yang bisa diedit (biasa/soal/bonus/
- * penalti/mystery) yang berarti diubah lewat import ini — baris Start/Finish/
- * Tangga/Ular tetap ikut ter-export untuk konteks, tapi ditolak saat import
- * (dikelola lewat Editor Petak/Konektor, bukan bulk import).
+ * kembali (round-trip). Hanya petak yang bisa diedit (biasa/mystery) yang
+ * berarti diubah lewat import ini — baris Start/Finish/Tangga/Ular tetap ikut
+ * ter-export untuk konteks, tapi ditolak saat import (dikelola lewat Editor
+ * Petak/Konektor, bukan bulk import).
  */
 class PapanPetakExport implements FromCollection, WithHeadings, WithMapping
 {

@@ -4,9 +4,9 @@
     :navLinkHref="route('login')"
 >
     <x-slot:heroMobile>
-        <h1 class="text-[32px] font-bold leading-tight text-slate-900">Buat Password Baru</h1>
+        <h1 class="text-[32px] font-bold leading-tight text-slate-900 dark:text-slate-100">Buat Password Baru</h1>
 
-        <p class="mx-auto mt-2 max-w-xs text-sm text-slate-500">
+        <p class="mx-auto mt-2 max-w-xs text-sm text-slate-500 dark:text-slate-400">
             Satu langkah lagi sebelum kamu bisa masuk kembali.
         </p>
 
@@ -19,11 +19,11 @@
     </x-slot:heroMobile>
 
     <x-slot:hero>
-        <h1 class="text-[40px] font-bold leading-tight text-slate-900 lg:text-5xl">
+        <h1 class="text-[40px] font-bold leading-tight text-slate-900 lg:text-5xl dark:text-slate-100">
             Buat Password Baru
         </h1>
 
-        <p class="mt-5 max-w-md text-xl text-slate-500">
+        <p class="mt-5 max-w-md text-xl text-slate-500 dark:text-slate-400">
             Buat password baru yang kuat dan mudah kamu ingat untuk melanjutkan petualangan statistikmu.
         </p>
 
@@ -35,7 +35,7 @@
         >
     </x-slot:hero>
 
-    <div class="mx-auto w-full max-w-[520px] rounded-[28px] bg-white p-5 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.15)] md:p-8 lg:p-12">
+    <div class="mx-auto w-full max-w-[520px] rounded-[28px] bg-white p-5 shadow-[0_20px_60px_-15px_rgba(15,23,42,0.15)] md:p-8 lg:p-12 dark:bg-slate-800 dark:shadow-none">
         <div class="text-center">
             <img
                 src="{{ asset('images/brand/logo-baruuuu.png') }}"
@@ -43,8 +43,8 @@
                 class="mx-auto h-20 w-20 object-contain"
                 loading="lazy"
             >
-            <h1 class="mt-5 text-2xl font-bold text-slate-900">Reset Password</h1>
-            <p class="mt-1.5 text-sm text-slate-500">Buat password baru untuk akunmu</p>
+            <h1 class="mt-5 text-2xl font-bold text-slate-900 dark:text-slate-100">Reset Password</h1>
+            <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">Buat password baru untuk akunmu</p>
         </div>
 
         <form
@@ -80,7 +80,7 @@
                 required
                 aria-describedby="password-hint"
             />
-            <p id="password-hint" class="-mt-3 text-xs text-slate-400">Minimal 8 karakter, kombinasi huruf besar/kecil &amp; angka.</p>
+            <p id="password-hint" class="-mt-3 text-xs text-slate-400 dark:text-slate-500">Minimal 8 karakter, kombinasi huruf besar/kecil &amp; angka.</p>
 
             <x-player.form-password-input
                 size="lg"

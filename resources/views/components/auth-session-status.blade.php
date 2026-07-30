@@ -1,7 +1,7 @@
 @props(['status'])
 
 @if ($status)
-    <div {{ $attributes->merge(['class' => 'font-medium text-sm text-green-600']) }}>
+    <div {{ $attributes->merge(['class' => 'font-medium text-sm text-green-600 dark:text-green-400']) }}>
         {{ $status }}
     </div>
 @endif
@@ -11,7 +11,7 @@
      - dipakai gaya alert merah yang sama dengan x-admin.flash supaya konsisten
      dengan alert lain di project, tanpa mengubah desain halaman Login/Register. --}}
 @if (session('oauth_error'))
-    <div {{ $attributes->merge(['class' => 'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800']) }}>
+    <div {{ $attributes->merge(['class' => 'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400']) }}>
         {{ session('oauth_error') }}
     </div>
 @endif

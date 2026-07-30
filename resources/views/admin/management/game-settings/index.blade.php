@@ -28,8 +28,8 @@
     {{-- Page header --}}
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-3xl font-extrabold leading-tight text-[#1E293B] sm:text-[42px]">Game Settings</h1>
-            <p class="mt-1 text-base text-[#64748B] sm:text-lg">Kelola konfigurasi permainan untuk pengalaman bermain yang lebih optimal</p>
+            <h1 class="text-3xl font-extrabold leading-tight text-[#1E293B] dark:text-slate-100 sm:text-[42px]">Game Settings</h1>
+            <p class="mt-1 text-base text-[#64748B] dark:text-slate-400 sm:text-lg">Kelola konfigurasi permainan untuk pengalaman bermain yang lebih optimal</p>
         </div>
 
         <button type="submit" form="game-settings-form"
@@ -48,15 +48,15 @@
             @php
                 $meta = $groupMeta[$group] ?? ['title' => $group, 'subtitle' => null, 'icon' => 'settings'];
             @endphp
-            <div class="rounded-[28px] border border-[#E5E7EB]/70 bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,.06)]">
+            <div class="rounded-[28px] border border-[#E5E7EB]/70 bg-white p-8 shadow-[0_10px_40px_rgba(0,0,0,.06)] dark:border-slate-700 dark:bg-slate-800">
                 <div class="mb-6 flex items-center gap-4">
-                    <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#ECFDF5] text-[#10B981]">
+                    <span class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl bg-[#ECFDF5] text-[#10B981] dark:bg-emerald-500/15 dark:text-emerald-400">
                         <x-player.icon :name="$meta['icon']" class="h-6 w-6" />
                     </span>
                     <div>
-                        <h2 class="text-sm font-bold uppercase tracking-wider text-[#10B981]">{{ $meta['title'] }}</h2>
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-[#10B981] dark:text-emerald-400">{{ $meta['title'] }}</h2>
                         @if ($meta['subtitle'])
-                            <p class="mt-0.5 text-sm text-[#64748B]">{{ $meta['subtitle'] }}</p>
+                            <p class="mt-0.5 text-sm text-[#64748B] dark:text-slate-400">{{ $meta['subtitle'] }}</p>
                         @endif
                     </div>
                 </div>
@@ -67,18 +67,18 @@
                             $colors = $itemMeta[$setting->key] ?? $fallbackPalette[$index % count($fallbackPalette)];
                             $icon = $itemMeta[$setting->key]['icon'] ?? $colors['icon'];
                         @endphp
-                        <div class="flex flex-col gap-4 rounded-[18px] border border-[#E5E7EB] bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="flex flex-col gap-4 rounded-[18px] border border-[#E5E7EB] bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex min-w-0 items-center gap-4">
                                 <span class="flex h-[60px] w-[60px] shrink-0 items-center justify-center rounded-2xl" style="background: {{ $colors['bg'] }}; color: {{ $colors['fg'] }};">
                                     <x-player.icon :name="$icon" class="h-7 w-7" />
                                 </span>
                                 <div class="min-w-0">
-                                    <p class="font-bold text-[#1F2937]">{{ $setting->label }}</p>
+                                    <p class="font-bold text-[#1F2937] dark:text-slate-100">{{ $setting->label }}</p>
                                     @if ($setting->deskripsi)
-                                        <p class="mt-0.5 truncate text-sm text-[#64748B]">{{ $setting->deskripsi }}</p>
+                                        <p class="mt-0.5 truncate text-sm text-[#64748B] dark:text-slate-400">{{ $setting->deskripsi }}</p>
                                     @endif
                                     @error("settings.{$setting->id}.value")
-                                        <p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>
+                                        <p class="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                                     @enderror
                                 </div>
                             </div>
@@ -91,15 +91,15 @@
                                     <input type="checkbox" id="setting-{{ $setting->id }}"
                                            name="settings[{{ $setting->id }}][value]" value="1"
                                            @checked($setting->value === '1')
-                                           class="h-5 w-5 rounded border-[#E5E7EB] text-[#10B981] focus:ring-[#10B981]">
+                                           class="h-5 w-5 rounded border-[#E5E7EB] text-[#10B981] focus:ring-[#10B981] dark:border-slate-600 dark:bg-slate-800">
                                 @elseif ($setting->type->value === 'integer')
                                     <input type="number" id="setting-{{ $setting->id }}"
                                            name="settings[{{ $setting->id }}][value]" value="{{ old("settings.{$setting->id}.value", $setting->value) }}"
-                                           class="h-12 w-full rounded-xl border-[#E5E7EB] text-center text-base font-bold text-[#1E293B] shadow-sm transition duration-200 ease-in-out focus:border-[#10B981] focus:shadow-[0_0_0_3px_rgba(16,185,129,.15)] focus:ring-[#10B981] sm:w-[110px]">
+                                           class="h-12 w-full rounded-xl border-[#E5E7EB] text-center text-base font-bold text-[#1E293B] shadow-sm transition duration-200 ease-in-out focus:border-[#10B981] focus:shadow-[0_0_0_3px_rgba(16,185,129,.15)] focus:ring-[#10B981] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 sm:w-[110px]">
                                 @else
                                     <input type="text" id="setting-{{ $setting->id }}"
                                            name="settings[{{ $setting->id }}][value]" value="{{ old("settings.{$setting->id}.value", $setting->value) }}"
-                                           class="h-12 w-full rounded-xl border-[#E5E7EB] text-center text-base font-bold text-[#1E293B] shadow-sm transition duration-200 ease-in-out focus:border-[#10B981] focus:shadow-[0_0_0_3px_rgba(16,185,129,.15)] focus:ring-[#10B981] sm:w-[110px]">
+                                           class="h-12 w-full rounded-xl border-[#E5E7EB] text-center text-base font-bold text-[#1E293B] shadow-sm transition duration-200 ease-in-out focus:border-[#10B981] focus:shadow-[0_0_0_3px_rgba(16,185,129,.15)] focus:ring-[#10B981] dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 sm:w-[110px]">
                                 @endif
                             </div>
                         </div>
@@ -108,13 +108,13 @@
             </div>
         @endforeach
 
-        <div class="flex items-start gap-3 rounded-[18px] border border-[#FDE68A] bg-[#FEF3C7] p-5">
-            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[#F59E0B]">
+        <div class="flex items-start gap-3 rounded-[18px] border border-[#FDE68A] bg-[#FEF3C7] p-5 dark:border-amber-500/30 dark:bg-amber-500/15">
+            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-[#F59E0B] dark:text-amber-400">
                 <x-player.icon name="info" class="h-6 w-6" />
             </span>
             <div>
-                <p class="font-bold text-[#B45309]">Informasi</p>
-                <p class="mt-0.5 text-sm text-[#92400E]">Perubahan pengaturan akan berlaku untuk semua permainan baru. Permainan yang sedang berlangsung tidak akan terpengaruh.</p>
+                <p class="font-bold text-[#B45309] dark:text-amber-400">Informasi</p>
+                <p class="mt-0.5 text-sm text-[#92400E] dark:text-amber-300/90">Perubahan pengaturan akan berlaku untuk semua permainan baru. Permainan yang sedang berlangsung tidak akan terpengaruh.</p>
             </div>
         </div>
     </form>

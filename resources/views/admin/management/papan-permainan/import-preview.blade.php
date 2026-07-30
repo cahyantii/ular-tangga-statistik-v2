@@ -3,31 +3,31 @@
 @endphp
 
 <x-admin-layout>
-    <h1 class="mb-6 text-2xl font-bold text-slate-900">Pratinjau Import Papan</h1>
+    <h1 class="mb-6 text-2xl font-bold text-slate-900 dark:text-slate-100">Pratinjau Import Papan</h1>
 
     <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <div class="rounded-2xl border p-4 {{ $canImport ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50' }}">
-            <p class="text-sm font-medium {{ $canImport ? 'text-emerald-700' : 'text-red-700' }}">Papan</p>
-            <p class="mt-1 text-lg font-bold {{ $canImport ? 'text-emerald-900' : 'text-red-900' }}">{{ $canImport ? 'Valid' : 'Ada Kesalahan' }}</p>
+        <div class="rounded-2xl border p-4 {{ $canImport ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/15' : 'border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/15' }}">
+            <p class="text-sm font-medium {{ $canImport ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400' }}">Papan</p>
+            <p class="mt-1 text-lg font-bold {{ $canImport ? 'text-emerald-900 dark:text-emerald-300' : 'text-red-900 dark:text-red-300' }}">{{ $canImport ? 'Valid' : 'Ada Kesalahan' }}</p>
         </div>
-        <div class="rounded-2xl border border-slate-200 bg-white p-4">
-            <p class="text-sm font-medium text-slate-600">Total Petak</p>
-            <p class="mt-1 text-2xl font-bold text-slate-900">{{ count($petak) }}</p>
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <p class="text-sm font-medium text-slate-600 dark:text-slate-400">Total Petak</p>
+            <p class="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">{{ count($petak) }}</p>
         </div>
-        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-            <p class="text-sm font-medium text-emerald-700">Konektor Valid</p>
-            <p class="mt-1 text-2xl font-bold text-emerald-900">{{ count($konektor_valid) }}</p>
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-500/30 dark:bg-emerald-500/15">
+            <p class="text-sm font-medium text-emerald-700 dark:text-emerald-400">Konektor Valid</p>
+            <p class="mt-1 text-2xl font-bold text-emerald-900 dark:text-emerald-300">{{ count($konektor_valid) }}</p>
         </div>
-        <div class="rounded-2xl border border-red-200 bg-red-50 p-4">
-            <p class="text-sm font-medium text-red-700">Konektor Bermasalah</p>
-            <p class="mt-1 text-2xl font-bold text-red-900">{{ count($konektor_invalid) }}</p>
+        <div class="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/15">
+            <p class="text-sm font-medium text-red-700 dark:text-red-400">Konektor Bermasalah</p>
+            <p class="mt-1 text-2xl font-bold text-red-900 dark:text-red-300">{{ count($konektor_invalid) }}</p>
         </div>
     </div>
 
     @if (! empty($papan_errors))
-        <div class="mb-6 rounded-2xl border border-red-200 bg-white p-4">
-            <p class="mb-2 text-sm font-semibold text-red-700">Kesalahan data papan</p>
-            <ul class="list-inside list-disc space-y-1 text-sm text-red-600">
+        <div class="mb-6 rounded-2xl border border-red-200 bg-white p-4 dark:border-red-500/30 dark:bg-slate-800">
+            <p class="mb-2 text-sm font-semibold text-red-700 dark:text-red-400">Kesalahan data papan</p>
+            <ul class="list-inside list-disc space-y-1 text-sm text-red-600 dark:text-red-400">
                 @foreach ($papan_errors as $err)
                     <li>{{ $err }}</li>
                 @endforeach
@@ -36,9 +36,9 @@
     @endif
 
     @if (! empty($petak_errors))
-        <div class="mb-6 rounded-2xl border border-red-200 bg-white p-4">
-            <p class="mb-2 text-sm font-semibold text-red-700">Kesalahan data petak (import dibatalkan seluruhnya)</p>
-            <ul class="list-inside list-disc space-y-1 text-sm text-red-600">
+        <div class="mb-6 rounded-2xl border border-red-200 bg-white p-4 dark:border-red-500/30 dark:bg-slate-800">
+            <p class="mb-2 text-sm font-semibold text-red-700 dark:text-red-400">Kesalahan data petak (import dibatalkan seluruhnya)</p>
+            <ul class="list-inside list-disc space-y-1 text-sm text-red-600 dark:text-red-400">
                 @foreach ($petak_errors as $err)
                     <li>{{ $err }}</li>
                 @endforeach
@@ -47,24 +47,24 @@
     @endif
 
     @if (count($konektor_invalid) > 0)
-        <div class="mb-6 overflow-hidden rounded-2xl border border-red-200 bg-white">
-            <div class="border-b border-red-100 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700">
+        <div class="mb-6 overflow-hidden rounded-2xl border border-red-200 bg-white dark:border-red-500/30 dark:bg-slate-800">
+            <div class="border-b border-red-100 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 dark:border-red-500/20 dark:bg-red-500/15 dark:text-red-400">
                 Konektor yang akan dilewati (papan tetap diimpor tanpa konektor ini)
             </div>
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <table class="min-w-full divide-y divide-slate-100 text-sm dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-900/50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th class="px-4 py-2">Baris</th>
                         <th class="px-4 py-2">Posisi Awal &rarr; Akhir</th>
                         <th class="px-4 py-2">Kesalahan</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                     @foreach ($konektor_invalid as $item)
                         <tr>
-                            <td class="px-4 py-2 text-slate-500">#{{ $item['row_number'] }}</td>
-                            <td class="px-4 py-2 text-slate-700">{{ $item['raw']['posisi_awal'] ?? '?' }} &rarr; {{ $item['raw']['posisi_akhir'] ?? '?' }}</td>
-                            <td class="px-4 py-2 text-red-600">{{ implode(' ', $item['errors']) }}</td>
+                            <td class="px-4 py-2 text-slate-500 dark:text-slate-400">#{{ $item['row_number'] }}</td>
+                            <td class="px-4 py-2 text-slate-700 dark:text-slate-300">{{ $item['raw']['posisi_awal'] ?? '?' }} &rarr; {{ $item['raw']['posisi_akhir'] ?? '?' }}</td>
+                            <td class="px-4 py-2 text-red-600 dark:text-red-400">{{ implode(' ', $item['errors']) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -73,24 +73,24 @@
     @endif
 
     @if (count($konektor_valid) > 0)
-        <div class="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            <div class="border-b border-slate-100 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
+        <div class="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+            <div class="border-b border-slate-100 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-300">
                 Konektor yang akan diimpor
             </div>
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <table class="min-w-full divide-y divide-slate-100 text-sm dark:divide-slate-700">
+                <thead class="bg-slate-50 dark:bg-slate-900/50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th class="px-4 py-2">Jenis</th>
                         <th class="px-4 py-2">Posisi Awal &rarr; Akhir</th>
                         <th class="px-4 py-2">Label</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                     @foreach ($konektor_valid as $item)
                         <tr>
-                            <td class="px-4 py-2 text-slate-700">{{ $item['jenis'] }}</td>
-                            <td class="px-4 py-2 text-slate-600">{{ $item['posisi_awal'] }} &rarr; {{ $item['posisi_akhir'] }}</td>
-                            <td class="px-4 py-2 text-slate-500">{{ $item['label'] ?? '-' }}</td>
+                            <td class="px-4 py-2 text-slate-700 dark:text-slate-300">{{ $item['jenis'] }}</td>
+                            <td class="px-4 py-2 text-slate-600 dark:text-slate-400">{{ $item['posisi_awal'] }} &rarr; {{ $item['posisi_akhir'] }}</td>
+                            <td class="px-4 py-2 text-slate-500 dark:text-slate-400">{{ $item['label'] ?? '-' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -99,7 +99,7 @@
     @endif
 
     <div class="flex justify-end gap-3">
-        <a href="{{ route('admin.management.papan-permainan.import.create') }}" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Batal</a>
+        <a href="{{ route('admin.management.papan-permainan.import.create') }}" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700">Batal</a>
 
         @if ($canImport)
             <form method="POST" action="{{ route('admin.management.papan-permainan.import.confirm') }}">

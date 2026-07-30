@@ -1,10 +1,10 @@
 <x-auth-message-layout title="Konfirmasi Password">
-    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+    <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
         <x-player.icon name="lock" class="h-7 w-7" />
     </span>
 
-    <h1 class="mt-5 text-2xl font-bold text-slate-900">Konfirmasi Password</h1>
-    <p class="mt-2 text-sm leading-relaxed text-slate-500">
+    <h1 class="mt-5 text-2xl font-bold text-slate-900 dark:text-slate-100">Konfirmasi Password</h1>
+    <p class="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
         Ini adalah area aman. Mohon konfirmasi password kamu sebelum melanjutkan.
     </p>
 

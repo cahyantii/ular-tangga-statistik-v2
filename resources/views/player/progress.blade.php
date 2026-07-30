@@ -4,8 +4,8 @@
 
 <x-player-layout>
     <x-slot name="header">
-        <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Progress Belajar</h1>
-        <p class="mt-0.5 text-sm text-slate-500">Pantau perkembangan belajarmu dan raih tujuanmu! &#128640;</p>
+        <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl">Progress Belajar</h1>
+        <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Pantau perkembangan belajarmu dan raih tujuanmu! &#128640;</p>
     </x-slot>
 
     <div class="space-y-6">
@@ -18,14 +18,14 @@
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {{-- Perkembangan belajar --}}
-            <div class="group rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6 lg:col-span-2">
-                <h3 class="text-base font-bold text-slate-700">Perkembangan Belajar</h3>
+            <div class="group rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft dark:bg-slate-800 sm:p-6 lg:col-span-2">
+                <h3 class="text-base font-bold text-slate-700 dark:text-slate-200">Perkembangan Belajar</h3>
 
                 <div class="mt-5 flex flex-col gap-6 lg:flex-row lg:items-start">
                     <div class="flex shrink-0 flex-col items-center gap-2 lg:w-36">
-                        <div class="relative w-full rounded-2xl bg-primary-50 px-3.5 py-2.5 text-center text-xs font-medium leading-relaxed text-slate-600 shadow-sm">
+                        <div class="relative w-full rounded-2xl bg-primary-50 px-3.5 py-2.5 text-center text-xs font-medium leading-relaxed text-slate-600 shadow-sm dark:bg-primary-500/10 dark:text-slate-300">
                             Belajar sedikit demi sedikit, hasil luar biasa akan mengikutimu!
-                            <span class="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-primary-50" aria-hidden="true"></span>
+                            <span class="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-primary-50 dark:bg-primary-500/10" aria-hidden="true"></span>
                         </div>
 
                         <img
@@ -50,14 +50,14 @@
                                 :delay="$loop->index * 75"
                             />
                         @empty
-                            <p class="text-sm text-slate-400">Belum ada kategori materi.</p>
+                            <p class="text-sm text-slate-400 dark:text-slate-500">Belum ada kategori materi.</p>
                         @endforelse
                     </div>
                 </div>
 
-                <div class="mt-6 flex items-center gap-3 rounded-2xl bg-primary-50 p-4 text-sm">
+                <div class="mt-6 flex items-center gap-3 rounded-2xl bg-primary-50 p-4 text-sm dark:bg-primary-500/10">
                     <x-player.icon name="trophy" class="h-5 w-5 shrink-0 text-primary-500" />
-                    <p class="text-primary-700">
+                    <p class="text-primary-700 dark:text-primary-400">
                         <span class="font-bold">Konsistensi adalah kunci kesuksesan!</span>
                         Terus belajar dan raih semua pencapaianmu! &#128170;
                     </p>

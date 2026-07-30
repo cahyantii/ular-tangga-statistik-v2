@@ -1,13 +1,13 @@
 <x-admin-layout>
     @php
         $palette = [
-            'green' => ['badge' => 'bg-gradient-to-br from-green-400 to-green-600', 'shadow' => 'shadow-[0_8px_18px_rgba(34,197,94,.35)]', 'code' => 'text-green-600', 'pastelBg' => 'bg-green-50', 'pastelText' => 'text-green-700', 'pastelIcon' => 'text-green-500'],
-            'blue' => ['badge' => 'bg-gradient-to-br from-blue-400 to-blue-600', 'shadow' => 'shadow-[0_8px_18px_rgba(37,99,235,.35)]', 'code' => 'text-blue-600', 'pastelBg' => 'bg-blue-50', 'pastelText' => 'text-blue-700', 'pastelIcon' => 'text-blue-500'],
-            'orange' => ['badge' => 'bg-gradient-to-br from-orange-400 to-orange-600', 'shadow' => 'shadow-[0_8px_18px_rgba(249,115,22,.35)]', 'code' => 'text-orange-600', 'pastelBg' => 'bg-orange-50', 'pastelText' => 'text-orange-700', 'pastelIcon' => 'text-orange-500'],
-            'purple' => ['badge' => 'bg-gradient-to-br from-purple-400 to-purple-600', 'shadow' => 'shadow-[0_8px_18px_rgba(147,51,234,.35)]', 'code' => 'text-purple-600', 'pastelBg' => 'bg-purple-50', 'pastelText' => 'text-purple-700', 'pastelIcon' => 'text-purple-500'],
-            'pink' => ['badge' => 'bg-gradient-to-br from-pink-400 to-pink-600', 'shadow' => 'shadow-[0_8px_18px_rgba(236,72,153,.35)]', 'code' => 'text-pink-600', 'pastelBg' => 'bg-pink-50', 'pastelText' => 'text-pink-700', 'pastelIcon' => 'text-pink-500'],
-            'amber' => ['badge' => 'bg-gradient-to-br from-amber-400 to-amber-600', 'shadow' => 'shadow-[0_8px_18px_rgba(217,119,6,.35)]', 'code' => 'text-amber-600', 'pastelBg' => 'bg-amber-50', 'pastelText' => 'text-amber-700', 'pastelIcon' => 'text-amber-500'],
-            'turquoise' => ['badge' => 'bg-gradient-to-br from-teal-400 to-teal-600', 'shadow' => 'shadow-[0_8px_18px_rgba(20,184,166,.35)]', 'code' => 'text-teal-600', 'pastelBg' => 'bg-teal-50', 'pastelText' => 'text-teal-700', 'pastelIcon' => 'text-teal-500'],
+            'green' => ['badge' => 'bg-gradient-to-br from-green-400 to-green-600', 'shadow' => 'shadow-[0_8px_18px_rgba(34,197,94,.35)]', 'code' => 'text-green-600 dark:text-green-400', 'pastelBg' => 'bg-green-50 dark:bg-green-500/15', 'pastelText' => 'text-green-700 dark:text-green-400', 'pastelIcon' => 'text-green-500 dark:text-green-400'],
+            'blue' => ['badge' => 'bg-gradient-to-br from-blue-400 to-blue-600', 'shadow' => 'shadow-[0_8px_18px_rgba(37,99,235,.35)]', 'code' => 'text-blue-600 dark:text-blue-400', 'pastelBg' => 'bg-blue-50 dark:bg-blue-500/15', 'pastelText' => 'text-blue-700 dark:text-blue-400', 'pastelIcon' => 'text-blue-500 dark:text-blue-400'],
+            'orange' => ['badge' => 'bg-gradient-to-br from-orange-400 to-orange-600', 'shadow' => 'shadow-[0_8px_18px_rgba(249,115,22,.35)]', 'code' => 'text-orange-600 dark:text-orange-400', 'pastelBg' => 'bg-orange-50 dark:bg-orange-500/15', 'pastelText' => 'text-orange-700 dark:text-orange-400', 'pastelIcon' => 'text-orange-500 dark:text-orange-400'],
+            'purple' => ['badge' => 'bg-gradient-to-br from-purple-400 to-purple-600', 'shadow' => 'shadow-[0_8px_18px_rgba(147,51,234,.35)]', 'code' => 'text-purple-600 dark:text-purple-400', 'pastelBg' => 'bg-purple-50 dark:bg-purple-500/15', 'pastelText' => 'text-purple-700 dark:text-purple-400', 'pastelIcon' => 'text-purple-500 dark:text-purple-400'],
+            'pink' => ['badge' => 'bg-gradient-to-br from-pink-400 to-pink-600', 'shadow' => 'shadow-[0_8px_18px_rgba(236,72,153,.35)]', 'code' => 'text-pink-600 dark:text-pink-400', 'pastelBg' => 'bg-pink-50 dark:bg-pink-500/15', 'pastelText' => 'text-pink-700 dark:text-pink-400', 'pastelIcon' => 'text-pink-500 dark:text-pink-400'],
+            'amber' => ['badge' => 'bg-gradient-to-br from-amber-400 to-amber-600', 'shadow' => 'shadow-[0_8px_18px_rgba(217,119,6,.35)]', 'code' => 'text-amber-600 dark:text-amber-400', 'pastelBg' => 'bg-amber-50 dark:bg-amber-500/15', 'pastelText' => 'text-amber-700 dark:text-amber-400', 'pastelIcon' => 'text-amber-500 dark:text-amber-400'],
+            'turquoise' => ['badge' => 'bg-gradient-to-br from-teal-400 to-teal-600', 'shadow' => 'shadow-[0_8px_18px_rgba(20,184,166,.35)]', 'code' => 'text-teal-600 dark:text-teal-400', 'pastelBg' => 'bg-teal-50 dark:bg-teal-500/15', 'pastelText' => 'text-teal-700 dark:text-teal-400', 'pastelIcon' => 'text-teal-500 dark:text-teal-400'],
         ];
         $fallback = $palette['blue'];
 
@@ -23,8 +23,8 @@
     {{-- Header --}}
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">Kelola Achievement</h1>
-            <p class="mt-2 text-slate-500">Kelola dan atur achievement yang dapat diperoleh pemain dalam permainan.</p>
+            <h1 class="text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl">Kelola Achievement</h1>
+            <p class="mt-2 text-slate-500 dark:text-slate-400">Kelola dan atur achievement yang dapat diperoleh pemain dalam permainan.</p>
         </div>
 
         <a href="{{ route('admin.management.achievements.create') }}"
@@ -38,32 +38,32 @@
     <div class="flex flex-wrap items-center gap-2">
         @foreach (['active' => 'Aktif', 'trashed' => 'Sampah', 'all' => 'Semua'] as $value => $label)
             <a href="{{ route('admin.management.achievements.index', ['filter' => $value]) }}"
-               class="inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold shadow-sm transition duration-200 ease-in-out {{ $filter === $value ? 'admin-nav-active text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700' }}">
+               class="inline-flex items-center rounded-full px-5 py-2.5 text-sm font-semibold shadow-sm transition duration-200 ease-in-out {{ $filter === $value ? 'admin-nav-active text-white' : 'border border-slate-200 bg-white text-slate-600 hover:border-green-300 hover:bg-green-50 hover:text-green-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-green-500/50 dark:hover:bg-green-500/15 dark:hover:text-green-400' }}">
                 {{ $label }}
             </a>
         @endforeach
     </div>
 
     {{-- Table --}}
-    <div class="mt-6 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-[0_10px_40px_rgba(0,0,0,.06)]">
+    <div class="mt-6 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-[0_10px_40px_rgba(0,0,0,.06)] dark:border-slate-700 dark:bg-slate-800">
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50/70">
-                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+            <table class="min-w-full divide-y divide-slate-100 text-sm dark:divide-slate-700">
+                <thead class="bg-slate-50/70 dark:bg-slate-900/50">
+                    <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         <th class="px-6 py-4">Achievement</th>
                         <th class="px-6 py-4">Syarat</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                     @forelse ($achievements as $achievement)
                         @php
                             $colors = $palette[$achievement->warna_badge] ?? $fallback;
                             $syaratIcon = $syaratMeta[$achievement->syarat_type->value] ?? 'flag';
                             $isPercent = $achievement->syarat_type->value === 'akurasi_keseluruhan';
                         @endphp
-                        <tr class="transition-colors duration-200 hover:bg-slate-50/60">
+                        <tr class="transition-colors duration-200 hover:bg-slate-50/60 dark:hover:bg-slate-700/60">
                             <td class="px-6 py-5">
                                 <div class="flex items-start gap-4">
                                     <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl {{ $colors['badge'] }} {{ $colors['shadow'] }} text-white">
@@ -71,9 +71,9 @@
                                     </span>
                                     <div class="min-w-0">
                                         <p class="text-xs font-bold uppercase tracking-wide {{ $colors['code'] }}">{{ $achievement->kode }}</p>
-                                        <p class="mt-0.5 font-bold text-slate-800">{{ $achievement->nama }}</p>
+                                        <p class="mt-0.5 font-bold text-slate-800 dark:text-slate-100">{{ $achievement->nama }}</p>
                                         @if ($achievement->deskripsi)
-                                            <p class="mt-0.5 text-sm text-slate-500">{{ $achievement->deskripsi }}</p>
+                                            <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{{ $achievement->deskripsi }}</p>
                                         @endif
                                     </div>
                                 </div>
@@ -89,17 +89,17 @@
                             </td>
                             <td class="px-6 py-5">
                                 @if ($achievement->trashed())
-                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 dark:bg-red-500/15 dark:text-red-400">
                                         <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                                         Dihapus
                                     </span>
                                 @elseif ($achievement->is_active)
-                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 dark:bg-green-500/15 dark:text-green-400">
                                         <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
                                         Aktif
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
+                                    <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                                         <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
                                         Nonaktif
                                     </span>
@@ -112,14 +112,14 @@
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
-                                                    class="inline-flex items-center gap-1.5 rounded-xl border border-green-500 px-3.5 py-2 text-xs font-semibold text-green-600 transition duration-200 ease-in-out hover:bg-green-50">
+                                                    class="inline-flex items-center gap-1.5 rounded-xl border border-green-500 px-3.5 py-2 text-xs font-semibold text-green-600 transition duration-200 ease-in-out hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-500/15">
                                                 <x-player.icon name="refresh" class="h-3.5 w-3.5" />
                                                 Pulihkan
                                             </button>
                                         </form>
                                     @else
                                         <a href="{{ route('admin.management.achievements.edit', $achievement) }}"
-                                           class="inline-flex items-center gap-1.5 rounded-xl border border-blue-500 px-3.5 py-2 text-xs font-semibold text-blue-600 transition duration-200 ease-in-out hover:bg-blue-50">
+                                           class="inline-flex items-center gap-1.5 rounded-xl border border-blue-500 px-3.5 py-2 text-xs font-semibold text-blue-600 transition duration-200 ease-in-out hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/15">
                                             <x-player.icon name="pencil" class="h-3.5 w-3.5" />
                                             Edit
                                         </a>
@@ -128,7 +128,7 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
-                                                    class="inline-flex items-center gap-1.5 rounded-xl border border-red-500 px-3.5 py-2 text-xs font-semibold text-red-600 transition duration-200 ease-in-out hover:bg-red-50">
+                                                    class="inline-flex items-center gap-1.5 rounded-xl border border-red-500 px-3.5 py-2 text-xs font-semibold text-red-600 transition duration-200 ease-in-out hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15">
                                                 <x-player.icon name="trash" class="h-3.5 w-3.5" />
                                                 Hapus
                                             </button>
@@ -139,7 +139,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-10 text-center text-slate-400">Tidak ada data achievement.</td>
+                            <td colspan="4" class="px-6 py-10 text-center text-slate-400 dark:text-slate-500">Tidak ada data achievement.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -149,7 +149,7 @@
 
     {{-- Count + Pagination --}}
     <div class="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
-        <p class="text-sm text-slate-500">
+        <p class="text-sm text-slate-500 dark:text-slate-400">
             Menampilkan {{ $achievements->firstItem() ?? 0 }} - {{ $achievements->lastItem() ?? 0 }} dari {{ $achievements->total() }} achievement
         </p>
         {{ $achievements->links('vendor.pagination.admin-users') }}

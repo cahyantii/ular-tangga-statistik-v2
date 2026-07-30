@@ -6,6 +6,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="user-id" content="{{ auth()->id() }}">
 
+        <x-theme-init key="admin-theme" />
+
         <title>Admin - {{ config('app.name') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -17,7 +19,7 @@
         <div
             x-data="{ sidebarOpen: false, profileOpen: false }"
             @keydown.escape.window="sidebarOpen = false"
-            class="min-h-screen font-admin bg-admin-bg text-slate-800"
+            class="min-h-screen font-admin bg-admin-bg text-slate-800 dark:bg-slate-900 dark:text-slate-100"
         >
             {{-- Sidebar backdrop (mobile & tablet): starts below the navbar so it never dims/covers it --}}
             <div
@@ -68,81 +70,81 @@
                      yang scroll hanya kolom konten utama di sebelah kanan. --}}
                 <nav class="relative z-[1] flex flex-1 flex-col space-y-4 px-4 pt-5 pb-7 text-sm">
                     <div>
-                        <p class="px-3 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#64748B]">Analytics</p>
+                        <p class="px-3 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#64748B] dark:text-slate-500">Analytics</p>
                         @php $active = request()->routeIs('admin.dashboard'); @endphp
                         <a href="{{ route('admin.dashboard') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="home" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Dashboard</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Dashboard</span>
                         </a>
                     </div>
 
                     <div class="space-y-1">
-                        <p class="px-3 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#64748B]">Management</p>
+                        <p class="px-3 mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#64748B] dark:text-slate-500">Management</p>
 
                         @php $active = request()->routeIs('admin.management.users.*'); @endphp
                         <a href="{{ route('admin.management.users.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="users" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Pengguna</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Pengguna</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.kategori-materi.*'); @endphp
                         <a href="{{ route('admin.management.kategori-materi.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="tag" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Kategori Materi</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Kategori Materi</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.materi.*'); @endphp
                         <a href="{{ route('admin.management.materi.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="book" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Materi</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Materi</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.soal.*'); @endphp
                         <a href="{{ route('admin.management.soal.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="help" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Soal</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Soal</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.papan-permainan.*'); @endphp
                         <a href="{{ route('admin.management.papan-permainan.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="grid" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Papan Permainan</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Papan Permainan</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.achievements.*'); @endphp
                         <a href="{{ route('admin.management.achievements.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="trophy" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Achievement</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Achievement</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.game-settings.*'); @endphp
                         <a href="{{ route('admin.management.game-settings.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="settings" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Game Settings</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Game Settings</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.notifications.*'); @endphp
                         <a href="{{ route('admin.management.notifications.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="bell" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Notifikasi</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Notifikasi</span>
                         </a>
                         @php $active = request()->routeIs('admin.management.feedback.*'); @endphp
                         <a href="{{ route('admin.management.feedback.index') }}"
                            @click="sidebarOpen = false"
-                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)]' }}">
+                           class="flex h-11 items-center gap-3 rounded-[18px] px-4 font-semibold transition-colors {{ $active ? 'admin-sidebar-nav-active text-white' : 'text-[#334155] hover:bg-[rgba(34,197,94,.08)] dark:text-slate-300 dark:hover:bg-white/5' }}">
                             <x-player.icon name="mail" class="h-5 w-5 shrink-0" />
-                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B]' }}">Feedback</span>
+                            <span class="{{ $active ? 'text-white' : 'text-[#1E293B] dark:text-slate-200' }}">Feedback</span>
                         </a>
                     </div>
                 </nav>
@@ -155,7 +157,7 @@
                     x-data="{ scrolled: false }"
                     x-init="scrolled = window.scrollY > 8"
                     @scroll.window="scrolled = window.scrollY > 8"
-                    :class="scrolled ? 'admin-header-glass' : 'border-b border-[#E5E7EB] bg-white shadow-sm'"
+                    :class="scrolled ? 'admin-header-glass' : 'border-b border-[#E5E7EB] bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800'"
                     class="sticky top-0 z-50 flex h-[72px] shrink-0 items-center gap-3 px-6 transition-colors duration-200 sm:px-8"
                 >
                     {{-- Hamburger toggle: lives in the navbar (left side), always above the
@@ -163,7 +165,7 @@
                     <button
                         type="button"
                         @click="sidebarOpen = !sidebarOpen"
-                        class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 lg:hidden"
+                        class="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 lg:hidden"
                         :aria-expanded="sidebarOpen.toString()"
                         aria-controls="admin-sidebar"
                         aria-label="Buka menu"
@@ -184,12 +186,22 @@
 
                     <div class="flex-1"></div>
 
+                    <button
+                        type="button"
+                        onclick="toggleTheme('admin-theme')"
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700"
+                        aria-label="Ganti mode gelap/terang"
+                    >
+                        <x-player.icon name="sun" class="hidden h-5 w-5 dark:block" />
+                        <x-player.icon name="moon" class="block h-5 w-5 dark:hidden" />
+                    </button>
+
                     <div class="relative" x-data="{ notifOpen: false }">
                         <button
                             type="button"
                             @click="notifOpen = !notifOpen"
                             @click.outside="notifOpen = false"
-                            class="js-notification-bell relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50"
+                            class="js-notification-bell relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-700"
                             aria-label="Notifikasi"
                         >
                             <x-player.icon name="bell" class="h-5 w-5" />
@@ -206,11 +218,11 @@
                             x-cloak
                             x-transition
                             @click.outside="notifOpen = false"
-                            class="notif-dropdown-glass absolute right-0 z-40 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-admin-border shadow-lg"
+                            class="notif-dropdown-glass absolute right-0 z-40 mt-2 w-80 max-w-[90vw] overflow-hidden rounded-2xl border border-admin-border shadow-lg dark:border-slate-700"
                         >
-                            <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                                <p class="text-sm font-bold text-slate-800">Notifikasi</p>
-                                <button type="button" @click="$store.notifications.markAllRead()" class="text-xs font-semibold text-green-600 hover:underline">
+                            <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-slate-700">
+                                <p class="text-sm font-bold text-slate-800 dark:text-slate-100">Notifikasi</p>
+                                <button type="button" @click="$store.notifications.markAllRead()" class="text-xs font-semibold text-green-600 hover:underline dark:text-green-400">
                                     Tandai Semua Dibaca
                                 </button>
                             </div>
@@ -224,25 +236,25 @@
                                 </template>
 
                                 <template x-if="!$store.notifications.loading && $store.notifications.items.length === 0">
-                                    <p class="p-6 text-center text-sm text-slate-400">Belum ada notifikasi.</p>
+                                    <p class="p-6 text-center text-sm text-slate-400 dark:text-slate-500">Belum ada notifikasi.</p>
                                 </template>
 
                                 <template x-for="notification in $store.notifications.items" :key="notification.id">
-                                    <div class="flex items-start gap-3 border-b border-slate-50 px-4 py-3 last:border-b-0 hover:bg-slate-50" :class="{ 'bg-green-50/40': !notification.read_at }">
-                                        <span x-init="$store.notifications.mountIcon($el, notification.icon)" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"></span>
+                                    <div class="flex items-start gap-3 border-b border-slate-50 px-4 py-3 last:border-b-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-700" :class="{ 'bg-green-50/40 dark:bg-green-500/10': !notification.read_at }">
+                                        <span x-init="$store.notifications.mountIcon($el, notification.icon)" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-300"></span>
                                         <a :href="notification.url ?? '#'" @click="$store.notifications.markRead(notification.id)" class="min-w-0 flex-1">
-                                            <p class="truncate text-sm font-semibold text-slate-800" x-text="notification.title"></p>
-                                            <p class="mt-0.5 line-clamp-2 text-xs text-slate-500" x-text="notification.message"></p>
-                                            <p class="mt-1 text-[11px] text-slate-400" x-text="notification.created_at_human"></p>
+                                            <p class="truncate text-sm font-semibold text-slate-800 dark:text-slate-100" x-text="notification.title"></p>
+                                            <p class="mt-0.5 line-clamp-2 text-xs text-slate-500 dark:text-slate-400" x-text="notification.message"></p>
+                                            <p class="mt-1 text-[11px] text-slate-400 dark:text-slate-500" x-text="notification.created_at_human"></p>
                                         </a>
-                                        <button type="button" @click="$store.notifications.remove(notification.id)" aria-label="Hapus" class="shrink-0 text-slate-300 hover:text-red-500">
+                                        <button type="button" @click="$store.notifications.remove(notification.id)" aria-label="Hapus" class="shrink-0 text-slate-300 hover:text-red-500 dark:text-slate-600">
                                             <x-player.icon name="close" class="h-3.5 w-3.5" />
                                         </button>
                                     </div>
                                 </template>
                             </div>
 
-                            <a href="{{ route('admin.management.notifications.index') }}" class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-slate-500 hover:bg-slate-50">
+                            <a href="{{ route('admin.management.notifications.index') }}" class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-semibold text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700">
                                 Lihat Semua Notifikasi
                             </a>
                         </div>
@@ -253,27 +265,27 @@
                             type="button"
                             @click="profileOpen = !profileOpen"
                             @click.outside="profileOpen = false"
-                            class="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-slate-50"
+                            class="flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-700"
                         >
                             <x-player.avatar :user="auth()->user()" size="h-9 w-9" />
                             <span class="hidden sm:block text-left leading-tight">
-                                <span class="block text-sm font-semibold text-slate-900">{{ auth()->user()->name }}</span>
-                                <span class="block text-xs text-slate-500">
+                                <span class="block text-sm font-semibold text-slate-900 dark:text-slate-100">{{ auth()->user()->name }}</span>
+                                <span class="block text-xs text-slate-500 dark:text-slate-400">
                                     {{ auth()->user()->role === \App\Enums\UserRole::Admin ? 'Administrator' : auth()->user()->role->label() }}
                                 </span>
                             </span>
-                            <x-player.icon name="chevron-down" class="hidden sm:block h-4 w-4 text-slate-400" />
+                            <x-player.icon name="chevron-down" class="hidden sm:block h-4 w-4 text-slate-400 dark:text-slate-500" />
                         </button>
 
                         <div
                             x-show="profileOpen"
                             x-cloak
                             x-transition
-                            class="absolute right-0 z-40 mt-2 w-48 rounded-xl border border-admin-border bg-white p-1.5 shadow-lg"
+                            class="absolute right-0 z-40 mt-2 w-48 rounded-xl border border-admin-border bg-white p-1.5 shadow-lg dark:border-slate-700 dark:bg-slate-800"
                         >
                             <div class="px-2.5 py-2 sm:hidden">
-                                <p class="truncate text-sm font-semibold text-slate-900">{{ auth()->user()->name }}</p>
-                                <p class="truncate text-xs text-slate-500">
+                                <p class="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{{ auth()->user()->name }}</p>
+                                <p class="truncate text-xs text-slate-500 dark:text-slate-400">
                                     {{ auth()->user()->role === \App\Enums\UserRole::Admin ? 'Administrator' : auth()->user()->role->label() }}
                                 </p>
                             </div>
@@ -281,7 +293,7 @@
                                 @csrf
                                 <button
                                     type="submit"
-                                    class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50"
+                                    class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
                                 >
                                     <x-player.icon name="logout" class="h-4 w-4" />
                                     Keluar
@@ -297,12 +309,12 @@
                 </main>
 
                 {{-- Footer --}}
-                <footer class="shrink-0 border-t border-admin-border bg-white px-4 py-4 sm:px-6">
-                    <div class="flex flex-col items-center justify-between gap-2 text-xs text-slate-500 sm:flex-row">
+                <footer class="shrink-0 border-t border-admin-border bg-white px-4 py-4 dark:border-slate-700 dark:bg-slate-800 sm:px-6">
+                    <div class="flex flex-col items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 sm:flex-row">
                         <p>&copy; {{ now()->year }} Ular Tangga Statistik Indonesia. Semua hak dilindungi.</p>
                         <div class="flex items-center gap-4">
-                            <a href="#" class="hover:text-slate-700">Dokumentasi</a>
-                            <a href="#" class="hover:text-slate-700">Bantuan</a>
+                            <a href="#" class="hover:text-slate-700 dark:hover:text-slate-200">Dokumentasi</a>
+                            <a href="#" class="hover:text-slate-700 dark:hover:text-slate-200">Bantuan</a>
                         </div>
                     </div>
                 </footer>

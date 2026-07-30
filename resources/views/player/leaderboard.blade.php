@@ -8,8 +8,8 @@
 
 <x-player-layout>
     <x-slot name="header">
-        <h1 class="text-xl font-bold text-slate-800 sm:text-2xl">Leaderboard</h1>
-        <p class="mt-0.5 text-sm text-slate-500">Bersaing dan raih posisi terbaikmu! &#127942;</p>
+        <h1 class="text-xl font-bold text-slate-800 dark:text-slate-100 sm:text-2xl">Leaderboard</h1>
+        <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">Bersaing dan raih posisi terbaikmu! &#127942;</p>
     </x-slot>
 
     <div class="space-y-6">
@@ -19,7 +19,7 @@
                 <a
                     href="{{ route('leaderboard', ['tab' => $key]) }}"
                     aria-current="{{ $active ? 'page' : 'false' }}"
-                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 {{ $active ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-soft' : 'bg-white text-slate-600 hover:-translate-y-0.5 hover:bg-slate-50' }}"
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold shadow-sm transition-all duration-200 {{ $active ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-soft' : 'bg-white text-slate-600 hover:-translate-y-0.5 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700' }}"
                 >
                     @if ($item['icon'])
                         <x-player.icon :name="$item['icon']" class="h-4 w-4" />
@@ -49,10 +49,10 @@
                     </div>
                 @endif
 
-                <div class="overflow-hidden rounded-3xl bg-white shadow-sm transition-shadow duration-300 hover:shadow-soft">
+                <div class="overflow-hidden rounded-3xl bg-white shadow-sm transition-shadow duration-300 hover:shadow-soft dark:bg-slate-800">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+                            <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-700/50 dark:text-slate-400">
                                 <tr>
                                     <th scope="col" class="px-4 py-3.5 sm:px-6">#</th>
                                     <th scope="col" class="px-4 py-3.5 sm:px-6">Nama</th>
@@ -62,10 +62,10 @@
                                     <th scope="col" class="px-4 py-3.5 text-right sm:px-6">Main</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                                 @if ($board['table']->isEmpty() && ! $board['current'])
                                     <tr>
-                                        <td colspan="6" class="px-4 py-8 text-center text-slate-400 sm:px-6">
+                                        <td colspan="6" class="px-4 py-8 text-center text-slate-400 dark:text-slate-500 sm:px-6">
                                             {{ $board['top3']->isEmpty() ? 'Belum ada data untuk kategori ini.' : 'Belum ada pemain lain di peringkat ini.' }}
                                         </td>
                                     </tr>

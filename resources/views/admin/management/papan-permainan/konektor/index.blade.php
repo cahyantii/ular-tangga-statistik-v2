@@ -372,32 +372,32 @@
 
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Konektor — {{ $papan->nama }}</h1>
-            <p class="mt-1 text-sm text-slate-500">Klik petak asal, lalu petak tujuan, untuk membuat tangga atau ular baru.</p>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Konektor — {{ $papan->nama }}</h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Klik petak asal, lalu petak tujuan, untuk membuat tangga atau ular baru.</p>
         </div>
         <a href="{{ route('admin.management.papan-permainan.index') }}"
-           class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900">
+           class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
             <x-player.icon name="arrow-right" class="h-4 w-4 rotate-180" />
             Kembali ke daftar papan
         </a>
     </div>
 
-    <div class="mb-4 flex flex-wrap gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-xs shadow-[0_10px_40px_rgba(0,0,0,.06)]">
+    <div class="mb-4 flex flex-wrap gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-xs shadow-[0_10px_40px_rgba(0,0,0,.06)] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
         @foreach ($legend as $meta)
             <span class="inline-flex items-center gap-1.5">
                 <span class="h-3 w-3 rounded" style="background-color: {{ $meta['color'] }}"></span>
                 {{ $meta['label'] }}
             </span>
         @endforeach
-        <span class="inline-flex items-center gap-1.5 text-slate-400">
+        <span class="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
             <span class="h-3 w-3 rounded border-2 border-sky-500"></span>
             Asal terpilih
         </span>
-        <span class="inline-flex items-center gap-1.5 text-slate-400">
+        <span class="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
             <span class="h-3 w-3 rounded border-2 border-amber-500"></span>
             Tujuan terpilih
         </span>
-        <span class="inline-flex items-center gap-1.5 text-slate-400">
+        <span class="inline-flex items-center gap-1.5 text-slate-400 dark:text-slate-500">
             <span class="h-3 w-3 rounded bg-slate-300"></span>
             Konektor yang sudah ada (pudar) — hindari jalur baru menyilang garis ini
         </span>
@@ -418,39 +418,39 @@
 
         {{-- Popover for existing tangga/ular tile --}}
         <template x-if="popover">
-            <div x-transition x-cloak class="fixed bottom-6 left-1/2 z-40 w-72 -translate-x-1/2 rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl">
-                <p class="text-sm font-semibold text-slate-800">
+            <div x-transition x-cloak class="fixed bottom-6 left-1/2 z-40 w-72 -translate-x-1/2 rounded-2xl border border-slate-100 bg-white p-4 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
+                <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     Konektor di petak #<span x-text="popover?.posisi"></span>
                 </p>
-                <p class="mt-0.5 text-xs text-slate-500">Jenis: <span x-text="popover?.jenis_petak"></span></p>
+                <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Jenis: <span x-text="popover?.jenis_petak"></span></p>
                 <div class="mt-3 flex gap-2">
                     <template x-if="popoverRoutes()">
                         <div class="flex gap-2">
-                            <a :href="popoverRoutes().edit_url" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Edit</a>
+                            <a :href="popoverRoutes().edit_url" class="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700">Edit</a>
                             <form method="POST" :action="popoverRoutes().delete_url" @submit="if (!confirm('Hapus konektor ini?')) $event.preventDefault()">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">Hapus</button>
+                                <button type="submit" class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/30 dark:text-red-400 dark:hover:bg-red-500/15">Hapus</button>
                             </form>
                         </div>
                     </template>
                 </div>
-                <button type="button" @click="popover = null" class="mt-3 text-xs text-slate-400 hover:text-slate-600">Tutup</button>
+                <button type="button" @click="popover = null" class="mt-3 text-xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">Tutup</button>
             </div>
         </template>
 
         {{-- Selection form (once origin + destination chosen) --}}
         <template x-if="origin && destination">
-            <div x-transition x-cloak class="mt-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,.06)]">
+            <div x-transition x-cloak class="mt-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,.06)] dark:border-slate-700 dark:bg-slate-800">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <p class="text-sm font-semibold text-slate-800">
+                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">
                         Konektor: Petak #<span x-text="origin?.posisi"></span> &rarr; Petak #<span x-text="destination?.posisi"></span>
                     </p>
-                    <button type="button" @click="reset()" class="text-xs font-semibold text-slate-500 hover:text-slate-700">Batal pilih</button>
+                    <button type="button" @click="reset()" class="text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Batal pilih</button>
                 </div>
 
                 <template x-if="validationErrors().length > 0">
-                    <ul class="mt-3 space-y-1 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                    <ul class="mt-3 space-y-1 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-500/15 dark:text-red-400">
                         <template x-for="err in validationErrors()" :key="err">
                             <li x-text="err"></li>
                         </template>
@@ -463,19 +463,19 @@
                     <input type="hidden" name="posisi_akhir" :value="destination?.posisi">
 
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-700">Jenis</label>
-                        <select name="jenis" x-model="jenis" class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Jenis</label>
+                        <select name="jenis" x-model="jenis" class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                             <option value="tangga">Tangga</option>
                             <option value="ular">Ular</option>
                         </select>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-700">Label (opsional)</label>
-                        <input type="text" name="label" x-model="label" class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Label (opsional)</label>
+                        <input type="text" name="label" x-model="label" class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-700">Icon (opsional)</label>
-                        <input type="text" name="icon" x-model="icon" class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                        <label class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300">Icon (opsional)</label>
+                        <input type="text" name="icon" x-model="icon" class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                     </div>
                     <button type="submit" :disabled="validationErrors().length > 0"
                             class="admin-nav-active rounded-lg px-4 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">
@@ -487,10 +487,10 @@
     </div>
 
     {{-- Existing table view (unchanged) --}}
-    <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <table class="min-w-full divide-y divide-slate-100 text-sm">
-            <thead class="bg-slate-50">
-                <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+    <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
+        <table class="min-w-full divide-y divide-slate-100 text-sm dark:divide-slate-700">
+            <thead class="bg-slate-50 dark:bg-slate-900/50">
+                <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th class="px-4 py-3">Jenis</th>
                     <th class="px-4 py-3">Posisi Awal</th>
                     <th class="px-4 py-3">Posisi Akhir</th>
@@ -498,26 +498,26 @@
                     <th class="px-4 py-3 text-right">Aksi</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-slate-100">
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-700">
                 @forelse ($konektorList as $konektor)
                     <tr>
-                        <td class="px-4 py-3 font-medium text-slate-800">{{ $konektor->jenis->label() }}</td>
-                        <td class="px-4 py-3 text-slate-500">{{ $konektor->posisi_awal }}</td>
-                        <td class="px-4 py-3 text-slate-500">{{ $konektor->posisi_akhir }}</td>
-                        <td class="px-4 py-3 text-slate-500">{{ $konektor->label ?? '-' }}</td>
+                        <td class="px-4 py-3 font-medium text-slate-800 dark:text-slate-100">{{ $konektor->jenis->label() }}</td>
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ $konektor->posisi_awal }}</td>
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ $konektor->posisi_akhir }}</td>
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ $konektor->label ?? '-' }}</td>
                         <td class="px-4 py-3 text-right">
-                            <a href="{{ route('admin.management.papan-permainan.konektor.edit', [$papan, $konektor]) }}" class="text-slate-600 hover:text-slate-900">Edit</a>
+                            <a href="{{ route('admin.management.papan-permainan.konektor.edit', [$papan, $konektor]) }}" class="text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">Edit</a>
                             <form method="POST" action="{{ route('admin.management.papan-permainan.konektor.destroy', [$papan, $konektor]) }}" class="inline"
                                   onsubmit="return confirm('Hapus konektor ini?');">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="ml-3 text-red-600 hover:text-red-800">Hapus</button>
+                                <button type="submit" class="ml-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">Hapus</button>
                             </form>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-8 text-center text-slate-400">Belum ada konektor pada papan ini.</td>
+                        <td colspan="5" class="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Belum ada konektor pada papan ini.</td>
                     </tr>
                 @endforelse
             </tbody>

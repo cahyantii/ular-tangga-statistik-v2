@@ -6,6 +6,8 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <meta name="user-id" content="{{ auth()->id() }}">
 
+        <x-theme-init key="user-theme" />
+
         <title>{{ config('app.name') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -13,7 +15,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="overflow-x-hidden font-sans antialiased bg-app-bg text-slate-800">
+    <body class="overflow-x-hidden font-sans antialiased bg-app-bg text-slate-800 dark:bg-slate-900 dark:text-slate-100">
         <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
             <x-player.sidebar />
 

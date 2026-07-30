@@ -23,9 +23,6 @@
 
     $jenisOptions = [
         'biasa' => 'Petak Biasa',
-        'soal' => 'Petak Soal',
-        'bonus' => 'Bonus',
-        'penalti' => 'Penalti',
         'mystery' => 'Mystery',
     ];
 
@@ -33,11 +30,8 @@
         'start' => ['label' => 'Start', 'color' => '#059669'],
         'finish' => ['label' => 'Finish', 'color' => '#7c3aed'],
         'biasa' => ['label' => 'Biasa', 'color' => '#f1f5f9'],
-        'soal' => ['label' => 'Soal', 'color' => '#2563eb'],
         'tangga' => ['label' => 'Tangga', 'color' => '#10b981'],
         'ular' => ['label' => 'Ular', 'color' => '#e11d48'],
-        'bonus' => ['label' => 'Bonus', 'color' => '#d97706'],
-        'penalti' => ['label' => 'Penalti', 'color' => '#f43f5e'],
         'mystery' => ['label' => 'Mystery', 'color' => '#6366f1'],
     ];
 @endphp
@@ -50,8 +44,8 @@
     <script>
     function petakPanel() {
         const TILE_COLORS = {
-            start: '#059669', finish: '#7c3aed', biasa: '#f1f5f9', soal: '#2563eb',
-            tangga: '#10b981', ular: '#e11d48', bonus: '#d97706', penalti: '#f43f5e', mystery: '#6366f1',
+            start: '#059669', finish: '#7c3aed', biasa: '#f1f5f9',
+            tangga: '#10b981', ular: '#e11d48', mystery: '#6366f1',
         };
 
         return {
@@ -181,29 +175,29 @@
 
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-            <h1 class="text-3xl font-bold tracking-tight text-slate-900">Editor Petak — {{ $papan->nama }}</h1>
-            <p class="mt-1 text-sm text-slate-500">Klik sebuah petak untuk mengubah jenis, warna, border, label, dan deskripsinya.</p>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Editor Petak — {{ $papan->nama }}</h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Klik sebuah petak untuk mengubah jenis, warna, border, label, dan deskripsinya.</p>
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a href="{{ route('admin.management.papan-permainan.petak.import.create', $papan) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 px-3 py-2 text-xs font-semibold text-violet-600 hover:bg-violet-50">
+               class="inline-flex items-center gap-1.5 rounded-lg border border-violet-200 px-3 py-2 text-xs font-semibold text-violet-600 hover:bg-violet-50 dark:border-violet-500/30 dark:text-violet-400 dark:hover:bg-violet-500/15">
                 <x-player.icon name="upload-cloud" class="h-3.5 w-3.5" />
                 Import Petak
             </a>
             <a href="{{ route('admin.management.papan-permainan.petak.export', $papan) }}"
-               class="inline-flex items-center gap-1.5 rounded-lg border border-orange-200 px-3 py-2 text-xs font-semibold text-orange-600 hover:bg-orange-50">
+               class="inline-flex items-center gap-1.5 rounded-lg border border-orange-200 px-3 py-2 text-xs font-semibold text-orange-600 hover:bg-orange-50 dark:border-orange-500/30 dark:text-orange-400 dark:hover:bg-orange-500/15">
                 <x-player.icon name="download" class="h-3.5 w-3.5" />
                 Export Petak
             </a>
             <a href="{{ route('admin.management.papan-permainan.index') }}"
-               class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900">
+               class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
                 <x-player.icon name="arrow-right" class="h-4 w-4 rotate-180" />
                 Kembali ke daftar papan
             </a>
         </div>
     </div>
 
-    <div class="mb-4 flex flex-wrap gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-xs shadow-[0_10px_40px_rgba(0,0,0,.06)]">
+    <div class="mb-4 flex flex-wrap gap-3 rounded-2xl border border-slate-100 bg-white p-4 text-xs shadow-[0_10px_40px_rgba(0,0,0,.06)] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
         @foreach ($legend as $meta)
             <span class="inline-flex items-center gap-1.5">
                 <span class="h-3 w-3 rounded" style="background-color: {{ $meta['color'] }}"></span>
@@ -231,82 +225,71 @@
 
         {{-- Side panel --}}
         <div x-show="panelOpen" x-transition x-cloak
-             class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto bg-white p-6 shadow-2xl">
+             class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto bg-white p-6 shadow-2xl dark:bg-slate-800">
             <div class="mb-5 flex items-center justify-between">
-                <h2 class="text-lg font-bold text-slate-900">Edit Petak <span x-text="tile ? '#' + tile.posisi : ''"></span></h2>
-                <button type="button" @click="close()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600">
+                <h2 class="text-lg font-bold text-slate-900 dark:text-slate-100">Edit Petak <span x-text="tile ? '#' + tile.posisi : ''"></span></h2>
+                <button type="button" @click="close()" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-slate-700 dark:hover:text-slate-300">
                     <x-player.icon name="close" class="h-5 w-5" />
                 </button>
             </div>
 
             <template x-if="error">
-                <p class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600" x-text="error"></p>
+                <p class="mb-4 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600 dark:bg-red-500/15 dark:text-red-400" x-text="error"></p>
             </template>
 
             <div class="space-y-4">
-                <label class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5">
-                    <span class="text-sm font-medium text-slate-700">
+                <label class="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700">
+                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
                         Petak Aktif
-                        <span class="block text-xs font-normal text-slate-400">Nonaktif = efek petak ini dimatikan sementara, diperlakukan seperti petak biasa di gameplay.</span>
+                        <span class="block text-xs font-normal text-slate-400 dark:text-slate-500">Nonaktif = efek petak ini dimatikan sementara, diperlakukan seperti petak biasa di gameplay.</span>
                     </span>
                     <input type="checkbox" x-model="form.is_active" @change="livePatch()"
-                           class="h-5 w-5 shrink-0 rounded border-slate-300 text-green-600 focus:ring-green-500">
+                           class="h-5 w-5 shrink-0 rounded border-slate-300 text-green-600 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800">
                 </label>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Jenis Petak</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Jenis Petak</label>
                     <select x-model="form.jenis_petak" @change="livePatch()"
-                            class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                            class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                         @foreach ($jenisOptions as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                <div x-show="form.jenis_petak === 'soal'" x-cloak>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Kategori Materi</label>
-                    <select x-model="form.kategori_id"
-                            class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
-                        <option value="">Pilih kategori&hellip;</option>
-                        <template x-for="(nama, id) in kategoriOptions" :key="id">
-                            <option :value="id" x-text="nama"></option>
-                        </template>
-                    </select>
-                </div>
-
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Label</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Label</label>
                     <input type="text" x-model="form.label" @input="livePatch()"
-                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Icon</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Icon</label>
                     <input type="text" x-model="form.icon" placeholder="nama-icon (opsional)"
-                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500">
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Warna (hex atau CSS gradient)</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Warna (hex atau CSS gradient)</label>
                     <input type="text" x-model="form.warna" @input="livePatch()" placeholder="#2563eb atau linear-gradient(...)"
-                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500">
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Border</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Border</label>
                     <input type="text" x-model="form.border_warna" @input="livePatch()" placeholder="3px solid #f59e0b"
-                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
+                           class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500">
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Deskripsi</label>
+                    <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Deskripsi</label>
                     <textarea x-model="form.deskripsi" rows="3"
-                              class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500"></textarea>
+                              class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"></textarea>
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
-                <button type="button" @click="close()" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100">Batal</button>
+            <div class="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4 dark:border-slate-700">
+                <button type="button" @click="close()" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700">Batal</button>
                 <button type="button" @click="save()" :disabled="saving"
                         class="admin-nav-active rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
                     <span x-show="!saving">Simpan</span>

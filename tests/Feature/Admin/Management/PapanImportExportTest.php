@@ -14,7 +14,7 @@ class PapanImportExportTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function samplePetakArray(int $jumlahPetak, ?string $kategoriNama, bool $includeSoalTile = true): array
+    private function samplePetakArray(int $jumlahPetak, bool $includeMysteryTile = true): array
     {
         $rows = [];
 
@@ -22,7 +22,7 @@ class PapanImportExportTest extends TestCase
             $jenis = match (true) {
                 $posisi === 1 => 'start',
                 $posisi === $jumlahPetak => 'finish',
-                $posisi === 5 && $includeSoalTile => 'soal',
+                $posisi === 5 && $includeMysteryTile => 'mystery',
                 default => 'biasa',
             };
 
@@ -34,7 +34,10 @@ class PapanImportExportTest extends TestCase
                 'warna' => null,
                 'border_warna' => null,
                 'deskripsi' => null,
-                'kategori_nama' => $jenis === 'soal' ? $kategoriNama : null,
+                // kategori_nama tidak lagi dipakai (jenis "soal" sudah dihapus),
+                // dipertahankan di array supaya bentuk baris tetap konsisten dgn
+                // format export/import lama.
+                'kategori_nama' => null,
             ];
         }
 
@@ -44,7 +47,6 @@ class PapanImportExportTest extends TestCase
     public function test_json_import_preview_reports_valid_board(): void
     {
         $admin = User::factory()->admin()->create();
-        KategoriMateri::factory()->create(['nama' => 'Statistika Dasar']);
 
         $data = [
             'papan' => [
@@ -55,7 +57,7 @@ class PapanImportExportTest extends TestCase
                 'thumbnail' => null,
                 'is_active' => true,
             ],
-            'petak' => $this->samplePetakArray(10, 'Statistika Dasar'),
+            'petak' => $this->samplePetakArray(10),
             'konektor' => [
                 ['jenis' => 'tangga', 'posisi_awal' => 3, 'posisi_akhir' => 8, 'label' => null, 'icon' => null],
             ],
@@ -75,7 +77,6 @@ class PapanImportExportTest extends TestCase
     public function test_json_import_confirm_creates_board_petak_and_konektor(): void
     {
         $admin = User::factory()->admin()->create();
-        $kategori = KategoriMateri::factory()->create(['nama' => 'Statistika Dasar']);
 
         $data = [
             'papan' => [
@@ -86,7 +87,7 @@ class PapanImportExportTest extends TestCase
                 'thumbnail' => null,
                 'is_active' => true,
             ],
-            'petak' => $this->samplePetakArray(10, 'Statistika Dasar'),
+            'petak' => $this->samplePetakArray(10),
             'konektor' => [
                 ['jenis' => 'tangga', 'posisi_awal' => 3, 'posisi_akhir' => 8, 'label' => null, 'icon' => null],
             ],
@@ -114,7 +115,39 @@ class PapanImportExportTest extends TestCase
         $this->assertSame('start', $papan->petak()->where('posisi', 1)->first()->jenis_petak->value);
         $this->assertSame('finish', $papan->petak()->where('posisi', 10)->first()->jenis_petak->value);
         $this->assertSame('tangga', $papan->petak()->where('posisi', 3)->first()->jenis_petak->value);
-        $this->assertSame($kategori->id, $papan->petak()->where('posisi', 5)->first()->kategori_id);
+        $this->assertSame('mystery', $papan->petak()->where('posisi', 5)->first()->jenis_petak->value);
+        $this->assertNull($papan->petak()->where('posisi', 5)->first()->kategori_id);
+    }
+
+    public function test_json_import_preview_rejects_the_removed_soal_jenis(): void
+    {
+        $admin = User::factory()->admin()->create();
+
+        $petak = $this->samplePetakArray(10, includeMysteryTile: false);
+        $petak[4]['jenis_petak'] = 'soal';
+
+        $data = [
+            'papan' => [
+                'nama' => 'Papan Uji Soal Dihapus',
+                'deskripsi' => null,
+                'jumlah_petak' => 10,
+                'jumlah_kolom' => 5,
+                'thumbnail' => null,
+                'is_active' => true,
+            ],
+            'petak' => $petak,
+            'konektor' => [],
+        ];
+
+        $file = UploadedFile::fake()->createWithContent('papan.json', json_encode($data));
+
+        $response = $this->actingAs($admin)->post('/admin/management/papan-permainan/import/preview', [
+            'file' => $file,
+        ]);
+
+        $response->assertOk();
+        $this->assertNotEmpty($response->viewData('petak_errors'));
+        $this->assertDatabaseMissing('papan_permainan', ['nama' => 'Papan Uji Soal Dihapus']);
     }
 
     public function test_json_import_skips_konektor_with_wrong_direction_but_still_imports_board(): void
@@ -130,7 +163,7 @@ class PapanImportExportTest extends TestCase
                 'thumbnail' => null,
                 'is_active' => true,
             ],
-            'petak' => $this->samplePetakArray(10, null, includeSoalTile: false),
+            'petak' => $this->samplePetakArray(10, includeMysteryTile: false),
             'konektor' => [
                 ['jenis' => 'tangga', 'posisi_awal' => 8, 'posisi_akhir' => 3, 'label' => null, 'icon' => null],
             ],
@@ -190,14 +223,13 @@ class PapanImportExportTest extends TestCase
     public function test_petak_csv_bulk_import_updates_existing_petak(): void
     {
         $admin = User::factory()->admin()->create();
-        $kategori = KategoriMateri::factory()->create(['nama' => 'Statistika Dasar']);
         $papan = PapanPermainan::factory()->create(['jumlah_petak' => 10]);
         Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 1, 'jenis_petak' => 'start']);
         Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 10, 'jenis_petak' => 'finish']);
         $target = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'biasa']);
 
         $csv = "papan_id,papan_nama,posisi,jenis_petak,kategori,label,icon,warna,border_warna,deskripsi\n"
-            ."{$papan->id},{$papan->nama},5,soal,Statistika Dasar,Label Baru,,,,\n";
+            ."{$papan->id},{$papan->nama},5,mystery,,Label Baru,,,,\n";
 
         $file = UploadedFile::fake()->createWithContent('petak.csv', $csv);
 
@@ -216,9 +248,33 @@ class PapanImportExportTest extends TestCase
         ])->assertRedirect(route('admin.management.papan-permainan.petak.index', $papan));
 
         $target->refresh();
-        $this->assertSame('soal', $target->jenis_petak->value);
-        $this->assertSame($kategori->id, $target->kategori_id);
+        $this->assertSame('mystery', $target->jenis_petak->value);
+        $this->assertNull($target->kategori_id);
         $this->assertSame('Label Baru', $target->label);
+    }
+
+    public function test_petak_csv_bulk_import_rejects_the_removed_soal_jenis(): void
+    {
+        $admin = User::factory()->admin()->create();
+        KategoriMateri::factory()->create(['nama' => 'Statistika Dasar']);
+        $papan = PapanPermainan::factory()->create(['jumlah_petak' => 10]);
+        Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 1, 'jenis_petak' => 'start']);
+        Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 10, 'jenis_petak' => 'finish']);
+        $target = Petak::factory()->create(['papan_id' => $papan->id, 'posisi' => 5, 'jenis_petak' => 'biasa']);
+
+        $csv = "papan_id,papan_nama,posisi,jenis_petak,kategori,label,icon,warna,border_warna,deskripsi\n"
+            ."{$papan->id},{$papan->nama},5,soal,Statistika Dasar,Label Baru,,,,\n";
+
+        $file = UploadedFile::fake()->createWithContent('petak.csv', $csv);
+
+        $previewResponse = $this->actingAs($admin)->post("/admin/management/papan-permainan/{$papan->id}/petak/import/preview", [
+            'file' => $file,
+        ]);
+        $previewResponse->assertOk();
+        $this->assertCount(0, $previewResponse->viewData('valid'));
+        $this->assertCount(1, $previewResponse->viewData('invalid'));
+
+        $this->assertSame('biasa', $target->fresh()->jenis_petak->value);
     }
 
     public function test_petak_csv_import_rejects_start_finish_and_wrong_board_rows(): void
