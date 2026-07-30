@@ -1318,9 +1318,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const duelTextEl = document.getElementById('duel-text');
             const duelOptionsEl = document.getElementById('duel-options');
             const duelTimerEl = document.getElementById('duel-timer');
+            
+            if (duelOptionsEl && duelOptionsEl.dataset.activeSoalId === 'waiting') {
+                return;
+            }
+
             if (duelStatusTextEl) duelStatusTextEl.textContent = 'Menunggu lawan selesai...';
             if (duelTextEl) duelTextEl.textContent = 'Anda telah menjawab semua soal. Harap tunggu.';
-            if (duelOptionsEl) duelOptionsEl.innerHTML = '';
+            if (duelOptionsEl) {
+                duelOptionsEl.innerHTML = '';
+                duelOptionsEl.dataset.activeSoalId = 'waiting';
+            }
             if (duelTimerEl) duelTimerEl.textContent = '';
             clearInterval(duelCountdownInterval);
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'duel-modal' }));
@@ -1333,10 +1341,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const duelTextEl = document.getElementById('duel-text');
         const duelOptionsEl = document.getElementById('duel-options');
         
+        if (duelOptionsEl && duelOptionsEl.dataset.activeSoalId == soal.id) {
+            // Do not reset the current question if it's already active
+            return;
+        }
+        
         if (duelStatusTextEl) duelStatusTextEl.textContent = `Pertanyaan ${nextQuestion.order} dari 3`;
         if (duelFeedbackEl) duelFeedbackEl.classList.add('hidden');
         if (duelTextEl) duelTextEl.textContent = soal.pertanyaan;
-        if (duelOptionsEl) duelOptionsEl.innerHTML = '';
+        if (duelOptionsEl) {
+            duelOptionsEl.innerHTML = '';
+            duelOptionsEl.dataset.activeSoalId = soal.id;
+        }
 
         duelStartTime = Date.now();
 
@@ -1382,6 +1398,8 @@ document.addEventListener('DOMContentLoaded', () => {
         'game-finished': () => 'Permainan telah selesai.',
         'session-paused': (nama) => `${nama} terputus koneksi. Menunggu reconnect...`,
         'session-resumed': (nama) => `${nama} telah kembali terhubung.`,
+        'duel-progress': (nama) => `${nama} telah menjawab soal duel.`,
+        'duel-finished': (nama) => `Duel selesai.`,
     };
 
     function resolveActorName(actorId) {
@@ -1978,6 +1996,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await postJson(duelAnswerUrl, { soal_id: soalId, jawaban, time_taken_ms: timeTakenMs });
 
             if (result.type === 'duel_answered') {
+                if (colyseusRoom) {
+                    colyseusRoom.send("broadcast_event", { event: 'duel-progress', actor: myGamePlayerId });
+                }
+
                 duelFeedbackEl.textContent = result.benar
                     ? 'Jawaban benar!'
                     : `Jawaban salah. ${result.pembahasan ?? ''}`;
@@ -2009,8 +2031,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(1800);
                 
                 // Refresh state to show next question or wait screen
-                applySessionState(result.session);
+                // IMPORTANT: Fetch fresh state instead of using result.session
+                // to avoid overwriting a 'playing' state if the opponent finished
+                // the duel during our 1.8s delay.
+                await loadState();
             } else if (result.type === 'duel_finished') {
+                if (colyseusRoom) {
+                    colyseusRoom.send("broadcast_event", { event: 'duel-finished', actor: myGamePlayerId });
+                }
+
                 duelFeedbackEl.textContent = 'Semua soal telah dijawab. Memproses hasil duel...';
                 duelFeedbackEl.classList.remove('hidden');
 
