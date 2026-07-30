@@ -110,16 +110,19 @@ class AchievementEvaluationService
      * oleh halaman Achievement (semua kartu) dan oleh nearestUpcoming() di
      * bawah (teaser dashboard) — satu query, dua pemakai.
      *
-     * @return Collection<int, array{achievement: Achievement, earned: bool, earned_at: ?\Illuminate\Support\Carbon, current: int, target: int, percent: int, gap: int}>
+     * @return Collection<int, array<string, mixed>>
      */
     public function progressSnapshot(User $user): Collection
     {
-        return Cache::remember(
+        /** @var \Illuminate\Support\Collection<int, array<string, mixed>> $result */
+        $result = Cache::remember(
             $this->cacheKey($user),
             now()->addMinutes(self::TTL_MINUTES),
+            /** @phpstan-ignore-next-line */
             function () use ($user) {
                 $earned = $user->userAchievements()->get()->keyBy('achievement_id');
 
+                /** @phpstan-ignore-next-line */
                 return Achievement::query()
                     ->active()
                     ->orderBy('urutan')
@@ -127,12 +130,14 @@ class AchievementEvaluationService
                     ->map(function (Achievement $achievement) use ($user, $earned) {
                         $current = $this->currentValue($user, $achievement->syarat_type);
                         $target = $achievement->syarat_value;
-                        $isEarned = $earned->has($achievement->id);
+                        /** @var \App\Models\UserAchievement|null $userAchievement */
+                        $userAchievement = $earned->get($achievement->id);
+                        $isEarned = $userAchievement !== null;
 
                         return [
                             'achievement' => $achievement,
                             'earned' => $isEarned,
-                            'earned_at' => $earned->get($achievement->id)?->earned_at,
+                            'earned_at' => $userAchievement ? \Illuminate\Support\Carbon::parse($userAchievement->earned_at) : null,
                             'current' => $current,
                             'target' => $target,
                             'percent' => $target > 0 ? min(100, (int) round($current / $target * 100)) : 0,
@@ -141,6 +146,8 @@ class AchievementEvaluationService
                     });
             }
         );
+
+        return $result;
     }
 
     /**

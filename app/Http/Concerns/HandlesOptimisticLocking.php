@@ -17,7 +17,8 @@ trait HandlesOptimisticLocking
 {
     protected function currentVersion(Model $model): string
     {
-        return (string) $model->updated_at?->timestamp;
+        $updatedAt = $model->getAttribute('updated_at');
+        return (string) ($updatedAt instanceof \Illuminate\Support\Carbon ? $updatedAt->timestamp : '');
     }
 
     protected function assertNotStale(Model $model, Request $request): void

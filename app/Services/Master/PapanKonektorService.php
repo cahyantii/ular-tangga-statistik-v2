@@ -117,7 +117,7 @@ class PapanKonektorService
             ->where('papan_id', $papan->id)
             ->where('posisi', $konektor->posisi_awal)
             ->update([
-                'jenis_petak' => $konektor->jenis->value,
+                'jenis_petak' => $konektor->jenis instanceof \App\Enums\ConnectorType ? $konektor->jenis->value : $konektor->jenis,
                 'label' => $konektor->label,
                 'icon' => $konektor->icon,
             ]);

@@ -6,6 +6,23 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $game_session_id
+ * @property int $soal_id
+ * @property \Illuminate\Support\Carbon $used_at
+ * @property-read \App\Models\GameSession $gameSession
+ * @property-read \App\Models\Soal|null $soal
+ * @method static \Database\Factories\GameQuestionUsedFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed whereGameSessionId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed whereSoalId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|GameQuestionUsed whereUsedAt($value)
+ * @mixin \Eloquent
+ */
 class GameQuestionUsed extends Model
 {
     use HasFactory;

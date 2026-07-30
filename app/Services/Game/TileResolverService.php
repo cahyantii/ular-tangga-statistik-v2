@@ -19,7 +19,7 @@ use App\Services\Game\PowerUpService;
  */
 class TileResolverService
 {
-    public function __construct(private readonly ScoreService $scoreService)
+    public function __construct()
     {
     }
 

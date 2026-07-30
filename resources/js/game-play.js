@@ -1,4 +1,5 @@
 import { CoordinateHelper } from './board/CoordinateHelper.js';
+import * as Colyseus from 'colyseus.js';
 
 /**
  * Kontroler gameplay Vs Robot & Multiplayer — presentasi visual (papan modern,
@@ -561,6 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.height = `${(100 / totalRows) * 0.8}%`;
         
         el.innerHTML = `
+            <div class="active-indicator hidden absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" stroke="#b45309" stroke-width="2" class="drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22L2 6h20L12 22z" stroke-linejoin="round" />
+                </svg>
+            </div>
             <div class="pawn-body">
                 <svg viewBox="0 0 100 150" class="pawn-svg">
                     <!-- Base Shadow -->
@@ -1014,6 +1020,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setTileGlow(currentPlayer?.posisi_pion);
 
+        // Update Active Indicator on all pawns
+        session.players.forEach(p => {
+            const pawnEl = document.querySelector(`.game-pawn[data-pawn-id="${p.id}"]`);
+            if (pawnEl) {
+                const indicator = pawnEl.querySelector('.active-indicator');
+                if (indicator) {
+                    if (p.id === session.current_turn_game_player_id && session.status === 'playing') {
+                        indicator.classList.remove('hidden');
+                    } else {
+                        indicator.classList.add('hidden');
+                    }
+                }
+            }
+        });
+
         const questionPending = !!session.active_question;
         const canRoll = isMyTurn && !questionPending;
         rollButton.classList.toggle('hidden', !canRoll);
@@ -1076,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ---------------------------------------------------------------
     // Modal Soal
     // ---------------------------------------------------------------
-    function startQuestionCountdown(expiresAtIso, soalId) {
+    function startQuestionCountdown(expiresAtIso, soalId, isMyTurn) {
         clearInterval(questionCountdownInterval);
 
         const update = () => {
@@ -1085,7 +1106,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (remaining <= 0) {
                 clearInterval(questionCountdownInterval);
-                submitAnswer(soalId, null);
+                if (isMyTurn) {
+                    submitAnswer(soalId, null);
+                }
             }
         };
 
@@ -1093,23 +1116,36 @@ document.addEventListener('DOMContentLoaded', () => {
         questionCountdownInterval = setInterval(update, 1000);
     }
 
-    function showQuestion(soal, expiresAtIso) {
+    function showQuestion(soal, expiresAtIso, isMyTurn = true, activePlayerName = 'Pemain') {
         questionFeedbackEl.classList.add('hidden');
         questionTextEl.textContent = soal.pertanyaan;
         questionOptionsEl.innerHTML = '';
 
+        const titleEl = document.getElementById('question-title-text');
+        if (titleEl) {
+            titleEl.textContent = isMyTurn ? 'Soal' : `${activePlayerName} sedang menjawab soal...`;
+        }
+
         Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50';
+            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150';
             button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
             button.dataset.kunci = kunci;
-            button.addEventListener('click', () => submitAnswer(soal.id, kunci, button));
+            
+            if (isMyTurn) {
+                button.classList.add('hover:-translate-y-0.5', 'hover:border-primary-400', 'hover:bg-primary-50');
+                button.addEventListener('click', () => submitAnswer(soal.id, kunci, button));
+            } else {
+                button.disabled = true;
+                button.classList.add('opacity-60', 'cursor-not-allowed');
+            }
+            
             questionOptionsEl.appendChild(button);
         });
 
         window.dispatchEvent(new CustomEvent('open-modal', { detail: 'question-modal' }));
-        startQuestionCountdown(expiresAtIso, soal.id);
+        startQuestionCountdown(expiresAtIso, soal.id, isMyTurn);
     }
 
     function hideQuestion() {
@@ -1354,36 +1390,80 @@ document.addEventListener('DOMContentLoaded', () => {
         return actor.is_robot ? 'Robot' : (actor.nama ?? 'Pemain lain');
     }
 
-    function joinRealtimeChannel(session) {
-        if (session.mode !== 'multiplayer' || !session.room_id || presenceChannel || !window.Echo) {
+    let colyseusClient = null;
+    let colyseusRoom = null;
+    let isJoiningColyseus = false;
+
+    async function joinRealtimeChannel(session) {
+        if (session.mode !== 'multiplayer' || colyseusRoom || isJoiningColyseus) {
             return;
         }
 
-        presenceChannel = window.Echo.join(`room.${session.room_id}`);
+        isJoiningColyseus = true;
 
-        Object.keys(REALTIME_EVENT_LABELS).forEach((eventName) => {
-            presenceChannel.listen(`.${eventName}`, (payload) => {
-                const actorId = payload.game_player_id ?? null;
+        if (!colyseusClient) {
+            colyseusClient = new Colyseus.Client('ws://localhost:2567');
+        }
+
+        try {
+            colyseusRoom = await colyseusClient.joinOrCreate("game_room", { 
+                token: csrfToken,
+                session_id: session.id,
+                player_id: myGamePlayerId
+            });
+
+            console.log("Joined Colyseus room successfully", colyseusRoom.roomId);
+
+            let diceRollPromise = Promise.resolve();
+
+            colyseusRoom.onMessage("state_changed", (message) => {
+                const eventName = message.event;
+                const actorId = message.actor ?? null;
+                
                 if (actorId !== null && actorId === myGamePlayerId) {
-                    return;
+                    return; // Ignore our own broadcasts
                 }
 
-                const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
-                showToast(label);
-                pushLog('info', label);
-                loadState();
+                if (eventName === 'dice-rolled') {
+                    // Animasi dadu dijalankan dan disimpan promisenya
+                    diceRollPromise = animateDiceRoll(message.raw_nilai_dadu ?? message.nilai_dadu ?? 1, message.double_dice_active ?? false);
+                    return; // Tunggu event pawn-moved untuk me-loadState
+                }
+
+                if (REALTIME_EVENT_LABELS[eventName]) {
+                    const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
+                    showToast(label);
+                    pushLog('info', label);
+                }
+                
+                diceRollPromise.then(() => {
+                    loadState();
+                });
             });
-        });
+
+            colyseusRoom.onMessage("error", (msg) => {
+                showToast(msg);
+                pushLog('error', msg);
+            });
+
+        } catch (e) {
+            console.error("Colyseus JOIN ERROR", e);
+        } finally {
+            isJoiningColyseus = false;
+        }
     }
 
     function leaveRealtimeChannel(session) {
-        if (presenceChannel && window.Echo && session.room_id) {
-            window.Echo.leave(`room.${session.room_id}`);
-            presenceChannel = null;
+        if (colyseusRoom) {
+            colyseusRoom.leave();
+            colyseusRoom = null;
         }
     }
 
     function startHeartbeat(session) {
+        // MATIKAN SEMENTARA untuk keperluan debugging agar Debugbar tidak penuh
+        return; 
+
         if (session.mode !== 'multiplayer' || heartbeatIntervalId) {
             return;
         }
@@ -1517,8 +1597,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function finalizeOutcome(session, newlyUnlockedAchievements = []) {
         renderFinished(session);
 
+        const isMyTurn = session.current_turn_game_player_id === myGamePlayerId;
+        const currentPlayer = session.players.find((p) => p.id === session.current_turn_game_player_id);
+
         if (session.active_question) {
-            showQuestion(session.active_question, session.active_question_expires_at);
+            showQuestion(
+                session.active_question, 
+                session.active_question_expires_at, 
+                isMyTurn, 
+                currentPlayer?.nama ?? 'Pemain'
+            );
         } else {
             hideQuestion();
         }
@@ -1704,6 +1792,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const forcedRoll = forcedRollEl ? forcedRollEl.value : null;
             const body = forcedRoll ? { forced_roll: parseInt(forcedRoll, 10) } : {};
             const result = await postJson(rollUrl, body);
+
+            if (colyseusRoom) {
+                // Beri tahu Colyseus untuk mem-broadcast ke klien lain
+                colyseusRoom.send("broadcast_event", { 
+                    event: 'dice-rolled', 
+                    actor: myGamePlayerId,
+                    nilai_dadu: result.nilai_dadu ?? 1,
+                    raw_nilai_dadu: result.raw_nilai_dadu,
+                    double_dice_active: result.double_dice_active ?? false
+                });
+                colyseusRoom.send("broadcast_event", { event: 'pawn-moved', actor: myGamePlayerId });
+            }
 
             await animateDiceRoll(result.raw_nilai_dadu ?? result.nilai_dadu ?? 1, result.double_dice_active ?? false);
 
@@ -1947,6 +2047,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const result = await postJson(answerUrl, { soal_id: soalId, jawaban });
 
+            if (colyseusRoom) {
+                colyseusRoom.send("broadcast_event", { event: 'score-updated', actor: myGamePlayerId });
+            }
+
             questionFeedbackEl.textContent = result.benar
                 ? 'Jawaban benar!'
                 : `Jawaban salah. ${result.pembahasan ?? ''}`;
@@ -2016,7 +2120,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Jika respons adalah 'soal', berarti butuh menjawab soal lagi (misal menginjak misteri setelah konektor)
             if (result.type === 'soal') {
-                showQuestion(result.soal, 15);
+                showQuestion(
+                    result.soal, 
+                    new Date(Date.now() + 15000).toISOString(),
+                    true,
+                    actingPlayer?.nama ?? 'Pemain'
+                );
                 return; // Hentikan alur di sini, tunggu pemain submit jawaban lagi
             }
 

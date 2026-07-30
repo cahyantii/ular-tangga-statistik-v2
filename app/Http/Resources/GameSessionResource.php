@@ -7,6 +7,9 @@ use App\Repositories\Game\GameSettingsRepository;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @mixin \App\Models\GameSession
+ */
 class GameSessionResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -48,24 +51,23 @@ class GameSessionResource extends JsonResource
                             'challenger_id' => $duel->challenger_id,
                             'opponent_id' => $duel->opponent_id,
                             'status' => $duel->status,
-                            'questions' => $duel->questions->map(function ($q) {
+                            'questions' => $duel->questions->map(function (\App\Models\GameDuelQuestion $q) {
                                 return [
                                     'id' => $q->id,
                                     'order' => $q->order,
                                     'soal' => new SoalPublicResource($q->soal)
                                 ];
-                            }),
-                            'answers' => $duel->answers->map(function ($a) use ($duel) {
+                            })->values()->all(),
+                            'answers' => $duel->answers->map(function (\App\Models\GameDuelAnswer $a) {
                                 $isRobot = $a->player->is_robot ?? false;
                                 return [
                                     'game_player_id' => $a->game_player_id,
                                     'soal_id' => $a->soal_id,
                                     'is_robot' => $isRobot,
-                                    'jawaban' => $isRobot ? $a->jawaban : null,
                                     'is_correct' => $isRobot ? $a->is_correct : null,
                                     'time_taken_ms' => $isRobot ? $a->time_taken_ms : null,
                                 ];
-                            })
+                            })->values()->all()
                         ] : null;
                     })
             ),

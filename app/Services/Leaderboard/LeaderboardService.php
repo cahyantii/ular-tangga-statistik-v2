@@ -34,7 +34,7 @@ class LeaderboardService
 
     public function cacheKey(?GameMode $mode): string
     {
-        return 'leaderboard.board.'.($mode?->value ?? 'global');
+        return 'leaderboard.board.'.($mode ? $mode->value : 'global');
     }
 
     /**
@@ -91,7 +91,7 @@ class LeaderboardService
                     return [
                         'user_id' => (int) $row->user_id,
                         'rank' => (int) $row->rnk,
-                        'nama' => $user?->name ?? '(pengguna dihapus)',
+                        'nama' => $user ? $user->name : '(pengguna dihapus)',
                         'avatar_url' => $user?->avatar_url,
                         'badge' => $badge['level_name'],
                         'badge_color' => $badge['badge_color'],

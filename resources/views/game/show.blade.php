@@ -270,7 +270,7 @@
         <div class="mb-4 flex items-center justify-between">
             <h3 class="flex items-center gap-2 text-lg font-bold text-slate-800">
                 <x-player.icon name="book" class="h-5 w-5 text-primary-500" />
-                Soal
+                <span id="question-title-text">Soal</span>
             </h3>
             <span id="question-timer" class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold text-primary-600"></span>
         </div>

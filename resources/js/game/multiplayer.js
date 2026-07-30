@@ -28,32 +28,79 @@ import { fetchState } from './http.js';
         return actor.is_robot ? 'Robot' : (actor.nama ?? 'Pemain lain');
     }
 
+import * as Colyseus from "colyseus.js";
+
+// Global colyseus room instance
+export let colyseusRoom = null;
+const colyseusClient = new Colyseus.Client("ws://localhost:2567");
+
     function joinRealtimeChannel(session) {
-        if (session.mode !== 'multiplayer' || !session.room_id || state.presenceChannel || !window.Echo) {
+        if (session.mode !== 'multiplayer' || colyseusRoom) {
             return;
         }
 
-        state.presenceChannel = window.Echo.join(`room.${session.room_id}`);
+        colyseusClient.joinOrCreate("game_room", { 
+            session_id: session.id,
+            nama: state.latestSession?.players?.find(p => p.id === state.myGamePlayerId)?.nama || "Player",
+            color: state.latestSession?.players?.find(p => p.id === state.myGamePlayerId)?.pawn_color || "red"
+        }).then(room => {
+            colyseusRoom = room;
+            console.log("Joined Colyseus room successfully", room.sessionId);
 
-        Object.keys(REALTIME_EVENT_LABELS).forEach((eventName) => {
-            state.presenceChannel.listen(`.${eventName}`, (payload) => {
-                const actorId = payload.game_player_id ?? null;
-                if (actorId !== null && actorId === state.myGamePlayerId) {
-                    return;
-                }
-
-                const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
+            room.onMessage("pawn_moved", (message) => {
+                const label = REALTIME_EVENT_LABELS['pawn-moved'](resolveActorName(message.playerId));
                 showToast(label);
                 pushLog('info', label);
                 loadState();
             });
+
+            room.onMessage("movement_blocked", (message) => {
+                const label = REALTIME_EVENT_LABELS['movement-blocked'](resolveActorName(message.playerId));
+                showToast(label);
+                pushLog('warning', label);
+                loadState();
+            });
+
+            room.onMessage("connector_applied", (message) => {
+                const label = REALTIME_EVENT_LABELS['connector-applied'](resolveActorName(message.playerId));
+                showToast(label);
+                pushLog('info', label);
+                loadState();
+            });
+
+            room.onMessage("question_presented", (message) => {
+                const label = REALTIME_EVENT_LABELS['question-presented'](resolveActorName(message.playerId));
+                showToast(label);
+                pushLog('info', label);
+                // Trigger modal for the player whose turn it is
+                if (message.playerId === state.myGamePlayerId) {
+                    // This logic would normally open the question modal
+                    // We need to fetch the question via API or directly from the message if provided
+                }
+                loadState();
+            });
+
+            room.onMessage("answered", (message) => {
+                const label = REALTIME_EVENT_LABELS['score-updated'](resolveActorName(message.playerId));
+                showToast(label);
+                pushLog('info', label);
+                loadState();
+            });
+
+            room.onMessage("error", (msg) => {
+                showToast(msg);
+                pushLog('error', msg);
+            });
+
+        }).catch(e => {
+            console.error("Colyseus JOIN ERROR", e);
         });
     }
 
     function leaveRealtimeChannel(session) {
-        if (state.presenceChannel && window.Echo && session.room_id) {
-            window.Echo.leave(`room.${session.room_id}`);
-            state.presenceChannel = null;
+        if (colyseusRoom) {
+            colyseusRoom.leave();
+            colyseusRoom = null;
         }
     }
 
