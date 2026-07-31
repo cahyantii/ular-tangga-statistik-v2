@@ -82,7 +82,7 @@ class DuelService
         return $duel;
     }
 
-    public function submitDuelAnswer(GameSession $gameSession, GamePlayer $gamePlayer, int $soalId, ?string $jawaban, int $timeTakenMs): array
+    public function submitDuelAnswer(GameSession $gameSession, GamePlayer $gamePlayer, int $soalId, ?string $jawaban, int $timeTakenMs, array &$events = []): array
     {
         $duel = GameDuel::where('game_session_id', $gameSession->id)->where('status', 'waiting')->firstOrFail();
         
@@ -104,7 +104,7 @@ class DuelService
         // Check if both players have answered all 3 questions
         $answersCount = $duel->answers()->count();
         if ($answersCount >= 6) { // 2 players * 3 questions
-            return $this->processDuelFinished($gameSession, $duel, $gamePlayer);
+            return $this->processDuelFinished($gameSession, $duel, $gamePlayer, $events);
         }
 
         return [
@@ -117,9 +117,9 @@ class DuelService
         ];
     }
 
-    private function processDuelFinished(GameSession $gameSession, GameDuel $duel, GamePlayer $gamePlayer): array
+    private function processDuelFinished(GameSession $gameSession, GameDuel $duel, GamePlayer $gamePlayer, array &$events): array
     {
-        $result = DB::transaction(function () use ($gameSession, $duel, $gamePlayer) {
+        $result = DB::transaction(function () use ($gameSession, $duel, $gamePlayer, &$events) {
             $challengerCorrect = $duel->answers()->where('game_player_id', $duel->challenger_id)->where('is_correct', true)->count();
             $opponentCorrect = $duel->answers()->where('game_player_id', $duel->opponent_id)->where('is_correct', true)->count();
 
@@ -166,13 +166,20 @@ class DuelService
             $loser->update(['posisi_pion' => $newPosisi]);
 
             $gameSession->update(['status' => GameStatus::Playing]);
-            $this->turn->advance($gameSession);
+            
+            // Check if loser meets another player at the new position
+            $newDuel = $this->checkAndStartDuel($gameSession, $loser, $events);
+            
+            if (!$newDuel) {
+                $this->turn->advance($gameSession);
+            }
 
             return [
                 'type' => 'duel_finished',
                 'session' => $gameSession->fresh(),
                 'player' => $gamePlayer->fresh(),
                 'duel' => $duel->load(['winner', 'loser']),
+                'new_duel' => $newDuel,
             ];
         });
 

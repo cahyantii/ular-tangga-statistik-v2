@@ -9,6 +9,7 @@ import { updateTurnIndicator } from './panel.js';
 import { queueAchievementUnlocks } from './achievement.js';
 import { showToast } from './utils.js';
 import { colyseusRoom } from './multiplayer.js';
+import { playSound } from './audio.js';
 
     // ---------------------------------------------------------------
     // HTTP
@@ -190,12 +191,14 @@ import { colyseusRoom } from './multiplayer.js';
 
                 await delay(120);
                 if (isNaik) {
+                    playSound('climb_ladder');
                     await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
                     spawnParticles(el, 'sparkle', 10);
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
                     dom.boardEl.classList.add('board-shake');
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
@@ -221,6 +224,12 @@ import { colyseusRoom } from './multiplayer.js';
             const result = await postJson(duelAnswerUrl, { soal_id: soalId, jawaban, time_taken_ms: timeTakenMs });
 
             if (result.type === 'duel_answered') {
+                if (result.benar) {
+                    playSound('correct_answer');
+                } else {
+                    playSound('false_answer');
+                }
+
                 dom.duelFeedbackEl.textContent = result.benar
                     ? 'Jawaban benar!'
                     : `Jawaban salah. ${result.pembahasan ?? ''}`;
@@ -262,9 +271,28 @@ import { colyseusRoom } from './multiplayer.js';
 
                 const duel = result.duel;
                 const loser = result.session.players.find(p => p.id === duel.loser_id);
+                const winner = result.session.players.find(p => p.id === duel.winner_id);
+
+                if (winner && loser) {
+                    const winnerNameEl = document.getElementById('duel-result-winner-name');
+                    const loserNameEl = document.getElementById('duel-result-loser-name');
+                    const penaltyEl = document.getElementById('duel-result-penalty');
+                    const messageEl = document.getElementById('duel-result-message');
+                    
+                    if(winnerNameEl) winnerNameEl.textContent = winner.nama || (winner.is_robot ? 'Robot' : 'Pemain');
+                    if(loserNameEl) loserNameEl.textContent = loser.nama || (loser.is_robot ? 'Robot' : 'Pemain');
+                    if(penaltyEl) penaltyEl.textContent = `Mundur ${duel.loser_penalty_roll} Langkah`;
+                    if(messageEl) messageEl.textContent = `${winner.nama || (winner.is_robot ? 'Robot' : 'Pemain')} memenangkan duel!`;
+                    
+                    window.dispatchEvent(new CustomEvent('open-modal', {detail: 'duel-result-modal'}));
+                    
+                    await delay(4000);
+                    window.dispatchEvent(new CustomEvent('close-modal', {detail: 'duel-result-modal'}));
+                    await delay(300);
+                }
 
                 if (loser) {
-                    showToast(`Duel selesai! ${duel.winner?.nama || 'Pemain'} menang. ${loser.nama || 'Pemain'} terlempar mundur ${duel.loser_penalty_roll} langkah.`);
+                    showToast(`Duel selesai! ${winner?.nama || 'Pemain'} menang. ${loser.nama || 'Pemain'} terlempar mundur ${duel.loser_penalty_roll} langkah.`);
                     await animateDiceRoll(duel.loser_penalty_roll);
                     const loserFromPosisi = state.knownPositions.get(loser.id) ?? 1;
                     await animatePlayerTurn(loser, loserFromPosisi, { type: 'normal', nilai_dadu: -duel.loser_penalty_roll });
@@ -304,6 +332,12 @@ import { colyseusRoom } from './multiplayer.js';
 
         try {
             const result = await postJson(config.answerUrl, { soal_id: soalId, jawaban });
+
+            if (result.benar) {
+                playSound('correct_answer');
+            } else {
+                playSound('false_answer');
+            }
 
             dom.questionFeedbackEl.textContent = result.benar
                 ? 'Jawaban benar!'
@@ -350,12 +384,14 @@ import { colyseusRoom } from './multiplayer.js';
                 await delay(120);
 
                 if (isNaik) {
+                    playSound('climb_ladder');
                     await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
                     spawnParticles(el, 'sparkle', 10);
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
                     dom.boardEl.classList.add('board-shake');
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
