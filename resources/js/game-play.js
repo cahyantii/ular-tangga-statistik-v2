@@ -1419,11 +1419,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         isJoiningColyseus = true;
 
-        if (!colyseusClient) {
-            colyseusClient = new Colyseus.Client('ws://localhost:2567');
-        }
-
         try {
+            if (!colyseusClient) {
+                const defaultColyseusUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/colyseus';
+                const colyseusUrl = import.meta.env.VITE_COLYSEUS_URL || defaultColyseusUrl;
+                colyseusClient = new Colyseus.Client(colyseusUrl);
+            }
             colyseusRoom = await colyseusClient.joinOrCreate("game_room", { 
                 token: csrfToken,
                 session_id: session.id,

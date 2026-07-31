@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -32,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (str_contains(config('app.url'), 'ngrok') || $this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
         Gate::policy(GameSession::class, GameSessionPolicy::class);
         Gate::policy(Room::class, RoomPolicy::class);
         Gate::policy(Certificate::class, CertificatePolicy::class);

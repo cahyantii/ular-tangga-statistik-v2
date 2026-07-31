@@ -1,0 +1,8 @@
+version: "2"
+tunnels:
+  laravel:
+    proto: http
+    addr: 8000
+  colyseus:
+    proto: http
+    addr: 2567

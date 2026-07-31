@@ -32,7 +32,9 @@ import * as Colyseus from "colyseus.js";
 
 // Global colyseus room instance
 export let colyseusRoom = null;
-const colyseusClient = new Colyseus.Client("ws://localhost:2567");
+const defaultColyseusUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/colyseus';
+const colyseusUrl = import.meta.env.VITE_COLYSEUS_URL || defaultColyseusUrl;
+const colyseusClient = new Colyseus.Client(colyseusUrl);
 
     function joinRealtimeChannel(session) {
         if (session.mode !== 'multiplayer' || colyseusRoom) {
