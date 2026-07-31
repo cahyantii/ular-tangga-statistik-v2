@@ -235,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function pushLog(kind, message) {
         const meta = LOG_ICONS[kind] ?? LOG_ICONS.info;
         logEmptyEl?.remove();
+        document.getElementById('game-log-empty-mobile')?.remove();
 
         const li = document.createElement('li');
         li.className = 'flex items-start gap-2 rounded-lg px-2 py-1.5 animate-fade-in-up';
@@ -242,10 +243,21 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="shrink-0">${meta.icon}</span>
             <span class="font-medium ${meta.color}">${message}</span>
         `;
-        logListEl.insertBefore(li, logListEl.firstChild);
 
+        // Desktop log
+        logListEl.insertBefore(li, logListEl.firstChild);
         while (logListEl.children.length > 30) {
             logListEl.removeChild(logListEl.lastChild);
+        }
+
+        // Mirror ke log mobile
+        const logListMobileEl = document.getElementById('game-log-list-mobile');
+        if (logListMobileEl) {
+            const liMobile = li.cloneNode(true);
+            logListMobileEl.insertBefore(liMobile, logListMobileEl.firstChild);
+            while (logListMobileEl.children.length > 30) {
+                logListMobileEl.removeChild(logListMobileEl.lastChild);
+            }
         }
     }
 
@@ -793,42 +805,84 @@ document.addEventListener('DOMContentLoaded', () => {
     // Panel pemain / robot
     // ---------------------------------------------------------------
     function renderPlayerPanels(session) {
-        playerPanelListEl.innerHTML = '';
+        const panelTargets = [
+            playerPanelListEl,
+            document.getElementById('player-panel-list-mobile'),
+        ].filter(Boolean);
+
+        panelTargets.forEach((el) => { el.innerHTML = ''; });
 
         session.players.forEach((p) => {
-            const template = p.is_robot ? robotCardTemplate : playerCardTemplate;
-            const node = template.content.firstElementChild.cloneNode(true);
+            panelTargets.forEach((targetEl) => {
+                const template = p.is_robot ? robotCardTemplate : playerCardTemplate;
+                const node = template.content.firstElementChild.cloneNode(true);
 
-            const isMe = !p.is_robot && myGamePlayerId === p.id;
-            const isTurn = session.current_turn_game_player_id === p.id && session.status === 'playing';
+                const isMe = !p.is_robot && myGamePlayerId === p.id;
+                const isTurn = session.current_turn_game_player_id === p.id && session.status === 'playing';
 
-            if (!p.is_robot) {
-                node.querySelector('[data-field="avatar"]').textContent = initials(p.nama);
-                node.querySelector('[data-field="nama"]').textContent = p.nama ?? 'Pemain';
-                if (isMe) node.querySelector('.me-badge')?.classList.remove('hidden');
-            }
+                if (!p.is_robot) {
+                    node.querySelector('[data-field="avatar"]').textContent = initials(p.nama);
+                    node.querySelector('[data-field="nama"]').textContent = p.nama ?? 'Pemain';
+                    if (isMe) node.querySelector('.me-badge')?.classList.remove('hidden');
+                }
 
-            const turnBadge = node.querySelector('.turn-badge');
-            if (isTurn) {
-                turnBadge?.classList.remove('hidden');
-                turnBadge?.classList.add('flex');
-                node.querySelector('.turn-glow')?.classList.add('opacity-100', 'ring-2', 'ring-accent-300');
-                node.classList.add('border-accent-300');
-            }
+                const turnBadge = node.querySelector('.turn-badge');
+                if (isTurn) {
+                    turnBadge?.classList.remove('hidden');
+                    turnBadge?.classList.add('flex');
+                    node.querySelector('.turn-glow')?.classList.add('opacity-100', 'ring-2', 'ring-accent-300');
+                    node.classList.add('border-accent-300');
+                }
 
-            node.querySelector('[data-field="skor"]').textContent = p.skor ?? 0;
-            node.querySelector('[data-field="posisi"]').textContent = p.posisi_pion ?? 0;
+                node.querySelector('[data-field="skor"]').textContent = p.skor ?? 0;
+                node.querySelector('[data-field="posisi"]').textContent = p.posisi_pion ?? 0;
 
-            const akurasiEl = node.querySelector('[data-field="akurasi"]');
-            const akurasi = p.accuracy !== null && p.accuracy !== undefined ? parseFloat(p.accuracy) : null;
-            akurasiEl.textContent = akurasi !== null ? `${Math.round(akurasi)}%` : '—';
+                const akurasiEl = node.querySelector('[data-field="akurasi"]');
+                const akurasi = p.accuracy !== null && p.accuracy !== undefined ? parseFloat(p.accuracy) : null;
+                akurasiEl.textContent = akurasi !== null ? `${Math.round(akurasi)}%` : '—';
 
-            const progressBar = node.querySelector('[data-field="progress-bar"]');
-            const pct = jumlahPetak > 0 ? Math.min(100, Math.max(0, (p.posisi_pion / jumlahPetak) * 100)) : 0;
-            progressBar.style.width = `${pct}%`;
+                const progressBar = node.querySelector('[data-field="progress-bar"]');
+                const pct = jumlahPetak > 0 ? Math.min(100, Math.max(0, (p.posisi_pion / jumlahPetak) * 100)) : 0;
+                progressBar.style.width = `${pct}%`;
 
-            playerPanelListEl.appendChild(node);
+                targetEl.appendChild(node);
+            });
         });
+
+        // Render panel Progress mobile
+        const progressPanelEl = document.getElementById('progress-panel-mobile');
+        if (progressPanelEl) {
+            progressPanelEl.innerHTML = '';
+            session.players.forEach((p) => {
+                const pct = jumlahPetak > 0 ? Math.min(100, Math.max(0, (p.posisi_pion / jumlahPetak) * 100)) : 0;
+                const isMe = !p.is_robot && myGamePlayerId === p.id;
+                const isTurn = session.current_turn_game_player_id === p.id && session.status === 'playing';
+                const label = p.is_robot ? 'Robot' : (p.nama ?? 'Pemain');
+                const avatarText = p.is_robot ? '🤖' : initials(p.nama);
+                const avatarBg = p.is_robot ? 'bg-slate-600' : 'bg-gradient-to-br from-primary-400 to-primary-600';
+
+                const div = document.createElement('div');
+                div.className = `rounded-2xl border p-3 ${isTurn ? 'border-accent-300 bg-accent-50 dark:bg-amber-900/20' : 'border-slate-100 bg-white dark:border-slate-700 dark:bg-slate-700/40'}`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${avatarBg} text-sm font-black text-white">${avatarText}</span>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">
+                                ${label}${isMe ? ' <span class="text-xs font-semibold text-primary-500">(Anda)</span>' : ''}
+                                ${isTurn ? '<span class="ml-1 text-xs font-semibold text-accent-600">● Giliran</span>' : ''}
+                            </p>
+                            <p class="text-xs text-slate-400">Posisi: ${p.posisi_pion ?? 0} / ${jumlahPetak}</p>
+                        </div>
+                        <p class="shrink-0 text-sm font-bold text-primary-600 dark:text-primary-400">${p.skor ?? 0} poin</p>
+                    </div>
+                    <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-600">
+                        <div class="h-2 rounded-full bg-gradient-to-r from-primary-400 to-secondary-500 transition-all duration-500" style="width: ${pct}%"></div>
+                    </div>
+                    <p class="mt-1 text-right text-[10px] text-slate-400">${Math.round(pct)}% menuju finish</p>
+                `;
+                progressPanelEl.appendChild(div);
+            });
+        }
     }
 
     function renderInventoryUI(session) {

@@ -18,11 +18,7 @@
             style="background-image: url('{{ asset('images/brand/logo-back.png') }}');"
             aria-hidden="true"
         ></div>
-        <div
-            class="absolute inset-0"
-            style="background: linear-gradient(90deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.75) 40%, rgba(255,255,255,.15) 100%);"
-            aria-hidden="true"
-        ></div>
+        <div class="admin-hero-overlay absolute inset-0" aria-hidden="true"></div>
 
         <div class="relative z-10 flex min-h-[240px] flex-col gap-5 p-6 sm:min-h-[260px] sm:flex-row sm:items-start sm:justify-between sm:p-8 lg:min-h-[300px] lg:p-10">
             <div>

@@ -6,41 +6,50 @@ import { pawnColorStyle } from './pawn.js';
     // Panel pemain / robot
     // ---------------------------------------------------------------
     function renderPlayerPanels(session) {
-        dom.playerPanelListEl.innerHTML = '';
+        const targets = [
+            dom.playerPanelListEl,
+            document.getElementById('player-panel-list-mobile'),
+        ].filter(Boolean);
+
+        targets.forEach((el) => {
+            el.innerHTML = '';
+        });
 
         session.players.forEach((p) => {
-            const template = p.is_robot ? dom.robotCardTemplate : dom.playerCardTemplate;
-            const node = template.content.firstElementChild.cloneNode(true);
+            targets.forEach((targetEl) => {
+                const template = p.is_robot ? dom.robotCardTemplate : dom.playerCardTemplate;
+                const node = template.content.firstElementChild.cloneNode(true);
 
-            const isMe = !p.is_robot && state.myGamePlayerId === p.id;
-            const isTurn = session.current_turn_game_player_id === p.id && session.status === 'playing';
+                const isMe = !p.is_robot && state.myGamePlayerId === p.id;
+                const isTurn = session.current_turn_game_player_id === p.id && session.status === 'playing';
 
-            if (!p.is_robot) {
-                node.querySelector('[data-field="avatar"]').textContent = initials(p.nama);
-                node.querySelector('[data-field="nama"]').textContent = p.nama ?? 'Pemain';
-                if (isMe) node.querySelector('.me-badge')?.classList.remove('hidden');
-            }
+                if (!p.is_robot) {
+                    node.querySelector('[data-field="avatar"]').textContent = initials(p.nama);
+                    node.querySelector('[data-field="nama"]').textContent = p.nama ?? 'Pemain';
+                    if (isMe) node.querySelector('.me-badge')?.classList.remove('hidden');
+                }
 
-            const turnBadge = node.querySelector('.turn-badge');
-            if (isTurn) {
-                turnBadge?.classList.remove('hidden');
-                turnBadge?.classList.add('flex');
-                node.querySelector('.turn-glow')?.classList.add('opacity-100', 'ring-2', 'ring-accent-300');
-                node.classList.add('border-accent-300');
-            }
+                const turnBadge = node.querySelector('.turn-badge');
+                if (isTurn) {
+                    turnBadge?.classList.remove('hidden');
+                    turnBadge?.classList.add('flex');
+                    node.querySelector('.turn-glow')?.classList.add('opacity-100', 'ring-2', 'ring-accent-300');
+                    node.classList.add('border-accent-300');
+                }
 
-            node.querySelector('[data-field="skor"]').textContent = p.skor ?? 0;
-            node.querySelector('[data-field="posisi"]').textContent = p.posisi_pion ?? 0;
+                node.querySelector('[data-field="skor"]').textContent = p.skor ?? 0;
+                node.querySelector('[data-field="posisi"]').textContent = p.posisi_pion ?? 0;
 
-            const akurasiEl = node.querySelector('[data-field="akurasi"]');
-            const akurasi = p.accuracy !== null && p.accuracy !== undefined ? parseFloat(p.accuracy) : null;
-            akurasiEl.textContent = akurasi !== null ? `${Math.round(akurasi)}%` : '—';
+                const akurasiEl = node.querySelector('[data-field="akurasi"]');
+                const akurasi = p.accuracy !== null && p.accuracy !== undefined ? parseFloat(p.accuracy) : null;
+                akurasiEl.textContent = akurasi !== null ? `${Math.round(akurasi)}%` : '—';
 
-            const progressBar = node.querySelector('[data-field="progress-bar"]');
-            const pct = config.jumlahPetak > 0 ? Math.min(100, Math.max(0, (p.posisi_pion / config.jumlahPetak) * 100)) : 0;
-            progressBar.style.width = `${pct}%`;
+                const progressBar = node.querySelector('[data-field="progress-bar"]');
+                const pct = config.jumlahPetak > 0 ? Math.min(100, Math.max(0, (p.posisi_pion / config.jumlahPetak) * 100)) : 0;
+                progressBar.style.width = `${pct}%`;
 
-            dom.playerPanelListEl.appendChild(node);
+                targetEl.appendChild(node);
+            });
         });
     }
 

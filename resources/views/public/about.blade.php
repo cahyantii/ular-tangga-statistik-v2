@@ -1,13 +1,13 @@
 <x-public-layout title="Tentang - {{ config('app.name') }}">
     {{-- Hero --}}
-    <section class="relative overflow-hidden bg-white">
+    <section class="relative overflow-hidden bg-white dark:bg-slate-900">
         <div class="mx-auto max-w-[1600px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-14 lg:pt-8">
-            <div class="relative isolate min-h-[560px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-blue-100 shadow-xl md:min-h-[500px] lg:min-h-[620px]">
+            <div class="relative isolate min-h-[560px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-blue-100 shadow-xl dark:border-slate-700 dark:from-slate-800 dark:via-slate-800 dark:to-slate-700 md:min-h-[500px] lg:min-h-[620px]">
 
                 {{-- Decorative light --}}
-                <div aria-hidden="true" class="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl"></div>
-                <div aria-hidden="true" class="pointer-events-none absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl lg:h-96 lg:w-96"></div>
-                <div aria-hidden="true" class="pointer-events-none absolute right-1/3 top-10 hidden h-40 w-40 rounded-full bg-white/70 blur-2xl lg:block"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl dark:bg-primary-900/30"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl dark:bg-primary-800/20 lg:h-96 lg:w-96"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute right-1/3 top-10 hidden h-40 w-40 rounded-full bg-white/70 blur-2xl dark:bg-slate-700/40 lg:block"></div>
 
                 <div class="relative flex h-full flex-col items-center gap-8 px-6 py-8 text-center sm:px-8 md:px-10 md:py-12 lg:items-start lg:gap-0 lg:px-0 lg:py-0 lg:text-left">
 
@@ -24,19 +24,19 @@
                     </div>
 
                     {{-- Blend overlay so the image melts into the text zone (desktop only) --}}
-                    <div aria-hidden="true" class="pointer-events-none absolute inset-0 hidden lg:block lg:bg-gradient-to-r lg:from-white lg:via-white/60 lg:to-transparent"></div>
+                    <div aria-hidden="true" class="pointer-events-none absolute inset-0 hidden lg:block lg:bg-gradient-to-r lg:from-white lg:via-white/60 lg:to-transparent dark:lg:from-slate-800 dark:lg:via-slate-800/60"></div>
 
                     <div class="animate-fade-in-up relative order-1 z-10 w-full lg:max-w-[45%] lg:px-16 lg:py-16">
-                        <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
+                        <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700 dark:bg-primary-900/50 dark:text-primary-300">
                             Tentang Kami
                         </span>
 
-                        <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl">
+                        <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 dark:text-white sm:text-5xl">
                             Tentang Ular Tangga
-                            <span class="block text-primary-600">Statistik Indonesia</span>
+                            <span class="block text-primary-600 dark:text-primary-400">Statistik Indonesia</span>
                         </h1>
 
-                        <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 lg:mx-0">
+                        <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 dark:text-slate-300 lg:mx-0">
                             Ular Tangga Statistik Indonesia adalah game edukasi berbasis web yang menggabungkan permainan
                             tradisional ular tangga dengan pembelajaran statistika dan pengenalan Badan Pusat Statistik (BPS).
                             Kami percaya bahwa literasi statistik adalah keterampilan penting yang sebaiknya dikuasai sejak dini,
@@ -51,35 +51,35 @@
     {{-- Tujuan Kami / Untuk Siapa --}}
     <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div class="grid gap-8 lg:grid-cols-2">
-            <div class="flex items-center gap-6 rounded-3xl bg-white p-8 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
+            <div class="flex items-center gap-6 rounded-3xl bg-white p-8 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft dark:bg-slate-800/80 dark:shadow-slate-900/50">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-3">
                         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-500 text-white shadow-sm">
                             <x-player.icon name="target" class="h-5 w-5" />
                         </span>
-                        <h2 class="text-xl font-bold text-slate-900">Tujuan Kami</h2>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tujuan Kami</h2>
                     </div>
-                    <ul class="mt-5 space-y-3 text-slate-600">
+                    <ul class="mt-5 space-y-3 text-slate-600 dark:text-slate-300">
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Meningkatkan literasi statistik masyarakat Indonesia
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Memperkenalkan tugas dan fungsi Badan Pusat Statistik
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Membuat pembelajaran statistika terasa menyenangkan
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Memberikan pengalaman belajar melalui gamifikasi
@@ -88,38 +88,47 @@
                 </div>
 
                 <svg viewBox="0 0 100 100" class="hidden h-28 w-28 shrink-0 select-none sm:block" aria-hidden="true">
-                    <circle cx="50" cy="50" r="46" fill="#EAF1FC" />
-                    <rect x="28" y="50" width="10" height="26" rx="2" fill="#93C5FD" />
-                    <rect x="42" y="40" width="10" height="36" rx="2" fill="#0F4CBA" />
-                    <rect x="56" y="30" width="10" height="46" rx="2" fill="#3E75D1" />
-                    <path d="M30 46 42 34 54 42 70 22" stroke="#0F4CBA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-                    <path d="M62 22h8v8" stroke="#0F4CBA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+                    {{-- dark: slate circle bg so bars are visible --}}
+                    <circle cx="50" cy="50" r="46" fill="#1e3a5f" class="hidden dark:block" />
+                    <circle cx="50" cy="50" r="46" fill="#EAF1FC" class="dark:hidden" />
+                    {{-- light bars --}}
+                    <rect x="28" y="50" width="10" height="26" rx="2" fill="#93C5FD" class="dark:hidden" />
+                    <rect x="42" y="40" width="10" height="36" rx="2" fill="#0F4CBA" class="dark:hidden" />
+                    <rect x="56" y="30" width="10" height="46" rx="2" fill="#3E75D1" class="dark:hidden" />
+                    <path d="M30 46 42 34 54 42 70 22" stroke="#0F4CBA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="dark:hidden" />
+                    <path d="M62 22h8v8" stroke="#0F4CBA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="dark:hidden" />
+                    {{-- dark bars (brighter so readable on dark bg) --}}
+                    <rect x="28" y="50" width="10" height="26" rx="2" fill="#7dd3fc" class="hidden dark:block" />
+                    <rect x="42" y="40" width="10" height="36" rx="2" fill="#60a5fa" class="hidden dark:block" />
+                    <rect x="56" y="30" width="10" height="46" rx="2" fill="#93c5fd" class="hidden dark:block" />
+                    <path d="M30 46 42 34 54 42 70 22" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="hidden dark:block" />
+                    <path d="M62 22h8v8" stroke="#93c5fd" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="hidden dark:block" />
                 </svg>
             </div>
 
-            <div class="flex flex-col-reverse items-center gap-6 rounded-3xl bg-white p-8 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft sm:gap-8 lg:flex-row">
+            <div class="flex flex-col-reverse items-center gap-6 rounded-3xl bg-white p-8 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft dark:bg-slate-800/80 dark:shadow-slate-900/50 sm:gap-8 lg:flex-row">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-3">
                         <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary-500 text-white shadow-sm">
                             <x-player.icon name="users" class="h-5 w-5" />
                         </span>
-                        <h2 class="text-xl font-bold text-slate-900">Untuk Siapa?</h2>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Untuk Siapa?</h2>
                     </div>
-                    <ul class="mt-5 space-y-3 text-slate-600">
+                    <ul class="mt-5 space-y-3 text-slate-600 dark:text-slate-300">
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-600 dark:bg-secondary-900/50 dark:text-secondary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Pelajar SD, SMP, dan SMA
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-600 dark:bg-secondary-900/50 dark:text-secondary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Mahasiswa
                         </li>
                         <li class="flex items-start gap-3">
-                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-600">
+                            <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-600 dark:bg-secondary-900/50 dark:text-secondary-300">
                                 <x-player.icon name="check" class="h-3 w-3" />
                             </span>
                             Masyarakat umum yang ingin belajar statistik
@@ -139,7 +148,7 @@
 
     {{-- Mengapa BPS --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl bg-primary-50/60 p-6 shadow-soft sm:gap-8 sm:p-8 lg:flex-row lg:p-10">
+        <div class="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl bg-primary-50/60 p-6 shadow-soft dark:bg-slate-800/80 dark:shadow-slate-900/50 sm:gap-8 sm:p-8 lg:flex-row lg:p-10">
             <img
                 src="{{ asset('images/brand/gedung.png') }}"
                 alt="Ilustrasi gedung Badan Pusat Statistik"
@@ -148,8 +157,8 @@
             >
 
             <div class="text-center lg:flex-1 lg:text-left">
-                <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Mengapa Badan Pusat Statistik?</h2>
-                <p class="mt-3 max-w-2xl text-slate-600 leading-relaxed">
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Mengapa Badan Pusat Statistik?</h2>
+                <p class="mt-3 max-w-2xl text-slate-600 dark:text-slate-300 leading-relaxed">
                     BPS adalah lembaga yang menghasilkan data resmi negara &ndash; mulai dari angka kemiskinan, inflasi,
                     hingga Indeks Pembangunan Manusia. Data-data ini memengaruhi kebijakan yang berdampak langsung
                     pada kehidupan kita. Dengan memahami dasar-dasar statistik dan peran BPS, kita menjadi warga

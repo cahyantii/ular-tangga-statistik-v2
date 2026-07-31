@@ -1,9 +1,9 @@
 <x-admin-layout>
     {{-- Header card --}}
-    <div class="overflow-hidden rounded-[30px] p-8 shadow-[0_10px_40px_rgba(0,0,0,.06)]" style="background: linear-gradient(90deg, #ffffff 0%, #ECFDF5 50%, #ffffff 100%);">
+    <div class="admin-header-gradient overflow-hidden rounded-[30px] p-8 shadow-[0_10px_40px_rgba(0,0,0,.06)]">
         <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-center gap-4">
-                <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-green-100 text-green-600">
+                <span class="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] bg-green-100 text-green-600 dark-admin:bg-green-900/30 dark-admin:text-green-400">
                     <x-player.icon name="help" class="h-8 w-8" />
                 </span>
                 <div>
@@ -14,17 +14,17 @@
 
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('admin.management.soal.export', ['format' => 'xlsx']) }}"
-                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-green-500 bg-white px-4 text-sm font-semibold text-green-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md">
+                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-green-500 bg-white px-4 text-sm font-semibold text-green-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md dark-admin:border-green-600 dark-admin:bg-slate-700 dark-admin:text-green-400">
                     <x-player.icon name="download" class="h-4 w-4" />
                     Export .xlsx
                 </a>
                 <a href="{{ route('admin.management.soal.export', ['format' => 'csv']) }}"
-                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-blue-500 bg-white px-4 text-sm font-semibold text-blue-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md">
+                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-blue-500 bg-white px-4 text-sm font-semibold text-blue-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md dark-admin:border-blue-600 dark-admin:bg-slate-700 dark-admin:text-blue-400">
                     <x-player.icon name="download" class="h-4 w-4" />
                     Export .csv
                 </a>
                 <a href="{{ route('admin.management.soal.import.create') }}"
-                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-violet-500 bg-white px-4 text-sm font-semibold text-violet-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md">
+                   class="inline-flex h-12 items-center gap-2 rounded-2xl border border-violet-500 bg-white px-4 text-sm font-semibold text-violet-600 shadow-sm transition duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-md dark-admin:border-violet-600 dark-admin:bg-slate-700 dark-admin:text-violet-400">
                     <x-player.icon name="upload-cloud" class="h-4 w-4" />
                     Import
                 </a>
@@ -88,7 +88,7 @@
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-100 text-sm">
                 <thead>
-                    <tr class="h-16 text-left text-xs font-semibold uppercase tracking-wider text-slate-600" style="background: linear-gradient(90deg, #ECFDF5, #F0FDF4);">
+                    <tr class="h-16 text-left text-xs font-semibold uppercase tracking-wider text-slate-600 admin-thead-gradient">
                         <th class="px-4 sm:px-6">#</th>
                         <th class="px-4 sm:px-6">Pertanyaan</th>
                         <th class="px-4 sm:px-6">Kategori</th>

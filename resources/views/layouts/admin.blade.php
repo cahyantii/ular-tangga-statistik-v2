@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
+    {{-- Class "dark-admin" ditambah/dihapus oleh Alpine store adminTheme (resources/js/theme.js).
+         Script inline di bawah menerapkan preferensi SEBELUM render pertama (anti-FOUC). --}}
+    <script>
+        (function () {
+            if (localStorage.getItem('admin-theme') === 'dark') {
+                document.documentElement.classList.add('dark-admin');
+            }
+        })();
+    </script>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,6 +21,219 @@
         <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+        {{-- ============================================================ --}}
+        {{-- Admin dark mode — CSS langsung (tidak butuh Vite build)      --}}
+        {{-- Ini meng-override semua elemen putih/terang di panel admin   --}}
+        {{-- saat html.dark-admin aktif.                                  --}}
+        {{-- ============================================================ --}}
+        <style>
+            /* Surfaces putih & abu menjadi gelap */
+            html.dark-admin .bg-white,
+            html.dark-admin .bg-white\/80,
+            html.dark-admin .bg-white\/95 {
+                background-color: #1e293b !important;
+            }
+            html.dark-admin .bg-slate-50,
+            html.dark-admin .bg-gray-50 {
+                background-color: rgba(30, 41, 59, 0.7) !important;
+            }
+            html.dark-admin .bg-slate-100,
+            html.dark-admin .bg-gray-100 {
+                background-color: rgba(51, 65, 85, 0.6) !important;
+            }
+
+            /* Teks */
+            html.dark-admin .text-slate-900 { color: #f1f5f9 !important; }
+            html.dark-admin .text-slate-800 { color: #e2e8f0 !important; }
+            html.dark-admin .text-slate-700 { color: #cbd5e1 !important; }
+            html.dark-admin .text-slate-600 { color: #94a3b8 !important; }
+            html.dark-admin .text-slate-500 { color: #64748b !important; }
+
+            /* Border */
+            html.dark-admin .border-slate-100 { border-color: rgba(51, 65, 85, 0.4) !important; }
+            html.dark-admin .border-slate-200 { border-color: rgba(71, 85, 105, 0.5) !important; }
+
+            /* Input, select, textarea */
+            html.dark-admin input[type="text"],
+            html.dark-admin input[type="number"],
+            html.dark-admin input[type="date"],
+            html.dark-admin input[type="email"],
+            html.dark-admin input[type="password"],
+            html.dark-admin input[type="search"],
+            html.dark-admin select,
+            html.dark-admin textarea {
+                background-color: #1e293b !important;
+                color: #e2e8f0 !important;
+                border-color: rgba(71, 85, 105, 0.6) !important;
+            }
+            html.dark-admin input::placeholder,
+            html.dark-admin textarea::placeholder { color: #64748b !important; }
+
+            /* Table */
+            html.dark-admin thead tr,
+            html.dark-admin thead,
+            html.dark-admin .admin-thead-neutral,
+            html.dark-admin .admin-thead-gradient {
+                background: rgba(15, 23, 42, 0.85) !important;
+                background-image: none !important;
+            }
+            html.dark-admin .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+            html.dark-admin .divide-y > :not([hidden]) ~ :not([hidden]) {
+                border-color: rgba(51, 65, 85, 0.5) !important;
+            }
+
+            /* Header card gradient (soal index dll) */
+            html.dark-admin .admin-header-gradient {
+                background: linear-gradient(90deg, #1e293b 0%, rgba(6,78,59,0.25) 50%, #1e293b 100%) !important;
+            }
+
+            /* Hero overlay (dashboard) */
+            html.dark-admin .admin-hero-overlay {
+                background: linear-gradient(90deg, rgba(15,23,42,.96) 0%, rgba(15,23,42,.78) 42%, rgba(15,23,42,.15) 100%) !important;
+            }
+
+            /* Hover baris tabel */
+            html.dark-admin .hover\:bg-green-50\/40:hover  { background-color: rgba(6,78,59,0.15) !important; }
+            html.dark-admin .hover\:bg-slate-50\/60:hover  { background-color: rgba(51,65,85,0.2) !important; }
+            html.dark-admin .hover\:bg-slate-50:hover      { background-color: rgba(51,65,85,0.3) !important; }
+            html.dark-admin .hover\:bg-slate-100:hover     { background-color: rgba(51,65,85,0.5) !important; }
+            html.dark-admin .hover\:bg-green-50:hover      { background-color: rgba(6,78,59,0.25) !important; }
+            html.dark-admin .hover\:bg-blue-50:hover       { background-color: rgba(30,58,138,0.25) !important; }
+            html.dark-admin .hover\:bg-red-50:hover        { background-color: rgba(127,29,29,0.25) !important; }
+
+            /* Stat cards berwarna pastel */
+            html.dark-admin .bg-green-50\/60  { background-color: rgba(6,78,59,0.25) !important; }
+            html.dark-admin .bg-blue-50\/60   { background-color: rgba(30,58,138,0.25) !important; }
+            html.dark-admin .bg-orange-50\/60 { background-color: rgba(124,45,18,0.25) !important; }
+            html.dark-admin .bg-violet-50\/60 { background-color: rgba(76,29,149,0.25) !important; }
+            html.dark-admin .bg-green-50      { background-color: rgba(6,78,59,0.2) !important; }
+            html.dark-admin .bg-blue-50       { background-color: rgba(30,58,138,0.2) !important; }
+            html.dark-admin .bg-emerald-50    { background-color: rgba(6,78,59,0.2) !important; }
+            html.dark-admin .bg-violet-50     { background-color: rgba(76,29,149,0.2) !important; }
+            html.dark-admin .bg-amber-50      { background-color: rgba(120,53,15,0.2) !important; }
+            html.dark-admin .bg-orange-50     { background-color: rgba(124,45,18,0.2) !important; }
+            html.dark-admin .bg-red-50        { background-color: rgba(127,29,29,0.2) !important; }
+            html.dark-admin .bg-blue-100      { background-color: rgba(30,58,138,0.3) !important; }
+            html.dark-admin .bg-violet-100    { background-color: rgba(76,29,149,0.3) !important; }
+            html.dark-admin .bg-green-100     { background-color: rgba(6,78,59,0.3) !important; }
+            html.dark-admin .bg-emerald-100   { background-color: rgba(6,78,59,0.3) !important; }
+            html.dark-admin .bg-orange-100    { background-color: rgba(124,45,18,0.3) !important; }
+
+            /* Border pastel */
+            html.dark-admin .border-green-100  { border-color: rgba(34,197,94,0.18) !important; }
+            html.dark-admin .border-blue-100   { border-color: rgba(59,130,246,0.18) !important; }
+            html.dark-admin .border-orange-100 { border-color: rgba(249,115,22,0.18) !important; }
+            html.dark-admin .border-violet-100 { border-color: rgba(139,92,246,0.18) !important; }
+
+            /* Hardcoded hex */
+            html.dark-admin .text-\[\#1E293B\] { color: #e2e8f0 !important; }
+            html.dark-admin .text-\[\#1F2937\] { color: #e2e8f0 !important; }
+            html.dark-admin .text-\[\#64748B\] { color: #94a3b8 !important; }
+            html.dark-admin .text-\[\#92400E\] { color: #fde68a !important; }
+            html.dark-admin .text-\[\#B45309\] { color: #fcd34d !important; }
+            html.dark-admin .border-\[\#E5E7EB\],
+            html.dark-admin .border-\[\#E5E7EB\]\/70 { border-color: rgba(51,65,85,0.5) !important; }
+            html.dark-admin .bg-\[\#FEF3C7\]   { background-color: rgba(120,53,15,0.2) !important; }
+            html.dark-admin .border-\[\#FDE68A\] { border-color: rgba(251,191,36,0.3) !important; }
+
+            /* Tombol action di tabel (border outline) */
+            html.dark-admin .border-green-200  { border-color: rgba(34,197,94,0.3) !important; }
+            html.dark-admin .border-slate-200  { border-color: rgba(71,85,105,0.4) !important; }
+            html.dark-admin .border-red-200    { border-color: rgba(252,165,165,0.3) !important; }
+            html.dark-admin .border-green-500  { border-color: rgba(34,197,94,0.6) !important; }
+            html.dark-admin .border-blue-500   { border-color: rgba(59,130,246,0.6) !important; }
+            html.dark-admin .border-violet-500 { border-color: rgba(139,92,246,0.6) !important; }
+
+            /* Tombol outline di header soal (bg-white + border) */
+            html.dark-admin a.border-green-500,
+            html.dark-admin a.border-blue-500,
+            html.dark-admin a.border-violet-500 {
+                background-color: #1e293b !important;
+            }
+
+            /* Badge chip kategori (violet) */
+            html.dark-admin .bg-violet-100.text-violet-700 {
+                background-color: rgba(76,29,149,0.3) !important;
+                color: #c4b5fd !important;
+            }
+            html.dark-admin .bg-green-100.text-green-700,
+            html.dark-admin .bg-green-100.text-green-600 {
+                background-color: rgba(6,78,59,0.3) !important;
+                color: #4ade80 !important;
+            }
+            html.dark-admin .bg-blue-100.text-blue-700 {
+                background-color: rgba(30,58,138,0.3) !important;
+                color: #93c5fd !important;
+            }
+            html.dark-admin .bg-red-50.text-red-600 {
+                background-color: rgba(127,29,29,0.25) !important;
+                color: #fca5a5 !important;
+            }
+            html.dark-admin .bg-amber-50.text-amber-600 {
+                background-color: rgba(120,53,15,0.25) !important;
+                color: #fcd34d !important;
+            }
+            html.dark-admin .bg-slate-100.text-slate-500 {
+                background-color: rgba(51,65,85,0.5) !important;
+                color: #94a3b8 !important;
+            }
+
+            /* Skeleton chart */
+            html.dark-admin .bg-slate-100.animate-pulse { background-color: #1e293b !important; }
+
+            /* Sidebar */
+            html.dark-admin .admin-sidebar {
+                background-color: #1a2744 !important;
+                border-right-color: rgba(71,85,105,0.5) !important;
+            }
+            html.dark-admin nav .text-\[\#64748B\]  { color: #94a3b8 !important; }
+            html.dark-admin nav .text-\[\#334155\]  { color: #94a3b8 !important; }
+            html.dark-admin nav .text-\[\#1E293B\]  { color: #cbd5e1 !important; }
+
+            /* Header */
+            html.dark-admin header {
+                background-color: #1e293b !important;
+                border-bottom-color: rgba(71,85,105,0.5) !important;
+            }
+            html.dark-admin .admin-header-glass {
+                background: rgba(15,23,42,0.88) !important;
+                border-bottom-color: rgba(71,85,105,0.5) !important;
+            }
+
+            /* Footer */
+            html.dark-admin footer {
+                background-color: #1e293b !important;
+                border-top-color: rgba(71,85,105,0.5) !important;
+            }
+            html.dark-admin footer p,
+            html.dark-admin footer a { color: #64748b !important; }
+
+            /* Notif dropdown */
+            html.dark-admin .notif-dropdown-glass {
+                background: rgba(15,23,42,0.97) !important;
+                border-color: rgba(71,85,105,0.5) !important;
+            }
+            html.dark-admin .notif-dropdown-glass .text-slate-800,
+            html.dark-admin .notif-dropdown-glass .font-semibold { color: #e2e8f0 !important; }
+            html.dark-admin .notif-dropdown-glass .text-slate-500 { color: #94a3b8 !important; }
+            html.dark-admin .notif-dropdown-glass .text-slate-400 { color: #64748b !important; }
+            html.dark-admin .notif-dropdown-glass .border-slate-100,
+            html.dark-admin .notif-dropdown-glass .border-b { border-color: rgba(71,85,105,0.5) !important; }
+            html.dark-admin .notif-dropdown-glass .hover\:bg-slate-50:hover { background-color: rgba(51,65,85,0.35) !important; }
+            html.dark-admin .notif-dropdown-glass .bg-slate-100 { background-color: rgba(51,65,85,0.7) !important; }
+
+            /* Profile dropdown */
+            html.dark-admin .rounded-xl.p-1\.5 {
+                background-color: #1e293b !important;
+                border-color: rgba(71,85,105,0.5) !important;
+            }
+
+            /* Flash messages */
+            html.dark-admin .bg-emerald-50 { background-color: rgba(6,78,59,0.2) !important; }
+            html.dark-admin .border-emerald-200 { border-color: rgba(52,211,153,0.3) !important; }
+            html.dark-admin .text-emerald-800 { color: #6ee7b7 !important; }
+        </style>
     </head>
     <body class="antialiased">
         <div
@@ -183,6 +405,25 @@
                     </button>
 
                     <div class="flex-1"></div>
+
+                    {{-- Toggle mode gelap/terang admin --}}
+                    <button
+                        type="button"
+                        @click="$store.adminTheme.toggle()"
+                        :aria-label="$store.adminTheme.isDark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'"
+                        :title="$store.adminTheme.isDark ? 'Mode Terang' : 'Mode Gelap'"
+                        class="theme-toggle-btn text-slate-500 hover:text-slate-700"
+                    >
+                        {{-- Ikon bulan: tampil saat mode terang (klik → gelap) --}}
+                        <svg x-show="!$store.adminTheme.isDark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+                        </svg>
+                        {{-- Ikon matahari: tampil saat mode gelap (klik → terang) --}}
+                        <svg x-show="$store.adminTheme.isDark" x-cloak xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <circle cx="12" cy="12" r="5" />
+                            <path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                        </svg>
+                    </button>
 
                     <div class="relative" x-data="{ notifOpen: false }">
                         <button

@@ -25,7 +25,7 @@
 @endphp
 
 <div>
-    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ $label }}</label>
+    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{{ $label }}</label>
 
     <div class="relative">
         @if ($icon)
@@ -41,7 +41,7 @@
             value="{{ old($name, $value) }}"
             aria-invalid="{{ $hasError ? 'true' : 'false' }}"
             {{ $attributes->merge([
-                'class' => "w-full border {$borderClasses} {$sizeClasses} bg-white text-slate-700 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 "
+                'class' => "w-full border {$borderClasses} {$sizeClasses} bg-white text-slate-700 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500 dark:border-slate-600 "
                     . ($icon ? $iconPad : $noIconPad)
                     . (isset($suffix) ? ' pr-32' : ($isLg ? ' pr-4' : ' pr-3.5')),
             ]) }}

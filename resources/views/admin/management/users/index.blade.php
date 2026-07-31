@@ -94,7 +94,7 @@
     <div class="mt-6 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-[0_10px_40px_rgba(0,0,0,.06)]">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-slate-100 text-sm">
-                <thead class="bg-slate-50">
+                <thead class="admin-thead-neutral">
                     <tr class="text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                         <th class="px-4 py-3.5 sm:px-6">#</th>
                         <th class="px-4 py-3.5 sm:px-6">Nama</th>

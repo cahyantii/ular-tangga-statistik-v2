@@ -16,12 +16,25 @@
     @endif
 
     <div id="game-fullscreen-container" class="transition-colors duration-300 relative group w-full h-full overflow-y-auto overflow-x-hidden p-0 xl:bg-transparent">
+
+        {{-- Style centering papan mobile — tidak bisa pakai Tailwind karena calc(100svh) tidak masuk safelist --}}
+        <style>
+            @media (max-width: 1279px) {
+                #board-centering-wrapper {
+                    min-height: calc(100svh - 136px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding-bottom: 15%;
+                }
+            }
+        </style>
         
         {{-- Toast notifikasi ringan --}}
-        <div id="game-toast" class="fixed left-1/2 top-20 z-50 hidden -translate-x-1/2 animate-fade-in-up rounded-xl border border-accent-200 bg-white px-4 py-3 text-sm font-medium text-accent-700 shadow-soft-lg"></div>
+        <div id="game-toast" class="fixed left-1/2 top-20 z-50 hidden -translate-x-1/2 animate-fade-in-up rounded-xl border border-accent-200 bg-white px-4 py-3 text-sm font-medium text-accent-700 shadow-soft-lg dark:border-amber-700/50 dark:bg-slate-800 dark:text-amber-400"></div>
 
         {{-- Lawan terputus koneksi (Multiplayer): countdown masa tenggang reconnect --}}
-        <div id="game-paused-banner" class="mb-4 hidden items-center gap-2 rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700 w-full max-w-4xl mx-auto">
+        <div id="game-paused-banner" class="mb-4 hidden items-center gap-2 rounded-2xl border border-accent-200 bg-accent-50 px-4 py-3 text-sm text-accent-700 w-full max-w-4xl mx-auto dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-400">
             <x-player.icon name="clock" class="h-4 w-4 shrink-0" />
             Lawan terputus koneksi. Permainan dijeda &mdash; menunggu reconnect
             <span id="game-paused-timer" class="font-bold"></span>
@@ -32,34 +45,128 @@
             kolom ditumpuk + panel Pemain/Progress/Log disembunyikan di balik FAB
             mobile):
         --}}
+        {{-- ============================================================
+             Panel overlay mobile: Pemain, Log, Progress
+             Di desktop (xl+) panel ini tidak dipakai — masing-masing
+             sudah tampil sebagai kolom grid. Di mobile panel muncul
+             sebagai overlay saat tombol FAB diklik.
+        ============================================================ --}}
+
+        {{-- Overlay: Pemain (mobile) --}}
+        <div
+            x-data="{ open: false }"
+            @open-mobile-panel.window="open = ($event.detail === 'pemain')"
+            @close-mobile-panel.window="open = false"
+            class="xl:hidden"
+        >
+            <div x-show="open" x-cloak x-transition.opacity @click="open = false" class="fixed inset-0 z-40 bg-slate-900/50"></div>
+            <div
+                x-show="open"
+                x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 translate-y-4"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-4"
+                class="fixed inset-x-4 top-20 bottom-24 z-50 overflow-y-auto rounded-3xl bg-white p-4 shadow-xl dark:bg-slate-800"
+            >
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                        <x-player.icon name="users" class="h-4 w-4 text-primary-500" />
+                        Pemain
+                    </h3>
+                    <button @click="open = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <x-player.icon name="close" class="h-4 w-4" />
+                    </button>
+                </div>
+                <div id="player-panel-list-mobile" class="space-y-3"></div>
+            </div>
+        </div>
+
+        {{-- Overlay: Log (mobile) --}}
+        <div
+            x-data="{ open: false }"
+            @open-mobile-panel.window="open = ($event.detail === 'log')"
+            @close-mobile-panel.window="open = false"
+            class="xl:hidden"
+        >
+            <div x-show="open" x-cloak x-transition.opacity @click="open = false" class="fixed inset-0 z-40 bg-slate-900/50"></div>
+            <div
+                x-show="open"
+                x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 translate-y-4"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-4"
+                class="fixed inset-x-4 top-20 bottom-24 z-50 overflow-y-auto rounded-3xl bg-white p-4 shadow-xl dark:bg-slate-800"
+            >
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                        <x-player.icon name="clock" class="h-4 w-4 text-primary-500" />
+                        Log Permainan
+                    </h3>
+                    <button @click="open = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <x-player.icon name="close" class="h-4 w-4" />
+                    </button>
+                </div>
+                <ul id="game-log-list-mobile" class="space-y-2 text-xs">
+                    <li class="text-slate-400" id="game-log-empty-mobile">Belum ada aktivitas.</li>
+                </ul>
+            </div>
+        </div>
+
+        {{-- Overlay: Progress (mobile) --}}
+        <div
+            x-data="{ open: false }"
+            @open-mobile-panel.window="open = ($event.detail === 'progress')"
+            @close-mobile-panel.window="open = false"
+            class="xl:hidden"
+        >
+            <div x-show="open" x-cloak x-transition.opacity @click="open = false" class="fixed inset-0 z-40 bg-slate-900/50"></div>
+            <div
+                x-show="open"
+                x-cloak
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 translate-y-4"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100 translate-y-0"
+                x-transition:leave-end="opacity-0 translate-y-4"
+                class="fixed inset-x-4 top-20 bottom-24 z-50 overflow-y-auto rounded-3xl bg-white p-4 shadow-xl dark:bg-slate-800"
+            >
+                <div class="mb-3 flex items-center justify-between">
+                    <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                        <x-player.icon name="flag" class="h-4 w-4 text-primary-500" />
+                        Progress Permainan
+                    </h3>
+                    <button @click="open = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+                        <x-player.icon name="close" class="h-4 w-4" />
+                    </button>
+                </div>
+                <div id="progress-panel-mobile" class="space-y-3">
+                    <p class="text-xs text-slate-400">Memuat data progress...</p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 gap-5 xl:grid-cols-[280px_1fr_280px] xl:gap-4 items-start w-full">
         {{-- Kolom 1 (desktop saja): Pemain + Log --}}
         <div class="max-xl:hidden xl:col-start-1 xl:row-start-1 flex flex-col gap-4">
-            {{-- Panel Pemain --}}
-            <div
-                x-data="{ open: false }"
-                @open-mobile-panel.window="open = ($event.detail === 'pemain')"
-                @close-mobile-panel.window="open = false"
-            >
-                <div x-show="open" x-cloak @click="open = false" class="fixed inset-x-0 top-0 bottom-24 z-40 bg-slate-900/50 xl:hidden"></div>
-                <div
-                    :class="open ? 'max-xl:fixed max-xl:inset-x-4 max-xl:top-20 max-xl:bottom-24 max-xl:z-40 max-xl:overflow-y-auto' : ''"
-                    class="animate-fade-in-up rounded-3xl bg-white p-4 shadow-sm sm:p-5"
-                >
-                    <div class="mb-2 flex items-center justify-between">
-                        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700">
-                            <x-player.icon name="users" class="h-4 w-4 text-primary-500" />
-                            Pemain
-                        </h3>
-                        <button @click="open = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 xl:hidden">
-                            <x-player.icon name="close" class="h-4 w-4" />
-                        </button>
-                    </div>
-                    <div id="player-panel-list" class="space-y-3"></div>
+            {{-- Panel Pemain (desktop) --}}
+            <div class="animate-fade-in-up rounded-3xl bg-white p-4 shadow-sm dark:bg-slate-800 sm:p-5">
+                <div class="mb-2 flex items-center justify-between">
+                    <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                        <x-player.icon name="users" class="h-4 w-4 text-primary-500" />
+                        Pemain
+                    </h3>
                 </div>
+                <div id="player-panel-list" class="space-y-3"></div>
             </div>
 
-            {{-- Log Permainan (di bawah Pemain, desktop saja) --}}
+            {{-- Log Permainan (desktop saja) --}}
             <div class="animate-fade-in-up">
                 <x-game.log-card />
             </div>
@@ -67,7 +174,9 @@
 
         {{-- Kolom 2 (tengah): Papan --}}
         <div class="max-xl:order-2 xl:col-start-2 xl:row-start-1">
-            <div id="board-card" class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm sm:p-4 mx-auto w-full" style="aspect-ratio: 1 / 1;">
+            {{-- Centering wrapper: di mobile papan di-tengahkan vertikal mengisi sisa layar --}}
+            <div id="board-centering-wrapper">
+                <div id="board-card" class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm dark:bg-slate-800 sm:p-4 w-full" style="aspect-ratio: 1 / 1;">
                 {{--
                     Toggle tema visual ular/perosotan - PURE client-side
                     (localStorage, lihat board-visuals.js initBoardThemeToggle()
@@ -77,10 +186,10 @@
                 --}}
                 <div class="mb-3 relative flex justify-center gap-2 items-center">
                     <div id="board-theme-toggle" class="flex gap-2">
-                        <button type="button" data-board-theme="ular" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150">
+                        <button type="button" data-board-theme="ular" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150 dark:border-slate-600 dark:text-slate-400">
                             🐍 Ular
                         </button>
-                        <button type="button" data-board-theme="perosotan" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150">
+                        <button type="button" data-board-theme="perosotan" class="board-theme-btn rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-500 transition-colors duration-150 dark:border-slate-600 dark:text-slate-400">
                             🛝 Perosotan
                         </button>
                     </div>
@@ -93,13 +202,14 @@
 
                 <x-game.board :papan="$papan" />
             </div>
+            </div>{{-- /centering wrapper mobile --}}
         </div>
 
 
-        {{-- Kolom 3 (kanan): Giliran+Dadu --}}
-        <div id="turn-dice-card" class="max-xl:order-1 animate-fade-in-up rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-soft-xl p-5 xl:col-start-3 xl:row-start-1 relative overflow-hidden">
+        {{-- Kolom 3 (kanan): Giliran+Dadu — disembunyikan di mobile, hanya tampil di desktop (xl ke atas) --}}
+        <div id="turn-dice-card" class="max-xl:hidden animate-fade-in-up rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-soft-xl p-5 xl:col-start-3 xl:row-start-1 relative overflow-hidden dark:bg-slate-800/90 dark:border-slate-700/50">
             <!-- Dekorasi gradient background ringan -->
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none"></div>
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-100 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-50 pointer-events-none dark:bg-primary-900/20"></div>
             
             <div class="flex flex-col items-center gap-5 relative z-10">
                 <div class="flex items-center gap-3 self-start w-full">
@@ -134,14 +244,14 @@
                     <p class="text-[11px] text-slate-400">Klik untuk melempar dadu</p>
 
                     @if(app()->environment('local'))
-                        <div class="mt-2 text-center border-t border-slate-100 pt-2 w-full">
+                        <div class="mt-2 text-center border-t border-slate-100 pt-2 w-full dark:border-slate-700">
                             <label class="text-[10px] text-slate-500 block mb-1 uppercase font-bold tracking-wider">Dev Cheat: Force Roll</label>
-                            <input type="number" id="forced-roll-input" min="1" max="100" class="w-20 rounded-md border border-slate-300 py-1 px-2 text-center text-sm" placeholder="Auto">
+                            <input type="number" id="forced-roll-input" min="1" max="100" class="w-20 rounded-md border border-slate-300 py-1 px-2 text-center text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200" placeholder="Auto">
                         </div>
                     @endif
 
                     {{-- UI Inventory --}}
-                    <div id="player-inventory-container" class="mt-4 w-full border-t border-slate-100 pt-3">
+                    <div id="player-inventory-container" class="mt-4 w-full border-t border-slate-100 pt-3 dark:border-slate-700">
                         <h4 class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide text-center">Item Anda</h4>
                         <div id="player-inventory-list" class="flex flex-wrap gap-2 justify-center">
                             <!-- Item akan dirender oleh JS -->
@@ -159,7 +269,7 @@
         <button
             id="leave-game-button"
             type="button"
-            class="max-xl:hidden flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-600 transition-all duration-200 hover:bg-rose-50 xl:col-start-3 xl:row-start-2"
+            class="max-xl:hidden flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-semibold text-rose-600 transition-all duration-200 hover:bg-rose-50 xl:col-start-3 xl:row-start-2 dark:bg-slate-800 dark:border-rose-800/50 dark:hover:bg-rose-900/20"
         >
             Keluar dari Permainan
         </button>
@@ -174,7 +284,7 @@
         elemen aslinya masing-masing — FAB ini murni "remote control", tidak
         ada logic yang diduplikasi (lihat initMobileActionFab() di game-play.js).
     --}}
-    <div id="mobile-action-fab" class="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-sm items-end justify-between gap-1 rounded-[28px] bg-white/95 p-2 shadow-soft-lg backdrop-blur-md xl:hidden">
+    <div id="mobile-action-fab" class="fixed inset-x-3 bottom-3 z-50 mx-auto flex max-w-sm items-end justify-between gap-1 rounded-[28px] bg-white/95 p-2 shadow-soft-lg backdrop-blur-md xl:hidden dark:bg-slate-800/95">
         <button type="button" data-open-panel="progress" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-slate-500 transition-colors duration-150 hover:bg-slate-100 active:bg-slate-100">
             <x-player.icon name="flag" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">Progress</span>
@@ -233,7 +343,7 @@
                 <button type="button" id="gacha-keep-btn" class="w-full rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
                     Simpan & Buang Terlama
                 </button>
-                <button type="button" id="gacha-discard-btn" class="w-full rounded-xl border-2 border-rose-500 bg-white px-4 py-2 text-rose-500 font-bold hover:bg-rose-50 transition-colors">
+                <button type="button" id="gacha-discard-btn" class="w-full rounded-xl border-2 border-rose-500 bg-white px-4 py-2 text-rose-500 font-bold hover:bg-rose-50 transition-colors dark:bg-transparent dark:hover:bg-rose-900/20">
                     Buang Item Ini
                 </button>
             </div>
@@ -255,7 +365,7 @@
             <p id="powerup-use-desc" class="text-sm text-slate-600 mb-6"></p>
             
             <div class="w-full flex gap-2">
-                <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal', {detail: 'powerup-use-modal'}))" class="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors">
+                <button type="button" onclick="window.dispatchEvent(new CustomEvent('close-modal', {detail: 'powerup-use-modal'}))" class="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 transition-colors dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600">
                     Batal
                 </button>
                 <button type="button" id="powerup-use-btn" class="flex-1 rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">
@@ -272,11 +382,11 @@
                 <x-player.icon name="book" class="h-5 w-5 text-primary-500" />
                 <span id="question-title-text">Soal</span>
             </h3>
-            <span id="question-timer" class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold text-primary-600"></span>
+            <span id="question-timer" class="rounded-full bg-primary-50 px-3 py-1 text-sm font-bold text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"></span>
         </div>
         <p id="question-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
         <div id="question-options" class="space-y-2"></div>
-        <p id="question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
+        <p id="question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"></p>
     </x-player.modal>
 
     {{-- Modal Soal Bot (spectator view) --}}
@@ -289,7 +399,7 @@
         </div>
         <p id="bot-question-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
         <div id="bot-question-options" class="space-y-2"></div>
-        <p id="bot-question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></p>
+        <p id="bot-question-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"></p>
     </x-player.modal>
 
     {{-- Modal Duel --}}
@@ -304,14 +414,14 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Kiri (Anda) -->
-            <div class="md:border-r md:border-slate-100 md:pr-6">
+            <div class="md:border-r md:border-slate-100 md:pr-6 dark:md:border-slate-700">
                 <div class="mb-4 flex items-center justify-between">
                     <h4 class="text-md font-bold text-slate-800">Soal Anda</h4>
-                    <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600"></span>
+                    <span id="duel-timer" class="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"></span>
                 </div>
                 <p id="duel-text" class="mb-4 text-sm leading-relaxed text-slate-700"></p>
                 <div id="duel-options" class="space-y-2"></div>
-                <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700"></div>
+                <div id="duel-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"></div>
             </div>
 
             <!-- Kanan (Lawan) -->
@@ -320,13 +430,13 @@
                     <h4 class="text-md font-bold text-slate-800 flex items-center gap-2">
                         <span id="duel-opponent-name">Lawan</span>
                     </h4>
-                    <span id="duel-opponent-status" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 uppercase tracking-wider">Menjawab...</span>
+                    <span id="duel-opponent-status" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500 uppercase tracking-wider dark:bg-slate-700 dark:text-slate-400">Menjawab...</span>
                 </div>
                 
                 <div id="duel-opponent-content">
                     <p id="duel-opponent-text" class="mb-4 text-sm leading-relaxed text-slate-700 text-center italic">Menunggu lawan...</p>
                     <div id="duel-opponent-options" class="space-y-2"></div>
-                    <div id="duel-opponent-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-center font-medium text-slate-700"></div>
+                    <div id="duel-opponent-feedback" class="mt-4 hidden rounded-xl bg-slate-50 p-3 text-sm text-center font-medium text-slate-700 dark:bg-slate-700/50 dark:text-slate-300"></div>
                 </div>
             </div>
         </div>
@@ -363,7 +473,7 @@
             <p id="achievement-unlock-kode" class="relative mt-3 text-xs font-bold uppercase tracking-wide"></p>
             <p id="achievement-unlock-nama" class="relative mt-0.5 text-xl font-bold text-slate-800"></p>
             <p id="achievement-unlock-deskripsi" class="relative mt-1 text-sm text-slate-500"></p>
-            <p id="achievement-unlock-poin" class="relative mt-3 inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-4 py-1.5 text-sm font-bold text-accent-600"></p>
+            <p id="achievement-unlock-poin" class="relative mt-3 inline-flex items-center gap-1.5 rounded-full bg-accent-50 px-4 py-1.5 text-sm font-bold text-accent-600 dark:bg-amber-900/20 dark:text-amber-400"></p>
             <button id="achievement-unlock-next" type="button"
                     class="relative mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-600">
                 Lanjut

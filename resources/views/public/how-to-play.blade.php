@@ -22,14 +22,14 @@
     @endphp
 
     {{-- Hero --}}
-    <section class="relative overflow-hidden bg-gradient-to-b from-[#EAF3FF] via-[#F4F8FF] to-white">
+    <section class="relative overflow-hidden bg-gradient-to-b from-[#EAF3FF] via-[#F4F8FF] to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-900">
         {{-- Decorative light --}}
-        <div aria-hidden="true" class="pointer-events-none absolute left-1/4 top-0 h-64 w-64 -translate-x-1/2 -translate-y-1/3 rounded-full bg-white/70 blur-3xl"></div>
-        <div aria-hidden="true" class="pointer-events-none absolute right-1/4 bottom-0 h-72 w-72 translate-x-1/3 translate-y-1/3 rounded-full bg-blue-200/40 blur-3xl"></div>
-        <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,.7)_0%,rgba(255,255,255,0)_70%)] blur-2xl"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute left-1/4 top-0 h-64 w-64 -translate-x-1/2 -translate-y-1/3 rounded-full bg-white/70 blur-3xl dark:bg-primary-900/20"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute right-1/4 bottom-0 h-72 w-72 translate-x-1/3 translate-y-1/3 rounded-full bg-blue-200/40 blur-3xl dark:bg-blue-900/20"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,255,255,.7)_0%,rgba(255,255,255,0)_70%)] blur-2xl dark:bg-transparent"></div>
 
         {{-- Soft fade into the section below --}}
-        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(to_bottom,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,.75),rgba(255,255,255,1))] sm:h-48 lg:h-56"></div>
+        <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-[linear-gradient(to_bottom,rgba(255,255,255,0),rgba(255,255,255,.35),rgba(255,255,255,.75),rgba(255,255,255,1))] dark:bg-[linear-gradient(to_bottom,rgba(15,23,42,0),rgba(15,23,42,.6),rgba(15,23,42,1))] sm:h-48 lg:h-56"></div>
 
         <div class="relative mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-16 sm:px-6 md:flex-row md:justify-between md:gap-6 lg:gap-10 lg:px-8 lg:py-20">
             <div class="shrink-0">
@@ -42,8 +42,8 @@
             </div>
 
             <div class="text-center md:flex-1">
-                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Cara Bermain</h1>
-                <p class="mx-auto mt-4 max-w-xl text-lg text-slate-600">
+                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">Cara Bermain</h1>
+                <p class="mx-auto mt-4 max-w-xl text-lg text-slate-600 dark:text-slate-400">
                     Ikuti langkah-langkah berikut untuk mulai bermain dan jadi juara statistik!
                 </p>
             </div>
@@ -63,7 +63,7 @@
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-x-10 lg:gap-y-10">
             @foreach ($steps as $step)
-                <div class="group relative flex flex-col items-center rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
+                <div class="group relative flex flex-col items-center rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft dark:bg-slate-800/80 dark:shadow-slate-900/50">
                     <span class="absolute left-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
                         {{ $loop->iteration }}
                     </span>
@@ -91,12 +91,12 @@
                         @endswitch
                     </span>
 
-                    <h3 class="mt-4 font-bold text-slate-900">{{ $step['judul'] }}</h3>
-                    <p class="mt-1.5 text-sm text-slate-600">{{ $step['deskripsi'] }}</p>
+                    <h3 class="mt-4 font-bold text-slate-900 dark:text-white">{{ $step['judul'] }}</h3>
+                    <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-300">{{ $step['deskripsi'] }}</p>
 
                     @if ($loop->iteration % 5 !== 0 && ! $loop->last)
                         <span class="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-1/2 lg:flex" aria-hidden="true">
-                            <svg viewBox="0 0 40 16" class="h-4 w-9 text-primary-300" fill="none">
+                            <svg viewBox="0 0 40 16" class="h-4 w-9 text-primary-300 dark:text-primary-700" fill="none">
                                 <path d="M2 8h28" stroke="currentColor" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round" />
                                 <path d="M26 3l8 5-8 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
                             </svg>
@@ -109,9 +109,9 @@
 
     {{-- CTA --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 p-6 text-center shadow-sm sm:gap-6 sm:p-8 md:flex-row md:justify-between md:gap-6 md:text-left lg:gap-10">
+        <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 p-6 text-center shadow-sm dark:from-slate-800 dark:via-slate-800/80 dark:to-slate-800 dark:border dark:border-slate-700 sm:gap-6 sm:p-8 md:flex-row md:justify-between md:gap-6 md:text-left lg:gap-10">
             {{-- Decorative light --}}
-            <div aria-hidden="true" class="pointer-events-none absolute left-8 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-white/70 blur-3xl"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute left-8 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-white/70 blur-3xl dark:bg-primary-900/20"></div>
 
             <img
                 src="{{ asset('images/brand/logo-piala.png') }}"
@@ -122,8 +122,8 @@
             >
 
             <div class="relative md:flex-1">
-                <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Siap Menguji Pengetahuanmu?</h2>
-                <p class="mt-1 text-slate-600">Belajar jadi lebih seru, statistik jadi lebih mudah dipahami!</p>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white sm:text-2xl">Siap Menguji Pengetahuanmu?</h2>
+                <p class="mt-1 text-slate-600 dark:text-slate-300">Belajar jadi lebih seru, statistik jadi lebih mudah dipahami!</p>
             </div>
 
             <a

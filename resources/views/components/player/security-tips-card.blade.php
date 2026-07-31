@@ -1,12 +1,12 @@
 @props(['tip'])
 
-<div class="flex items-center gap-4 overflow-hidden rounded-3xl border border-primary-100 bg-primary-50 p-5 sm:p-6">
+<div class="flex items-center gap-4 overflow-hidden rounded-3xl border border-primary-100 bg-primary-50 p-5 sm:p-6 dark:border-primary-800/40 dark:bg-primary-950/40">
     <div class="min-w-0 flex-1">
-        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800">
+        <h3 class="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-100">
             <x-player.icon name="lightbulb" class="h-4 w-4 text-accent-500" />
             Tips Keamanan
         </h3>
-        <p class="mt-1.5 text-sm leading-relaxed text-slate-600">{{ $tip }}</p>
+        <p class="mt-1.5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{{ $tip }}</p>
     </div>
 
     <svg viewBox="0 0 80 80" class="h-16 w-16 shrink-0 select-none" aria-hidden="true">

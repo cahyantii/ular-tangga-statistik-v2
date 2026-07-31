@@ -21,16 +21,30 @@ import { state, dom, config } from './state.js';
         const meta = LOG_ICONS[kind] ?? LOG_ICONS.info;
         dom.logEmptyEl?.remove();
 
+        // Hapus empty state mobile juga
+        document.getElementById('game-log-empty-mobile')?.remove();
+
         const li = document.createElement('li');
         li.className = 'flex items-start gap-2 rounded-lg px-2 py-1.5 animate-fade-in-up';
         li.innerHTML = `
             <span class="shrink-0">${meta.icon}</span>
             <span class="font-medium ${meta.color}">${message}</span>
         `;
-        dom.logListEl.insertBefore(li, dom.logListEl.firstChild);
 
+        // Push ke log desktop
+        dom.logListEl.insertBefore(li, dom.logListEl.firstChild);
         while (dom.logListEl.children.length > 30) {
             dom.logListEl.removeChild(dom.logListEl.lastChild);
+        }
+
+        // Mirror ke log mobile
+        const logListMobileEl = document.getElementById('game-log-list-mobile');
+        if (logListMobileEl) {
+            const liMobile = li.cloneNode(true);
+            logListMobileEl.insertBefore(liMobile, logListMobileEl.firstChild);
+            while (logListMobileEl.children.length > 30) {
+                logListMobileEl.removeChild(logListMobileEl.lastChild);
+            }
         }
     }
 

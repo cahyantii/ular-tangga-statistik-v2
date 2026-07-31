@@ -25,7 +25,7 @@
 @endphp
 
 <div x-data="{ show: false }">
-    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ $label }}</label>
+    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-slate-300">{{ $label }}</label>
 
     <div class="relative">
         <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center {{ $iconPad }} text-slate-400">
@@ -37,7 +37,7 @@
             id="{{ $name }}"
             name="{{ $name }}"
             aria-invalid="{{ $hasError ? 'true' : 'false' }}"
-            {{ $attributes->merge(['class' => "w-full border {$borderClasses} {$sizeClasses} bg-white text-slate-700 placeholder:text-slate-400 transition focus:outline-none focus:ring-2"]) }}
+            {{ $attributes->merge(['class' => "w-full border {$borderClasses} {$sizeClasses} bg-white text-slate-700 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-500 dark:border-slate-600"]) }}
         >
 
         <button

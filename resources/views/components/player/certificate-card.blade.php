@@ -20,13 +20,13 @@
     ];
 @endphp
 
-<div class="rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6">
+<div class="rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft dark:bg-slate-800 sm:p-6">
     <div class="mb-4 flex items-center justify-between">
-        <h3 class="flex items-center gap-2 text-base font-bold text-slate-700">
+        <h3 class="flex items-center gap-2 text-base font-bold text-slate-700 dark:text-slate-200">
             <x-player.icon name="certificate" class="h-5 w-5 text-primary-500" />
             Sertifikat Digital
         </h3>
-        <a href="{{ route('player.certificate') }}" class="text-xs font-semibold text-primary-500 transition hover:text-primary-600">
+        <a href="{{ route('player.certificate') }}" class="text-xs font-semibold text-primary-500 transition hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300">
             Buka halaman Sertifikat &rarr;
         </a>
     </div>
@@ -34,7 +34,7 @@
     <div class="grid grid-cols-1 items-center gap-6 sm:grid-cols-5">
         <div class="sm:col-span-3">
             @if ($sudahPunya)
-                <p class="mb-3 text-sm font-medium text-secondary-600">
+                <p class="mb-3 text-sm font-medium text-secondary-600 dark:text-secondary-400">
                     Selamat! Anda sudah meraih sertifikat digital.
                 </p>
             @endif
@@ -42,15 +42,15 @@
             <ul class="space-y-2.5 text-sm">
                 @foreach ($items as $item)
                     <li class="flex items-center gap-2.5">
-                        <x-player.icon name="check-circle" class="h-5 w-5 shrink-0 {{ $item['done'] ? 'text-secondary-500' : 'text-slate-300' }}" />
-                        <span class="text-slate-600">{{ $item['label'] }}</span>
+                        <x-player.icon name="check-circle" class="h-5 w-5 shrink-0 {{ $item['done'] ? 'text-secondary-500' : 'text-slate-300 dark:text-slate-600' }}" />
+                        <span class="text-slate-600 dark:text-slate-300">{{ $item['label'] }}</span>
                     </li>
                 @endforeach
             </ul>
 
             <button
                 @click="$dispatch('open-modal', 'sertifikat-preview')"
-                class="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-600 transition hover:bg-primary-100"
+                class="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-600 transition hover:bg-primary-100 dark:border-primary-800/40 dark:bg-primary-950/40 dark:text-primary-300 dark:hover:bg-primary-900/50"
             >
                 <x-player.icon name="eye" class="h-4 w-4" />
                 Lihat Preview

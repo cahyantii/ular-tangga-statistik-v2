@@ -7,8 +7,8 @@
     game.answer / broadcast Reverb yang sudah ada, jadi tetap 100% berasal
     dari aksi & data nyata (tidak ada baris log yang dikarang).
 --}}
-<div class="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-    <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700">
+<div class="animate-fade-in-up rounded-2xl bg-white p-4 shadow-sm dark:bg-slate-800 sm:p-5">
+    <h3 class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
         <x-player.icon name="clock" class="h-4 w-4 text-primary-500" />
         Log Permainan
     </h3>

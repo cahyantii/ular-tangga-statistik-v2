@@ -37,9 +37,45 @@
     }
 }
 
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/* Admin-specific gradient classes for dark mode support              */
+/* ================================================================== */
+
+/* Header card gradient (soal index, dll) */
+.admin-header-gradient {
+    background: linear-gradient(90deg, #ffffff 0%, #ECFDF5 50%, #ffffff 100%);
+}
+.dark-admin .admin-header-gradient {
+    background: linear-gradient(90deg, rgba(30, 41, 59, 0.95) 0%, rgba(6, 78, 59, 0.3) 50%, rgba(30, 41, 59, 0.95) 100%);
+}
+
+/* Table thead gradient (soal, papan, dll) */
+.admin-thead-gradient {
+    background: linear-gradient(90deg, #ECFDF5, #F0FDF4);
+}
+.dark-admin .admin-thead-gradient {
+    background: linear-gradient(90deg, rgba(6, 78, 59, 0.2), rgba(6, 78, 59, 0.15));
+}
+
+/* Table thead neutral (users, feedback, dll) */
+.admin-thead-neutral {
+    background-color: #f8fafc;
+}
+.dark-admin .admin-thead-neutral {
+    background-color: rgba(15, 23, 42, 0.8);
+}
+
+/* Hero banner overlay (dashboard) */
+.admin-hero-overlay {
+    background: linear-gradient(90deg, rgba(255,255,255,.95) 0%, rgba(255,255,255,.75) 40%, rgba(255,255,255,.15) 100%);
+}
+.dark-admin .admin-hero-overlay {
+    background: linear-gradient(90deg, rgba(15, 23, 42, .95) 0%, rgba(15, 23, 42, .75) 40%, rgba(15, 23, 42, .15) 100%);
+}
+
+/* ================================================================== */
 /* Dadu 3D (kubus CSS asli, bukan gambar) — dipakai di halaman game.  */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
 .dice-3d-wrap {
     perspective: 700px;
 }
@@ -538,6 +574,11 @@
     background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
 }
 
+.dark .cert-card--white {
+    background: linear-gradient(180deg, #1e293b 0%, #1a2744 100%);
+    border-color: rgba(71, 85, 105, 0.4);
+}
+
 .cert-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 45px rgba(37, 99, 235, 0.12);
@@ -560,8 +601,18 @@
     background: linear-gradient(180deg, #fff7ed, #fffdf8);
 }
 
+.dark .cert-card--cream {
+    background: linear-gradient(180deg, #271a0f, #1e1a15);
+    border-color: rgba(71, 85, 105, 0.4);
+}
+
 .cert-card--progress {
     background: linear-gradient(180deg, #ffffff, #fbfcff);
+}
+
+.dark .cert-card--progress {
+    background: linear-gradient(180deg, #1e293b, #1a2030);
+    border-color: rgba(71, 85, 105, 0.4);
 }
 
 .cert-card--reward {
@@ -581,8 +632,17 @@
     box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
 }
 
+.dark .cert-banner--motivation {
+    background: linear-gradient(180deg, #271a0f, #1e1a15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
 .cert-timeline-line {
     border-color: rgba(203, 213, 225, 0.6);
+}
+
+.dark .cert-timeline-line {
+    border-color: rgba(71, 85, 105, 0.5);
 }
 
 .cert-progress-bar {
@@ -605,14 +665,26 @@
     background: #f8fafc;
 }
 
+.dark .avatar-option {
+    background: #1e293b;
+}
+
 .avatar-option:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 25px rgba(37, 99, 235, 0.15);
     border-color: #2563eb;
 }
 
+.dark .avatar-option:hover {
+    box-shadow: 0 12px 25px rgba(37, 99, 235, 0.25);
+}
+
 .avatar-option--active {
     background: linear-gradient(180deg, #eff6ff, #dbeafe);
+}
+
+.dark .avatar-option--active {
+    background: linear-gradient(180deg, rgba(30, 58, 138, 0.35), rgba(30, 58, 138, 0.2));
 }
 
 /* ------------------------------------------------------------------ */
@@ -813,6 +885,11 @@ body.game-fullscreen-active #mobile-action-fab {
     overflow: hidden !important;
 }
 
+.dark #game-fullscreen-container.is-fullscreen {
+    background-color: #0f172a;
+    background-image: radial-gradient(rgba(71, 85, 105, 0.5) 1px, transparent 1px);
+}
+
 /* The inner grid becomes a flex row in fullscreen */
 #game-fullscreen-container.is-fullscreen > .grid {
     display: flex !important;
@@ -837,6 +914,11 @@ body.game-fullscreen-active #mobile-action-fab {
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     border-right: 1px solid rgba(203, 213, 225, 0.5);
+}
+
+.dark #game-fullscreen-container.is-fullscreen > .grid > :nth-child(1) {
+    background: rgba(15, 23, 42, 0.75);
+    border-right-color: rgba(71, 85, 105, 0.4);
 }
 
 /* Column 2: Board — takes up all remaining space */
@@ -876,6 +958,11 @@ body.game-fullscreen-active #mobile-action-fab {
     box-shadow: none !important;
 }
 
+.dark #game-fullscreen-container.is-fullscreen > .grid > :nth-child(3) {
+    background: rgba(15, 23, 42, 0.75);
+    border-left-color: rgba(71, 85, 105, 0.4);
+}
+
 /* Hide roll button & help text in fullscreen — click the dice directly */
 #game-fullscreen-container.is-fullscreen #roll-dice-button,
 #game-fullscreen-container.is-fullscreen #board-theme-toggle,
@@ -887,4 +974,739 @@ body.game-fullscreen-active #mobile-action-fab {
 #game-fullscreen-container.is-fullscreen #toggle-fullscreen-btn {
     background: white;
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.dark #game-fullscreen-container.is-fullscreen #toggle-fullscreen-btn {
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+/* ================================================================== */
+/* MODE GELAP — Player & Admin                                         */
+/*                                                                    */
+/* Strategi: CSS custom properties di :root (light defaults) di-      */
+/* override di html.dark (player) dan html.dark-admin (admin).        */
+/* Semua surface/teks memakai var() di bawah, jadi satu override      */
+/* langsung mengubah seluruh tampilan tanpa perlu selector panjang.   */
+/* ================================================================== */
+
+/* ------------------------------------------------------------------ */
+/* CSS variables — nilai default (mode terang)                        */
+/* ------------------------------------------------------------------ */
+:root {
+    /* Surfaces */
+    --clr-page-bg:        #F6FAFF;
+    --clr-surface:        #ffffff;
+    --clr-surface-2:      #f8fafc;
+    --clr-surface-3:      #f1f5f9;
+    --clr-surface-hover:  rgba(241, 245, 249, 0.9);
+
+    /* Borders */
+    --clr-border:         #e5e7eb;
+    --clr-border-2:       #f1f5f9;
+
+    /* Text */
+    --clr-text-base:      #1e293b;   /* slate-800 */
+    --clr-text-muted:     #475569;   /* slate-600 */
+    --clr-text-subtle:    #64748b;   /* slate-500 */
+    --clr-text-faint:     #94a3b8;   /* slate-400 */
+    --clr-text-heading:   #0f172a;   /* slate-900 */
+
+    /* Admin-specific surfaces */
+    --clr-admin-page-bg:  #F8FAFC;
+    --clr-admin-surface:  #ffffff;
+    --clr-admin-sidebar:  #f0fdf4;
+    --clr-admin-header:   #ffffff;
+    --clr-admin-footer:   #ffffff;
+
+    /* Notif dropdown */
+    --clr-notif-bg:       rgba(255, 255, 255, 0.92);
+    --clr-notif-border:   #e5e7eb;
+    --clr-notif-item-bg:  transparent;
+    --clr-notif-item-hover: #f8fafc;
+    --clr-notif-text:     #1e293b;
+    --clr-notif-muted:    #64748b;
+    --clr-notif-faint:    #94a3b8;
+    --clr-notif-unread:   rgba(219, 234, 254, 0.35);
+    --clr-notif-avatar:   #f1f5f9;
+
+    /* Skeleton */
+    --clr-skeleton-from:  #f1f5f9;
+    --clr-skeleton-via:   #e2e8f0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Override mode gelap — Player (html.dark)                           */
+/* ------------------------------------------------------------------ */
+html.dark {
+    --clr-page-bg:        #0f172a;
+    --clr-surface:        #1e293b;
+    --clr-surface-2:      #1e293b;
+    --clr-surface-3:      #273549;
+    --clr-surface-hover:  rgba(51, 65, 85, 0.6);
+
+    --clr-border:         rgba(71, 85, 105, 0.5);
+    --clr-border-2:       rgba(71, 85, 105, 0.3);
+
+    --clr-text-base:      #e2e8f0;
+    --clr-text-muted:     #cbd5e1;
+    --clr-text-subtle:    #94a3b8;
+    --clr-text-faint:     #64748b;
+    --clr-text-heading:   #f1f5f9;
+
+    --clr-notif-bg:       rgba(15, 23, 42, 0.97);
+    --clr-notif-border:   rgba(71, 85, 105, 0.5);
+    --clr-notif-item-bg:  transparent;
+    --clr-notif-item-hover: rgba(51, 65, 85, 0.4);
+    --clr-notif-text:     #e2e8f0;
+    --clr-notif-muted:    #94a3b8;
+    --clr-notif-faint:    #64748b;
+    --clr-notif-unread:   rgba(30, 58, 138, 0.3);
+    --clr-notif-avatar:   rgba(51, 65, 85, 0.7);
+
+    --clr-skeleton-from:  #1e293b;
+    --clr-skeleton-via:   #334155;
+}
+
+/* ------------------------------------------------------------------ */
+/* Override mode gelap — Admin (html.dark-admin)                      */
+/* ------------------------------------------------------------------ */
+html.dark-admin {
+    --clr-admin-page-bg:  #0f172a;
+    --clr-admin-surface:  #1e293b;
+    --clr-admin-sidebar:  #1a2744;
+    --clr-admin-header:   #1e293b;
+    --clr-admin-footer:   #1e293b;
+
+    --clr-border:         rgba(71, 85, 105, 0.5);
+    --clr-border-2:       rgba(71, 85, 105, 0.3);
+
+    --clr-text-base:      #e2e8f0;
+    --clr-text-muted:     #cbd5e1;
+    --clr-text-subtle:    #94a3b8;
+    --clr-text-faint:     #64748b;
+    --clr-text-heading:   #f1f5f9;
+
+    /* Teks hardcoded di sidebar admin */
+    --clr-sidebar-section: #94a3b8;
+    --clr-sidebar-link:    #94a3b8;
+    --clr-sidebar-text:    #cbd5e1;
+
+    --clr-notif-bg:       rgba(15, 23, 42, 0.97);
+    --clr-notif-border:   rgba(71, 85, 105, 0.5);
+    --clr-notif-item-bg:  transparent;
+    --clr-notif-item-hover: rgba(51, 65, 85, 0.35);
+    --clr-notif-text:     #e2e8f0;
+    --clr-notif-muted:    #94a3b8;
+    --clr-notif-faint:    #64748b;
+    --clr-notif-unread:   rgba(20, 83, 45, 0.3);
+    --clr-notif-avatar:   rgba(51, 65, 85, 0.7);
+
+    --clr-skeleton-from:  #1e293b;
+    --clr-skeleton-via:   #334155;
+}
+
+/* ================================================================== */
+/* Terapkan variables ke elemen — Player dark                         */
+/* ================================================================== */
+
+.dark body {
+    background-color: var(--clr-page-bg) !important;
+    color: var(--clr-text-base) !important;
+}
+
+/* Topbar */
+.dark header.sticky {
+    background-color: rgba(15, 23, 42, 0.85) !important;
+    border-bottom-color: var(--clr-border) !important;
+    color: var(--clr-text-base) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Semua surface putih & abu-abu                                      */
+/* ------------------------------------------------------------------ */
+.dark .bg-white,
+.dark .bg-white\/80,
+.dark .bg-white\/95   { background-color: var(--clr-surface) !important; }
+.dark .bg-app-bg      { background-color: var(--clr-page-bg) !important; }
+.dark .bg-slate-50    { background-color: rgba(30, 41, 59, 0.7) !important; }
+.dark .bg-gray-50     { background-color: rgba(30, 41, 59, 0.7) !important; }
+.dark .bg-slate-100   { background-color: rgba(51, 65, 85, 0.6) !important; }
+.dark .bg-gray-100    { background-color: rgba(51, 65, 85, 0.6) !important; }
+
+/* Accent bg chip (poin) */
+.dark .bg-accent-50   { background-color: rgba(246, 139, 31, 0.12) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Teks umum                                                          */
+/* ------------------------------------------------------------------ */
+.dark .text-slate-900 { color: var(--clr-text-heading) !important; }
+.dark .text-slate-800 { color: var(--clr-text-base)    !important; }
+.dark .text-slate-700 { color: var(--clr-text-muted)   !important; }
+.dark .text-slate-600 { color: var(--clr-text-subtle)  !important; }
+.dark .text-slate-500 { color: var(--clr-text-faint)   !important; }
+.dark .text-slate-400 { color: #64748b !important; }
+/* ------------------------------------------------------------------ */
+/* Border                                                             */
+/* ------------------------------------------------------------------ */
+.dark .border-slate-100 { border-color: var(--clr-border-2) !important; }
+.dark .border-slate-200 { border-color: var(--clr-border)   !important; }
+
+/* ------------------------------------------------------------------ */
+/* Hover states                                                       */
+/* ------------------------------------------------------------------ */
+.dark .hover\:bg-slate-50:hover   { background-color: var(--clr-surface-hover) !important; }
+.dark .hover\:bg-slate-100:hover  { background-color: var(--clr-surface-3)     !important; }
+
+/* ------------------------------------------------------------------ */
+/* Background warna pastel (primary, secondary, accent, violet, rose) */
+/* ------------------------------------------------------------------ */
+.dark .bg-primary-50    { background-color: rgba(15, 76, 186, 0.15) !important; }
+.dark .bg-primary-100   { background-color: rgba(15, 76, 186, 0.25) !important; }
+.dark .bg-secondary-50  { background-color: rgba(0, 166, 90, 0.12)  !important; }
+.dark .bg-secondary-100 { background-color: rgba(0, 166, 90, 0.22)  !important; }
+.dark .bg-violet-50     { background-color: rgba(109, 40, 217, 0.15) !important; }
+.dark .bg-violet-100    { background-color: rgba(109, 40, 217, 0.25) !important; }
+.dark .bg-rose-50       { background-color: rgba(225, 29, 72, 0.12)  !important; }
+.dark .bg-rose-100      { background-color: rgba(225, 29, 72, 0.22)  !important; }
+.dark .bg-red-50        { background-color: rgba(220, 38, 38, 0.12)  !important; }
+.dark .bg-blue-50       { background-color: rgba(37, 99, 235, 0.12)  !important; }
+.dark .bg-green-50      { background-color: rgba(22, 163, 74, 0.12)  !important; }
+.dark .bg-emerald-50    { background-color: rgba(16, 185, 129, 0.12) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Teks warna pastel                                                  */
+/* ------------------------------------------------------------------ */
+.dark .text-secondary-600 { color: #34d399 !important; }
+.dark .text-secondary-700 { color: #6ee7b7 !important; }
+.dark .text-violet-600    { color: #a78bfa !important; }
+.dark .text-primary-600   { color: #93c5fd !important; }
+
+/* ------------------------------------------------------------------ */
+/* Border warna pastel                                                */
+/* ------------------------------------------------------------------ */
+.dark .border-secondary-400 { border-color: rgba(0, 166, 90, 0.5)  !important; }
+.dark .border-primary-100   { border-color: rgba(15, 76, 186, 0.25) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Input & select — Player                                            */
+/* ------------------------------------------------------------------ */
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="search"],
+.dark select,
+.dark textarea {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(71, 85, 105, 0.6) !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #64748b !important; }
+
+/* ------------------------------------------------------------------ */
+/* Dividers                                                           */
+/* ------------------------------------------------------------------ */
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+.dark .divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Notifikasi dropdown                                                */
+/* ------------------------------------------------------------------ */
+.dark .notif-dropdown-glass {
+    background: var(--clr-notif-bg) !important;
+    border-color: var(--clr-notif-border) !important;
+}
+.dark .notif-dropdown-glass p,
+.dark .notif-dropdown-glass span:not(.notif-badge-pulse),
+.dark .notif-dropdown-glass a { color: var(--clr-notif-muted) !important; }
+.dark .notif-dropdown-glass .text-slate-800,
+.dark .notif-dropdown-glass .text-slate-700,
+.dark .notif-dropdown-glass .font-semibold { color: var(--clr-notif-text) !important; }
+.dark .notif-dropdown-glass .text-slate-500 { color: var(--clr-notif-muted)  !important; }
+.dark .notif-dropdown-glass .text-slate-400 { color: var(--clr-notif-faint)  !important; }
+.dark .notif-dropdown-glass .border-slate-100,
+.dark .notif-dropdown-glass .border-b { border-color: var(--clr-notif-border) !important; }
+.dark .notif-dropdown-glass .hover\:bg-slate-50:hover { background-color: var(--clr-notif-item-hover) !important; }
+.dark .notif-dropdown-glass .bg-slate-100 { background-color: var(--clr-notif-avatar) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Dropdown menu user (Profil/Kirim Masukan/Keluar)                   */
+/* ------------------------------------------------------------------ */
+.dark .origin-top-right.overflow-hidden {
+    background-color: var(--clr-surface) !important;
+    border-color: var(--clr-border) !important;
+}
+.dark .origin-top-right .text-slate-600 { color: var(--clr-text-muted) !important; }
+.dark .origin-top-right .text-slate-700 { color: var(--clr-text-base)  !important; }
+.dark .origin-top-right .hover\:bg-slate-50:hover { background-color: var(--clr-surface-hover) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Tombol ikon (bell, toggle)                                         */
+/* ------------------------------------------------------------------ */
+.dark button.text-slate-500 { color: var(--clr-text-subtle) !important; }
+.dark button.hover\:bg-slate-100:hover { background-color: var(--clr-surface-3) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Skeleton                                                           */
+/* ------------------------------------------------------------------ */
+.dark .notif-skeleton-line {
+    background: linear-gradient(
+        90deg,
+        var(--clr-skeleton-from) 25%,
+        var(--clr-skeleton-via)  37%,
+        var(--clr-skeleton-from) 63%
+    );
+    background-size: 400% 100%;
+}
+
+/* ================================================================== */
+/* Terapkan variables ke elemen — Admin dark                          */
+/* ================================================================== */
+
+/* Latar & teks halaman */
+.dark-admin body {
+    background-color: var(--clr-admin-page-bg) !important;
+    color: var(--clr-text-base) !important;
+}
+.dark-admin .bg-admin-bg { background-color: var(--clr-admin-page-bg) !important; }
+
+/* Sidebar */
+.dark-admin .admin-sidebar {
+    background-color: var(--clr-admin-sidebar) !important;
+    border-right-color: var(--clr-border) !important;
+}
+/* Teks hardcoded di sidebar */
+.dark-admin nav .text-\[\#64748B\]  { color: var(--clr-sidebar-section, #94a3b8) !important; }
+.dark-admin nav .text-\[\#334155\]  { color: var(--clr-sidebar-link,    #94a3b8) !important; }
+.dark-admin nav .text-\[\#1E293B\]  { color: var(--clr-sidebar-text,    #cbd5e1) !important; }
+.dark-admin nav .hover\:bg-\[rgba\(34\,197\,94\,\.08\)\]:hover {
+    background-color: rgba(34, 197, 94, 0.14) !important;
+}
+
+/* Header (tidak scroll) */
+.dark-admin header {
+    background-color: var(--clr-admin-header) !important;
+    border-bottom-color: var(--clr-border) !important;
+}
+/* Header glassmorphism (setelah scroll) */
+.dark-admin .admin-header-glass {
+    background: rgba(15, 23, 42, 0.88) !important;
+    border-bottom-color: var(--clr-border) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* Semua surface putih & abu-abu                                      */
+/* ------------------------------------------------------------------ */
+.dark-admin .bg-white    { background-color: var(--clr-admin-surface) !important; }
+.dark-admin .bg-slate-50 { background-color: rgba(30, 41, 59, 0.7) !important; }
+.dark-admin .bg-gray-50  { background-color: rgba(30, 41, 59, 0.7) !important; }
+.dark-admin .bg-gray-100 { background-color: rgba(30, 41, 59, 0.9) !important; }
+.dark-admin .bg-slate-100 { background-color: rgba(51, 65, 85, 0.6) !important; color: #94a3b8 !important; }
+
+/* Stat cards berwarna pastel (users page: bg-green-50/60, bg-blue-50/60, dst) */
+.dark-admin .bg-green-50\/60  { background-color: rgba(6,  78, 59,  0.25) !important; }
+.dark-admin .bg-blue-50\/60   { background-color: rgba(30, 58, 138, 0.25) !important; }
+.dark-admin .bg-orange-50\/60 { background-color: rgba(124, 45, 18, 0.25) !important; }
+.dark-admin .bg-violet-50\/60 { background-color: rgba(76, 29, 149, 0.25) !important; }
+
+/* Border pastel dari stat cards */
+.dark-admin .border-green-100  { border-color: rgba(34, 197, 94, 0.18)  !important; }
+.dark-admin .border-blue-100   { border-color: rgba(59, 130, 246, 0.18) !important; }
+.dark-admin .border-orange-100 { border-color: rgba(249, 115, 22, 0.18) !important; }
+.dark-admin .border-violet-100 { border-color: rgba(139, 92, 246, 0.18) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Tabel                                                              */
+/* ------------------------------------------------------------------ */
+/* Thead bg (bg-slate-50, bg-slate-50/70, gradient hijau) */
+.dark-admin thead tr,
+.dark-admin thead {
+    background: rgba(15, 23, 42, 0.8) !important;
+    background-image: none !important;
+}
+/* Divider baris */
+.dark-admin .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+.dark-admin .divide-y > :not([hidden]) ~ :not([hidden]) {
+    border-color: rgba(51, 65, 85, 0.5) !important;
+}
+/* Hover baris tabel */
+.dark-admin .hover\:bg-green-50\/40:hover  { background-color: rgba(6, 78, 59, 0.15)  !important; }
+.dark-admin .hover\:bg-slate-50\/60:hover  { background-color: rgba(51, 65, 85, 0.2)  !important; }
+
+/* ------------------------------------------------------------------ */
+/* Input, select, form                                                */
+/* ------------------------------------------------------------------ */
+.dark-admin input[type="text"],
+.dark-admin input[type="number"],
+.dark-admin input[type="date"],
+.dark-admin input[type="email"],
+.dark-admin input[type="password"],
+.dark-admin input[type="search"],
+.dark-admin select,
+.dark-admin textarea {
+    background-color: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: rgba(71, 85, 105, 0.6) !important;
+}
+.dark-admin input::placeholder,
+.dark-admin textarea::placeholder { color: #64748b !important; }
+
+/* ------------------------------------------------------------------ */
+/* Teks umum                                                          */
+/* ------------------------------------------------------------------ */
+.dark-admin .text-slate-900 { color: var(--clr-text-heading) !important; }
+.dark-admin .text-slate-800 { color: var(--clr-text-base)    !important; }
+.dark-admin .text-slate-700 { color: var(--clr-text-muted)   !important; }
+.dark-admin .text-slate-600 { color: var(--clr-text-subtle)  !important; }
+.dark-admin .text-slate-500 { color: var(--clr-text-faint)   !important; }
+.dark-admin .text-slate-400 { color: #64748b !important; }
+
+/* Teks hardcoded hex (game-settings, soal, dll) */
+.dark-admin .text-\[\#1E293B\] { color: #e2e8f0 !important; }
+.dark-admin .text-\[\#1F2937\] { color: #e2e8f0 !important; }
+.dark-admin .text-\[\#64748B\] { color: #94a3b8 !important; }
+.dark-admin .text-\[\#92400E\] { color: #fde68a !important; }
+.dark-admin .text-\[\#B45309\] { color: #fcd34d !important; }
+
+/* ------------------------------------------------------------------ */
+/* Border                                                             */
+/* ------------------------------------------------------------------ */
+.dark-admin .border-slate-100,
+.dark-admin .border-admin-border,
+.dark-admin .border-\[\#E5E7EB\]\/70,
+.dark-admin .border-\[\#E5E7EB\]    { border-color: rgba(51, 65, 85, 0.5) !important; }
+.dark-admin .border-slate-200        { border-color: rgba(51, 65, 85, 0.6) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Hover states                                                       */
+/* ------------------------------------------------------------------ */
+.dark-admin .hover\:bg-slate-50:hover   { background-color: rgba(51, 65, 85, 0.3) !important; }
+.dark-admin .hover\:bg-slate-100:hover  { background-color: rgba(51, 65, 85, 0.5) !important; }
+.dark-admin .hover\:bg-green-50:hover   { background-color: rgba(6, 78, 59, 0.25) !important; }
+.dark-admin .hover\:bg-blue-50:hover    { background-color: rgba(30, 58, 138, 0.25) !important; }
+.dark-admin .hover\:bg-red-50:hover     { background-color: rgba(127, 29, 29, 0.25) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Notifikasi dropdown                                                */
+/* ------------------------------------------------------------------ */
+.dark-admin .notif-dropdown-glass {
+    background: var(--clr-notif-bg) !important;
+    border-color: var(--clr-notif-border) !important;
+}
+.dark-admin .notif-dropdown-glass p,
+.dark-admin .notif-dropdown-glass span:not(.notif-badge-pulse),
+.dark-admin .notif-dropdown-glass a { color: var(--clr-notif-muted) !important; }
+.dark-admin .notif-dropdown-glass .text-slate-800,
+.dark-admin .notif-dropdown-glass .text-slate-700,
+.dark-admin .notif-dropdown-glass .font-semibold { color: var(--clr-notif-text) !important; }
+.dark-admin .notif-dropdown-glass .text-slate-500 { color: var(--clr-notif-muted) !important; }
+.dark-admin .notif-dropdown-glass .text-slate-400 { color: var(--clr-notif-faint) !important; }
+.dark-admin .notif-dropdown-glass .border-slate-100,
+.dark-admin .notif-dropdown-glass .border-b { border-color: var(--clr-notif-border) !important; }
+.dark-admin .notif-dropdown-glass .hover\:bg-slate-50:hover { background-color: var(--clr-notif-item-hover) !important; }
+.dark-admin .notif-dropdown-glass .bg-slate-100  { background-color: var(--clr-notif-avatar) !important; }
+.dark-admin .notif-dropdown-glass .bg-green-50\/40 { background-color: var(--clr-notif-unread) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Dropdown profil admin                                              */
+/* ------------------------------------------------------------------ */
+.dark-admin .rounded-xl.p-1\.5 {
+    background-color: var(--clr-admin-surface) !important;
+    border-color: var(--clr-border) !important;
+}
+.dark-admin .rounded-xl .text-slate-900 { color: var(--clr-text-heading) !important; }
+.dark-admin .rounded-xl .text-slate-500 { color: var(--clr-text-subtle)  !important; }
+
+/* ------------------------------------------------------------------ */
+/* Footer                                                             */
+/* ------------------------------------------------------------------ */
+.dark-admin footer {
+    background-color: var(--clr-admin-footer) !important;
+    border-top-color: var(--clr-border) !important;
+}
+.dark-admin footer p,
+.dark-admin footer a { color: var(--clr-text-faint) !important; }
+.dark-admin footer a:hover { color: var(--clr-text-subtle) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Skeleton & glass card notification list                            */
+/* ------------------------------------------------------------------ */
+.dark-admin .notif-skeleton-line {
+    background: linear-gradient(
+        90deg,
+        var(--clr-skeleton-from) 25%,
+        var(--clr-skeleton-via)  37%,
+        var(--clr-skeleton-from) 63%
+    );
+    background-size: 400% 100%;
+}
+
+/* bg-slate-100 skeleton chart (dashboard) */
+.dark-admin .bg-slate-100.animate-pulse { background-color: #1e293b !important; }
+
+/* ------------------------------------------------------------------ */
+/* Tombol ikon header admin                                           */
+/* ------------------------------------------------------------------ */
+.dark-admin header button.text-slate-500 { color: var(--clr-text-subtle) !important; }
+
+/* ------------------------------------------------------------------ */
+/* Notification list items (admin.management.notifications)           */
+/* ------------------------------------------------------------------ */
+.dark-admin .border-green-200.bg-green-50\/30 {
+    background-color: rgba(6, 78, 59, 0.15) !important;
+    border-color: rgba(34, 197, 94, 0.25) !important;
+}
+
+/* Info box kuning (game-settings) */
+.dark-admin .border-\[\#FDE68A\] {
+    border-color: rgba(251, 191, 36, 0.3) !important;
+}
+.dark-admin .bg-\[\#FEF3C7\] {
+    background-color: rgba(120, 53, 15, 0.2) !important;
+}
+
+/* ================================================================== */
+/* Tombol toggle tema (dipakai di topbar player & header admin)       */
+/* ================================================================== */
+.theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--clr-text-subtle);
+}
+.theme-toggle-btn:hover {
+    background-color: rgba(100, 116, 139, 0.15);
+}
+
+/* ================================================================== */
+/* Leaderboard Podium Cards — Dark Mode                                */
+/* (Tailwind cannot scan dynamic PHP match() strings, so we use CSS)  */
+/* ================================================================== */
+
+/* Light mode base */
+.podium-card-gold {
+    background: linear-gradient(to bottom, #FEE3C2, #FFF2E3, #ffffff);
+    border-color: #FCC386;
+}
+.podium-card-silver {
+    background: linear-gradient(to bottom, #f1f5f9, #f8fafc, #ffffff);
+    border-color: #cbd5e1;
+}
+.podium-card-bronze {
+    background: linear-gradient(to bottom, #fed7aa, #fff7ed, #ffffff);
+    border-color: #fdba74;
+}
+
+/* Dark mode overrides */
+.dark .podium-card-gold {
+    background: linear-gradient(to bottom, rgba(120, 53, 15, 0.55), rgba(30, 27, 20, 0.9), #1e293b);
+    border-color: rgba(245, 158, 11, 0.55);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.12), inset 0 1px 0 rgba(245, 158, 11, 0.08);
+}
+.dark .podium-card-silver {
+    background: linear-gradient(to bottom, rgba(71, 85, 105, 0.6), rgba(30, 41, 59, 0.9), #1e293b);
+    border-color: rgba(148, 163, 184, 0.45);
+    box-shadow: 0 0 20px rgba(148, 163, 184, 0.06);
+}
+.dark .podium-card-bronze {
+    background: linear-gradient(to bottom, rgba(120, 53, 15, 0.4), rgba(30, 25, 15, 0.85), #1e293b);
+    border-color: rgba(194, 120, 60, 0.5);
+    box-shadow: 0 0 20px rgba(194, 120, 60, 0.08);
+}
+
+/* Dark mode text inside podium cards */
+.dark .podium-card-gold .podium-name   { color: #fde68a; }
+.dark .podium-card-silver .podium-name { color: #e2e8f0; }
+.dark .podium-card-bronze .podium-name { color: #fed7aa; }
+.dark .podium-card-gold .podium-score  { color: #fbbf24; }
+
+/* Leaderboard table — highlighted row (current user) */
+.leaderboard-row-highlight {
+    background: linear-gradient(to right, #EAF1FC, #f5f3ff);
+}
+.dark .leaderboard-row-highlight {
+    background: linear-gradient(to right, rgba(15, 76, 186, 0.25), rgba(30, 41, 59, 0.8));
+}
+
+/* Tab buttons - inactive in dark mode */
+.dark .leaderboard-tab-inactive {
+    background-color: #1e293b;
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+.dark .leaderboard-tab-inactive:hover {
+    background-color: #334155;
+    color: #cbd5e1;
+}
+
+/* ================================================================== */
+/* Achievement Components — Dark Mode                                  */
+/* ================================================================== */
+
+/* Summary banner (top of achievement page) */
+.achievement-summary-banner {
+    background: linear-gradient(135deg, #e8f8f0, #f0fdf4);
+    border-color: #86efac;
+}
+.dark .achievement-summary-banner {
+    background: linear-gradient(135deg, rgba(5, 46, 22, 0.7), rgba(15, 23, 42, 0.85));
+    border-color: rgba(34, 197, 94, 0.35);
+    box-shadow: 0 0 30px rgba(34, 197, 94, 0.08);
+}
+.dark .achievement-summary-banner .achievement-count-text { color: #4ade80; }
+.dark .achievement-summary-banner .achievement-body-text  { color: #e2e8f0; }
+.dark .achievement-summary-banner .achievement-sub-text   { color: #94a3b8; }
+
+/* Achievement card — earned (colored) */
+.achievement-card-earned-blue   { background-color: #eff6ff; border-color: #bfdbfe; }
+.achievement-card-earned-green  { background-color: #f0fdf4; border-color: #bbf7d0; }
+.achievement-card-earned-amber  { background-color: #fffbeb; border-color: #fde68a; }
+.achievement-card-earned-purple { background-color: #f5f3ff; border-color: #ddd6fe; }
+.achievement-card-earned-rose   { background-color: #fff1f2; border-color: #fecdd3; }
+
+.dark .achievement-card-earned-blue   { background: linear-gradient(135deg, rgba(15,76,186,0.18), rgba(30,41,59,0.9)); border-color: rgba(62,117,209,0.4); }
+.dark .achievement-card-earned-green  { background: linear-gradient(135deg, rgba(0,166,90,0.2), rgba(30,41,59,0.9));  border-color: rgba(0,166,90,0.4); }
+.dark .achievement-card-earned-amber  { background: linear-gradient(135deg, rgba(246,139,31,0.18), rgba(30,41,59,0.9)); border-color: rgba(246,139,31,0.4); }
+.dark .achievement-card-earned-purple { background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(30,41,59,0.9)); border-color: rgba(139,92,246,0.4); }
+.dark .achievement-card-earned-rose   { background: linear-gradient(135deg, rgba(225,29,72,0.18), rgba(30,41,59,0.9));  border-color: rgba(251,113,133,0.35); }
+
+/* Achievement card — not earned (locked/in-progress) — same in light and dark */
+.achievement-card-locked {
+    background-color: #ffffff;
+    border-color: #e2e8f0;
+}
+.dark .achievement-card-locked {
+    background: linear-gradient(135deg, rgba(51,65,85,0.5), rgba(15,23,42,0.85));
+    border-color: rgba(100,116,139,0.35);
+}
+
+/* Tips banner (bottom of achievement page) */
+.achievement-tips-banner {
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+}
+.dark .achievement-tips-banner {
+    background: linear-gradient(135deg, rgba(15,76,186,0.15), rgba(15,23,42,0.8));
+    border-color: rgba(62,117,209,0.35);
+}
+.dark .achievement-tips-banner p { color: #93c5fd; }
+
+/* ================================================================== */
+/* Certificate Page Components — Dark Mode                             */
+/* ================================================================== */
+
+/* Hero card (top banner) */
+.cert-card--white {
+    background-color: #ffffff;
+}
+.dark .cert-card--white {
+    background: linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98));
+    border: 1px solid rgba(100,116,139,0.25);
+}
+
+/* Progress/checklist card */
+.cert-card--progress {
+    background-color: #ffffff;
+}
+.dark .cert-card--progress {
+    background: linear-gradient(160deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98));
+    border: 1px solid rgba(100,116,139,0.2);
+}
+
+/* Motivation banner inside progress card */
+.cert-banner--motivation {
+    background-color: #f8fafc;
+}
+.dark .cert-banner--motivation {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(100,116,139,0.15);
+}
+
+/* Step action pills — per color tone */
+.cert-action-green {
+    background-color: #e8f8f0;
+    color: #00713d;
+}
+.dark .cert-action-green {
+    background-color: rgba(0,166,90,0.18);
+    color: #4ade80;
+    border: 1px solid rgba(0,166,90,0.25);
+}
+.cert-action-purple {
+    background-color: #f5f3ff;
+    color: #5b21b6;
+}
+.dark .cert-action-purple {
+    background-color: rgba(124,58,237,0.18);
+    color: #c4b5fd;
+    border: 1px solid rgba(139,92,246,0.25);
+}
+.cert-action-blue {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+}
+.dark .cert-action-blue {
+    background-color: rgba(15,76,186,0.18);
+    color: #93c5fd;
+    border: 1px solid rgba(62,117,209,0.25);
+}
+
+/* Already earned certificate banner */
+.cert-earned-banner {
+    background-color: #f0fdf4;
+    border-color: #86efac;
+}
+.dark .cert-earned-banner {
+    background: linear-gradient(135deg, rgba(5,46,22,0.7), rgba(15,23,42,0.9));
+    border-color: rgba(34,197,94,0.35);
+}
+
+/* ------------------------------------------------------------------ */
+/* cert-card base (shared rounded / overflow for reward & cream cards) */
+/* ------------------------------------------------------------------ */
+.cert-card {
+    border-radius: 1.5rem; /* rounded-3xl */
+    overflow: hidden;
+}
+
+/* Tips card — premium/cream variant (shown on certificate page) */
+.cert-card--cream {
+    background-color: #fffbeb;
+    border: 1px solid #fde68a;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+.dark .cert-card--cream {
+    background: linear-gradient(135deg, rgba(120,53,15,0.28), rgba(15,23,42,0.92));
+    border: 1px solid rgba(245,158,11,0.3);
+    box-shadow: 0 0 20px rgba(245,158,11,0.07);
+}
+/* Make title & text readable in dark mode inside cream card */
+.dark .cert-card--cream h3,
+.dark .cert-card--cream .tips-title { color: #fde68a; }
+.dark .cert-card--cream p           { color: #d1d5db; }
+
+/* Hadiah Sertifikat card — keep the vibrant gradient, just ensure contrast */
+.cert-card--reward {
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(15,76,186,0.25);
+}
+.dark .cert-card--reward {
+    box-shadow: 0 4px 30px rgba(15,76,186,0.35), 0 0 50px rgba(109,40,217,0.15);
 }
