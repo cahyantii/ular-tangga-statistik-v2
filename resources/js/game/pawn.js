@@ -1,5 +1,6 @@
 import { state, dom, config } from './state.js';
 import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from './utils.js';
+import { playSound } from './audio.js';
 
     // ---------------------------------------------------------------
     // Pion & animasi pergerakan
@@ -110,6 +111,7 @@ import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from 
                 el.classList.add('pawn-hop');
                 
                 placePawnAt(el, step, stackIndex);
+                playSound('pion_walk');
                 await delay(400);
             }
             el.classList.remove('pawn-hop');
@@ -128,6 +130,7 @@ import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from 
             el.classList.add('pawn-hop');
             
             placePawnAt(el, step, stackIndex);
+            playSound('pion_walk');
             // eslint-disable-next-line no-await-in-loop
             await delay(400);
         }
@@ -150,6 +153,7 @@ import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from 
                     el.classList.add('pawn-hop');
                     
                     placePawnAt(el, step, stackIndex);
+                    playSound('pion_walk');
                     // eslint-disable-next-line no-await-in-loop
                     await delay(400);
                 }
@@ -167,6 +171,7 @@ import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from 
                 await delay(120);
 
                 if (isNaik) {
+                    playSound('climb_ladder');
                     // Efek visual tangga (glow+sparkle) — best-effort, lihat catatan di atas file.
                     await window.BoardVisuals?.reactLadder?.(landingPosisi);
                     await animateAlongConnector(el, landingPosisi, finalPosisi, 'tangga', 900);
@@ -174,6 +179,7 @@ import { delay, cellCenterPercent, animateAlongConnector, spawnParticles } from 
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     // Efek "ular menggigit" (glow+lidah+kepala bergerak) SEBELUM pion
                     // meluncur turun — best-effort, lihat catatan di atas file.
                     await window.BoardVisuals?.reactSnake?.(landingPosisi);

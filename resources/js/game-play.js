@@ -291,50 +291,77 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dadu 3D
     // ---------------------------------------------------------------
     // ---------------------------------------------------------------
-    // Audio Synth (Web Audio API) untuk Sound Effects
+    // Audio Manager (BGM & SFX)
     // ---------------------------------------------------------------
-    let audioCtx = null;
-    function initAudio() {
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const soundCache = {};
+    let bgmAudio = null;
+    let isBgmPlaying = false;
+    let isMuted = false;
+
+    function getAudio(filename) {
+        if (!soundCache[filename]) {
+            const audio = new Audio(`/sounds/${filename}`);
+            audio.preload = 'auto';
+            soundCache[filename] = audio;
         }
-        if (audioCtx.state === 'suspended') audioCtx.resume();
+        return soundCache[filename];
     }
-    
+
+    // Preload important SFX so they play immediately without network delay
+    function preloadSFX() {
+        const sfx = ['correct_answer', 'false_answer', 'climb_ladder', 'snake_eat', 'pion_walk', 'roll_dice', 'win_match'];
+        sfx.forEach(name => getAudio(`${name}.mp3`));
+    }
+    preloadSFX();
+
+    function playSound(name) {
+        if (isMuted) return;
+        try {
+            const audio = getAudio(`${name}.mp3`);
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        } catch (e) {}
+    }
+
     function playRollSound() {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-        
-        gain.gain.setValueAtTime(0, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
+        playSound('roll_dice');
     }
-    
+
     function playHitSound(vol = 0.2) {
-        initAudio();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.1);
-        
-        gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.1);
+        playSound('roll_dice');
     }
+
+    function startBGM() {
+        if (isBgmPlaying || isMuted) return;
+        try {
+            if (!bgmAudio) {
+                bgmAudio = getAudio('bgm.mp3');
+                bgmAudio.loop = true;
+                bgmAudio.volume = 0.25;
+            }
+            bgmAudio.play().then(() => {
+                isBgmPlaying = true;
+            }).catch(() => {});
+        } catch (e) {}
+    }
+
+    function stopBGM() {
+        if (bgmAudio) {
+            bgmAudio.pause();
+            isBgmPlaying = false;
+        }
+    }
+
+    function initAudioAutoStart() {
+        const handler = () => {
+            startBGM();
+        };
+        document.addEventListener('click', handler, { once: true });
+        document.addEventListener('keydown', handler, { once: true });
+        document.addEventListener('touchstart', handler, { once: true });
+    }
+
+    initAudioAutoStart();
 
     // ---------------------------------------------------------------
     // Dadu 3D
@@ -655,6 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.classList.add('pawn-hop');
                 
                 placePawnAt(el, step, stackIndex);
+                playSound('pion_walk');
                 await delay(400);
             }
             el.classList.remove('pawn-hop');
@@ -673,6 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.classList.add('pawn-hop');
             
             placePawnAt(el, step, stackIndex);
+            playSound('pion_walk');
             // eslint-disable-next-line no-await-in-loop
             await delay(400);
         }
@@ -695,6 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.classList.add('pawn-hop');
                     
                     placePawnAt(el, step, stackIndex);
+                    playSound('pion_walk');
                     // eslint-disable-next-line no-await-in-loop
                     await delay(400);
                 }
@@ -712,6 +742,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(120);
 
                 if (isNaik) {
+                    playSound('climb_ladder');
                     // Efek visual tangga (glow+sparkle) — best-effort, lihat catatan di atas file.
                     await window.BoardVisuals?.reactLadder?.(landingPosisi);
                     await animateAlongConnector(el, landingPosisi, finalPosisi, 'tangga', 900);
@@ -719,6 +750,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     // Efek "ular menggigit" (glow+lidah+kepala bergerak) SEBELUM pion
                     // meluncur turun — best-effort, lihat catatan di atas file.
                     await window.BoardVisuals?.reactSnake?.(landingPosisi);
@@ -1047,8 +1079,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let isWinSoundPlayed = false;
+
     function renderFinished(session) {
         if (session.status === 'finished') {
+            if (!isWinSoundPlayed) {
+                playSound('win_match');
+                isWinSoundPlayed = true;
+            }
             const winner = session.players.find((p) => p.id === session.winner_game_player_id);
             const isMeWinner = winner && myGamePlayerId === winner.id;
 
@@ -1538,12 +1576,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (konektor) {
                 await delay(100);
                 if (naik) {
+                    playSound('climb_ladder');
                     await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
                     await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
                     spawnParticles(el, 'sparkle', 10);
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
                     boardEl.classList.add('board-shake');
                     await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
@@ -1560,6 +1600,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     el.classList.add('pawn-hop');
                     
                     placePawnAt(el, step, stackIndex);
+                    playSound('pion_walk');
                     // eslint-disable-next-line no-await-in-loop
                     await delay(400);
                 }
@@ -1908,6 +1949,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            playSound(benar ? 'correct_answer' : 'false_answer');
             botQuestionFeedbackEl.textContent = benar ? '✅ Bot menjawab benar!' : '❌ Bot menjawab salah!';
             botQuestionFeedbackEl.classList.remove('hidden');
         }, 800);
@@ -1966,12 +2008,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 await delay(120);
                 if (isNaik) {
+                    playSound('climb_ladder');
                     await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
                     spawnParticles(el, 'sparkle', 10);
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
                     boardEl.classList.add('board-shake');
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
@@ -2000,6 +2044,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (colyseusRoom) {
                     colyseusRoom.send("broadcast_event", { event: 'duel-progress', actor: myGamePlayerId });
                 }
+                
+                playSound(result.benar ? 'correct_answer' : 'false_answer');
 
                 duelFeedbackEl.textContent = result.benar
                     ? 'Jawaban benar!'
@@ -2097,6 +2143,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     colyseusRoom.send("broadcast_event", { event: 'score-updated', actor: myGamePlayerId });
                 }
             }
+            
+            playSound(result.benar ? 'correct_answer' : 'false_answer');
 
             questionFeedbackEl.textContent = result.benar
                 ? 'Jawaban benar!'
@@ -2143,12 +2191,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(120);
 
                 if (isNaik) {
+                    playSound('climb_ladder');
                     await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
                     spawnParticles(el, 'sparkle', 10);
                     el.classList.add('pawn-climb');
                     setTimeout(() => el.classList.remove('pawn-climb'), 650);
                 } else {
+                    playSound('snake_eat');
                     await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
                     boardEl.classList.add('board-shake');
                     await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
@@ -2295,6 +2345,22 @@ document.addEventListener('DOMContentLoaded', () => {
             event.returnValue = '';
         }
     });
+
+    const toggleAudioBtn = document.getElementById('toggle-audio-btn');
+    if (toggleAudioBtn) {
+        toggleAudioBtn.addEventListener('click', () => {
+            isMuted = !isMuted;
+            if (isMuted) {
+                stopBGM();
+                toggleAudioBtn.textContent = '🔇 Mute';
+                toggleAudioBtn.classList.add('text-rose-500', 'border-rose-200');
+            } else {
+                startBGM();
+                toggleAudioBtn.textContent = '🔊 Suara';
+                toggleAudioBtn.classList.remove('text-rose-500', 'border-rose-200');
+            }
+        });
+    }
 
     // ---------------------------------------------------------------
     // FULLSCREEN TOGGLE (CSS-only: avoids browser fullscreen API

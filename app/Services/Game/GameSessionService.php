@@ -213,7 +213,7 @@ class GameSessionService
             }
 
             $events = [];
-            $result = $this->duel->submitDuelAnswer($gameSession, $gamePlayer, $soalId, $jawaban, $timeTakenMs);
+            $result = $this->duel->submitDuelAnswer($gameSession, $gamePlayer, $soalId, $jawaban, $timeTakenMs, $events);
 
             if ($result['type'] === 'duel_finished') {
                 $robotOutcome = $this->playRobotTurnsIfNeeded($gameSession, $events);

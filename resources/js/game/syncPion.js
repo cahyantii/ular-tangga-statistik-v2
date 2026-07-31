@@ -5,6 +5,7 @@ import { renderFinished } from './panel.js';
 import { showQuestion, hideQuestion } from './modalSoal.js';
 import { showDuel, hideDuel } from './modalDuel.js';
 import { queueAchievementUnlocks } from './achievement.js';
+import { playSound } from './audio.js';
 
     // ---------------------------------------------------------------
     // Sinkronisasi pion untuk pemain LAIN (mis. lawan multiplayer) yang
@@ -31,6 +32,7 @@ import { queueAchievementUnlocks } from './achievement.js';
                 for (let step = prev + 1; step <= p.posisi_pion; step++) {
                     const stackIndex = step === p.posisi_pion ? stackIndexAt(step, p.id, session.players) : 0;
                     placePawnAt(el, step, stackIndex);
+                    playSound('pion_walk');
                     // eslint-disable-next-line no-await-in-loop
                     await delay(180);
                 }
@@ -47,12 +49,14 @@ import { queueAchievementUnlocks } from './achievement.js';
 
                 if (konektor) {
                     if (naik) {
+                        playSound('climb_ladder');
                         await window.BoardVisuals?.reactLadder?.(konektor.posisi_awal);
                         await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'tangga', 900);
                         spawnParticles(el, 'sparkle', 10);
                         el.classList.add('pawn-climb');
                         setTimeout(() => el.classList.remove('pawn-climb'), 650);
                     } else {
+                        playSound('snake_eat');
                         await window.BoardVisuals?.reactSnake?.(konektor.posisi_awal);
                         dom.boardEl.classList.add('board-shake');
                         await animateAlongConnector(el, konektor.posisi_awal, p.posisi_pion, 'ular', 900);
@@ -118,6 +122,9 @@ import { queueAchievementUnlocks } from './achievement.js';
      */
     function finalizeOutcome(session, newlyUnlockedAchievements = []) {
         renderFinished(session);
+        if (session.status === 'finished') {
+            playSound('win_match');
+        }
 
         if (session.active_question) {
             showQuestion(session.active_question, session.active_question_expires_at);
