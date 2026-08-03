@@ -22,22 +22,16 @@
     ];
 
     $jenisOptions = [
-        'biasa' => 'Petak Biasa',
-        'soal' => 'Petak Soal',
-        'bonus' => 'Bonus',
-        'penalti' => 'Penalti',
+        'biasa'   => 'Petak Biasa',
         'mystery' => 'Mystery',
     ];
 
     $legend = [
-        'start' => ['label' => 'Start', 'color' => '#059669'],
-        'finish' => ['label' => 'Finish', 'color' => '#7c3aed'],
-        'biasa' => ['label' => 'Biasa', 'color' => '#f1f5f9'],
-        'soal' => ['label' => 'Soal', 'color' => '#2563eb'],
-        'tangga' => ['label' => 'Tangga', 'color' => '#10b981'],
-        'ular' => ['label' => 'Ular', 'color' => '#e11d48'],
-        'bonus' => ['label' => 'Bonus', 'color' => '#d97706'],
-        'penalti' => ['label' => 'Penalti', 'color' => '#f43f5e'],
+        'start'   => ['label' => 'Start',   'color' => '#059669'],
+        'finish'  => ['label' => 'Finish',  'color' => '#7c3aed'],
+        'biasa'   => ['label' => 'Biasa',   'color' => '#f1f5f9'],
+        'tangga'  => ['label' => 'Tangga',  'color' => '#10b981'],
+        'ular'    => ['label' => 'Ular',    'color' => '#e11d48'],
         'mystery' => ['label' => 'Mystery', 'color' => '#6366f1'],
     ];
 @endphp
@@ -50,8 +44,8 @@
     <script>
     function petakPanel() {
         const TILE_COLORS = {
-            start: '#059669', finish: '#7c3aed', biasa: '#f1f5f9', soal: '#2563eb',
-            tangga: '#10b981', ular: '#e11d48', bonus: '#d97706', penalti: '#f43f5e', mystery: '#6366f1',
+            start: '#059669', finish: '#7c3aed', biasa: '#f1f5f9',
+            tangga: '#10b981', ular: '#e11d48', mystery: '#6366f1',
         };
 
         return {
@@ -263,16 +257,6 @@
                     </select>
                 </div>
 
-                <div x-show="form.jenis_petak === 'soal'" x-cloak>
-                    <label class="mb-1 block text-sm font-medium text-slate-700">Kategori Materi</label>
-                    <select x-model="form.kategori_id"
-                            class="w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-green-500 focus:ring-green-500">
-                        <option value="">Pilih kategori&hellip;</option>
-                        <template x-for="(nama, id) in kategoriOptions" :key="id">
-                            <option :value="id" x-text="nama"></option>
-                        </template>
-                    </select>
-                </div>
 
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">Label</label>

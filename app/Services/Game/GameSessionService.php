@@ -13,6 +13,7 @@ use App\Enums\TileType;
 use App\Events\Game\ConnectorApplied;
 use App\Events\Game\DiceRolled;
 use App\Events\Game\GameFinished;
+use App\Events\Game\PlayerFinished;
 use App\Events\Game\MovementBlocked;
 use App\Events\Game\PawnMoved;
 use App\Events\Game\QuestionPresented;
@@ -309,18 +310,13 @@ class GameSessionService
             'posisi_sesudah' => $move['posisi_sesudah'],
         ]);
         if ($this->winCondition->hasWon($gamePlayer, $papan)) {
-            \Log::info("🏆 [MENANG] Pemain '{$gamePlayer->nama}' mencapai garis akhir (Petak {$move['posisi_sesudah']})!");
-            $achievementsByPlayer = $this->finishSession($gameSession, $gamePlayer, WinReason::Finish, $events);
+            \Log::info("🏆 [FINISH] Pemain '{$gamePlayer->nama}' mencapai garis akhir (Petak {$move['posisi_sesudah']})!");
+            $result = $this->handlePlayerReachFinish($gameSession, $gamePlayer, WinReason::Finish, $events);
+            $result['nilai_dadu'] = $nilaiDadu;
+            $result['raw_nilai_dadu'] = $rawNilaiDadu;
+            $result['double_dice_active'] = $doubleDiceActive;
 
-            return [
-                'type' => 'finished',
-                'session' => $gameSession->fresh(),
-                'player' => $gamePlayer->fresh(),
-                'nilai_dadu' => $nilaiDadu,
-                'raw_nilai_dadu' => $rawNilaiDadu,
-                'double_dice_active' => $doubleDiceActive,
-                '_achievements_by_player' => $achievementsByPlayer,
-            ];
+            return $result;
         }
 
         $petak = Petak::query()->where('papan_id', $papan->id)->where('posisi', $move['posisi_sesudah'])->firstOrFail();
@@ -389,16 +385,12 @@ class GameSessionService
                 $this->applyMysteryEffect($gameSession, $gamePlayer, $papan, $effect, $events);
                 
                 if ($this->winCondition->hasWon($gamePlayer, $papan)) {
-                    $achievementsByPlayer = $this->finishSession($gameSession, $gamePlayer, WinReason::Finish, $events);
-                    return [
-                        'type' => 'finished',
-                        'session' => $gameSession->fresh(),
-                        'player' => $gamePlayer->fresh(),
-                        'nilai_dadu' => $nilaiDadu,
-                        'raw_nilai_dadu' => $rawNilaiDadu,
-                        'double_dice_active' => false,
-                        '_achievements_by_player' => $achievementsByPlayer,
-                    ];
+                    $result = $this->handlePlayerReachFinish($gameSession, $gamePlayer, WinReason::Finish, $events);
+                    $result['nilai_dadu'] = $nilaiDadu;
+                    $result['raw_nilai_dadu'] = $rawNilaiDadu;
+                    $result['double_dice_active'] = false;
+
+                    return $result;
                 }
             }
         }
@@ -908,10 +900,94 @@ class GameSessionService
      * @return array<int, array<int, array{kode: string, nama: string, deskripsi: ?string, icon: ?string, warna_badge: ?string, reward_poin: int}>>
      *         achievement yang baru diraih pada pemanggilan ini, dikelompokkan per game_player_id.
      */
+    /**
+     * Memproses ketika seorang pemain menyentuh petak Finish (petak 100).
+     */
+    private function handlePlayerReachFinish(GameSession $gameSession, GamePlayer $gamePlayer, WinReason $winReason, array &$events): array
+    {
+        $finishedCount = $gameSession->players()->whereNotNull('finish_rank')->count();
+        $nextRank = $finishedCount + 1;
+
+        $gamePlayer->update([
+            'finish_rank' => $nextRank,
+            'finished_at_turn' => $gameSession->total_turn,
+            'status' => PlayerStatus::Finished,
+        ]);
+
+        $rankDelta = $this->score->applyRankBonus($gamePlayer, $nextRank);
+        if ($rankDelta > 0) {
+            $events[] = new ScoreUpdated($gameSession, $gamePlayer, ScoreEventType::Win, $rankDelta, $gamePlayer->fresh()->skor);
+        }
+
+        $events[] = new PlayerFinished($gameSession, $gamePlayer, $nextRank);
+
+        $allPlayers = $gameSession->players()->get();
+        $totalPlayersCount = $allPlayers->count();
+        $remainingActivePlayers = $allPlayers->filter(fn (GamePlayer $p) => $p->status === PlayerStatus::Active);
+
+        // Syarat permainan SELESAI TOTAL:
+        // 1. Permainan 1v1 / 1vBot (total <= 2)
+        // 2. Juara 3 sudah terisi ($nextRank >= 3)
+        // 3. Pemain aktif yang belum finish tersisa <= 1
+        $shouldFinishGame = ($totalPlayersCount <= 2) || ($nextRank >= 3) || ($remainingActivePlayers->count() <= 1);
+
+        if ($shouldFinishGame) {
+            $unrankedPlayers = $gameSession->players()
+                ->whereNull('finish_rank')
+                ->orderBy('posisi_pion', 'desc')
+                ->orderBy('skor', 'desc')
+                ->get();
+
+            $currentAssignedRank = $nextRank;
+            foreach ($unrankedPlayers as $unranked) {
+                $currentAssignedRank++;
+                $unranked->update([
+                    'finish_rank' => $currentAssignedRank,
+                    'finished_at_turn' => $gameSession->total_turn,
+                    'status' => PlayerStatus::Finished,
+                ]);
+                $rankBonus = $this->score->applyRankBonus($unranked, $currentAssignedRank);
+                if ($rankBonus > 0) {
+                    $events[] = new ScoreUpdated($gameSession, $unranked, ScoreEventType::Win, $rankBonus, $unranked->fresh()->skor);
+                }
+            }
+
+            $juara1 = $gameSession->players()->where('finish_rank', 1)->first() ?? $gamePlayer;
+
+            $achievementsByPlayer = $this->finishSession($gameSession, $juara1, $winReason, $events);
+
+            return [
+                'type' => 'finished',
+                'session' => $gameSession->fresh(),
+                'player' => $gamePlayer->fresh(),
+                'rank' => $nextRank,
+                'game_over' => true,
+                '_achievements_by_player' => $achievementsByPlayer,
+            ];
+        }
+
+        $this->turn->advance($gameSession);
+
+        return [
+            'type' => 'player_finished',
+            'session' => $gameSession->fresh(),
+            'player' => $gamePlayer->fresh(),
+            'rank' => $nextRank,
+            'game_over' => false,
+        ];
+    }
+
     private function finishSession(GameSession $gameSession, GamePlayer $pemenang, WinReason $winReason, array &$events): array
     {
-        $winDelta = $this->score->apply($pemenang, ScoreEventType::Win);
-        $events[] = new ScoreUpdated($gameSession, $pemenang, ScoreEventType::Win, $winDelta, $pemenang->fresh()->skor);
+        if ($pemenang->finish_rank === null) {
+            $pemenang->update([
+                'finish_rank' => 1,
+                'finished_at_turn' => $gameSession->total_turn,
+                'status' => PlayerStatus::Finished,
+            ]);
+            $winDelta = $this->score->applyRankBonus($pemenang, 1);
+            $events[] = new ScoreUpdated($gameSession, $pemenang, ScoreEventType::Win, $winDelta, $pemenang->fresh()->skor);
+        }
 
         foreach ($gameSession->players as $player) {
             $player->update(['accuracy' => $this->computeAccuracy($gameSession, $player)]);

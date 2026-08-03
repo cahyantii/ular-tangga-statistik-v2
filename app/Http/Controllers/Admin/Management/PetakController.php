@@ -57,7 +57,7 @@ class PetakController extends Controller
 
         $data = $request->validated();
         unset($data['_version']);
-        $data['kategori_id'] = $data['jenis_petak'] === 'soal' ? $data['kategori_id'] : null;
+        $data['kategori_id'] = null; // Petak soal dihapus, kategori_id selalu null
         $data['is_active'] = $request->boolean('is_active', true);
 
         $petak->update($data);

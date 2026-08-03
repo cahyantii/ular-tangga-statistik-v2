@@ -22,9 +22,9 @@ class UpdatePetakRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'jenis_petak' => ['required', Rule::in(['biasa', 'soal', 'bonus', 'penalti', 'mystery'])],
+            'jenis_petak' => ['required', Rule::in(['biasa', 'mystery'])],
             'is_active' => ['boolean'],
-            'kategori_id' => ['nullable', 'integer', 'exists:kategori_materi,id', 'required_if:jenis_petak,soal'],
+            'kategori_id' => ['nullable', 'integer', 'exists:kategori_materi,id'],
             'label' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:255'],
             'warna' => ['nullable', 'string', 'max:255'],

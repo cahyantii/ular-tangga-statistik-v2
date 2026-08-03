@@ -17,7 +17,7 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class PapanPetakImportService
 {
-    private const EDITABLE_JENIS = ['biasa', 'soal', 'bonus', 'penalti', 'mystery'];
+    private const EDITABLE_JENIS = ['biasa', 'mystery'];
 
     public function parseAndValidate(PapanPermainan $papan, string $absolutePath): array
     {

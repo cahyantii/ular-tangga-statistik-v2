@@ -12,15 +12,12 @@ const TILE_COLORS = {
     start: '#059669',
     finish: '#7c3aed',
     biasa: '#f1f5f9',
-    soal: '#2563eb',
     tangga: '#10b981',
     ular: '#e11d48',
-    bonus: '#d97706',
-    penalti: '#f43f5e',
     mystery: '#6366f1',
 };
 
-const LIGHT_TEXT_TILES = new Set(['start', 'finish', 'soal', 'tangga', 'ular', 'bonus', 'penalti', 'mystery']);
+const LIGHT_TEXT_TILES = new Set(['start', 'finish', 'tangga', 'ular', 'mystery']);
 
 export function computeCellPosition(posisi, jumlahKolom, totalRows) {
     const rowIndexFromBottom = Math.floor((posisi - 1) / jumlahKolom);

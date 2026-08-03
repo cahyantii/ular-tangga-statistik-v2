@@ -220,16 +220,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // lihat catatan di resources/views/components/game/log-card.blade.php
     // ---------------------------------------------------------------
     const LOG_ICONS = {
-        dice: { icon: '\u{1F3B2}', color: 'text-primary-600' },
-        correct: { icon: '✅', color: 'text-secondary-600' },
-        wrong: { icon: '❌', color: 'text-rose-600' },
-        ladder: { icon: '\u{1FA9C}', color: 'text-secondary-600' },
-        snake: { icon: '\u{1F40D}', color: 'text-rose-600' },
-        bonus: { icon: '⭐', color: 'text-accent-600' },
-        penalti: { icon: '⚠️', color: 'text-rose-600' },
-        mystery: { icon: '❓', color: 'text-violet-600' },
-        info: { icon: '\u{1F514}', color: 'text-slate-500' },
-        finish: { icon: '\u{1F3C6}', color: 'text-accent-600' },
+        dice:    { icon: '\u{1F3B2}', color: 'text-primary-600' },
+        correct: { icon: '✅',        color: 'text-secondary-600' },
+        wrong:   { icon: '❌',        color: 'text-rose-600' },
+        ladder:  { icon: '\u{1FA9C}', color: 'text-secondary-600' },
+        snake:   { icon: '\u{1F40D}', color: 'text-rose-600' },
+        mystery: { icon: '❓',        color: 'text-violet-600' },
+        info:    { icon: '\u{1F514}', color: 'text-slate-500' },
+        finish:  { icon: '\u{1F3C6}', color: 'text-accent-600' },
     };
 
     function pushLog(kind, message) {
@@ -265,12 +263,6 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (result.type) {
             case 'blocked':
                 pushLog('info', `${nama}: langkah terlalu jauh, giliran dilewati`);
-                break;
-            case 'bonus':
-                pushLog('bonus', `${nama} mendapat petak Bonus`);
-                break;
-            case 'penalti':
-                pushLog('penalti', `${nama} kena petak Penalti`);
                 break;
             case 'mystery':
                 const itemName = result.item_name || 'Power-Up';
@@ -773,7 +765,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 'double_dice': '/images/powerups/double_dice.jpg',
                 'snake_shield': '/images/powerups/snake_shield.jpg',
                 'teleport_forward': '/images/powerups/teleport_forward.jpg',
-                'curse_dice': '/images/powerups/curse_dice.jpg'
+                'curse_dice': '/images/powerups/curse_dice.jpg',
+                'whirlwind': '/images/powerups/whirlwind.jpg'
             };
             
             const gachaImg = document.getElementById('gacha-image');
@@ -789,13 +782,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             gachaImg.src = itemImages[result.item_id] || itemImages['double_dice'];
             gachaName.textContent = result.item_name || 'Item Misteri';
-            gachaDesc.textContent = result.item_description || '(Efek Langsung)';
+            gachaDesc.innerHTML = `<strong class="text-violet-600">Efek:</strong> ${result.item_description || '(Tidak ada efek khusus)'}`;
             
             // Reset animasi
             gachaImg.style.transform = 'scale(0)';
             gachaName.classList.remove('opacity-100');
+            gachaName.classList.add('opacity-0');
             gachaDesc.classList.remove('opacity-100');
-            if (normalActions) normalActions.classList.remove('opacity-100');
+            gachaDesc.classList.add('opacity-0');
+            if (normalActions) {
+                normalActions.classList.remove('opacity-100');
+                normalActions.classList.add('opacity-0');
+            }
             
             const cleanupAndClose = () => {
                 if (klaimBtn) klaimBtn.onclick = null;
@@ -813,10 +811,19 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Mulai sequence animasi
             setTimeout(() => gachaImg.style.transform = 'scale(1)', 100);
-            setTimeout(() => gachaName.classList.add('opacity-100'), 400);
-            setTimeout(() => gachaDesc.classList.add('opacity-100'), 600);
             setTimeout(() => {
-                if (normalActions) normalActions.classList.add('opacity-100');
+                gachaName.classList.remove('opacity-0');
+                gachaName.classList.add('opacity-100');
+            }, 400);
+            setTimeout(() => {
+                gachaDesc.classList.remove('opacity-0');
+                gachaDesc.classList.add('opacity-100');
+            }, 600);
+            setTimeout(() => {
+                if (normalActions) {
+                    normalActions.classList.remove('opacity-0');
+                    normalActions.classList.add('opacity-100');
+                }
             }, 900);
         });
     }
@@ -838,6 +845,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 node.querySelector('[data-field="avatar"]').textContent = initials(p.nama);
                 node.querySelector('[data-field="nama"]').textContent = p.nama ?? 'Pemain';
                 if (isMe) node.querySelector('.me-badge')?.classList.remove('hidden');
+            }
+
+            const rankBadge = node.querySelector('[data-field="rank-badge"]');
+            if (rankBadge && p.finish_rank) {
+                rankBadge.classList.remove('hidden');
+                if (p.finish_rank === 1) {
+                    rankBadge.textContent = '🥇 Juara 1';
+                    rankBadge.className = 'rank-badge rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm';
+                } else if (p.finish_rank === 2) {
+                    rankBadge.textContent = '🥈 Juara 2';
+                    rankBadge.className = 'rank-badge rounded-full bg-slate-400 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm';
+                } else if (p.finish_rank === 3) {
+                    rankBadge.textContent = '🥉 Juara 3';
+                    rankBadge.className = 'rank-badge rounded-full bg-amber-700 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm';
+                } else {
+                    rankBadge.textContent = `#${p.finish_rank}`;
+                    rankBadge.className = 'rank-badge rounded-full bg-slate-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm';
+                }
             }
 
             const turnBadge = node.querySelector('.turn-badge');
@@ -1087,15 +1112,54 @@ document.addEventListener('DOMContentLoaded', () => {
                 playSound('win_match');
                 isWinSoundPlayed = true;
             }
-            const winner = session.players.find((p) => p.id === session.winner_game_player_id);
-            const isMeWinner = winner && myGamePlayerId === winner.id;
 
-            document.getElementById('finished-title').textContent = isMeWinner
-                ? 'Selamat, Anda menang!'
-                : 'Permainan selesai';
-            document.getElementById('finished-subtitle').textContent = isMeWinner
-                ? 'Anda berhasil mencapai garis Finish lebih dulu.'
-                : `${winner?.is_robot ? 'Robot' : (winner?.nama ?? 'Pemain lain')} mencapai Finish lebih dulu.`;
+            const sortedPlayers = [...session.players].sort((a, b) => {
+                if (a.finish_rank && b.finish_rank) return a.finish_rank - b.finish_rank;
+                if (a.finish_rank) return -1;
+                if (b.finish_rank) return 1;
+                return b.skor - a.skor;
+            });
+
+            const juara1 = sortedPlayers.find((p) => p.finish_rank === 1) || sortedPlayers[0];
+            const isMeJuara1 = juara1 && myGamePlayerId === juara1.id;
+            const myPlayer = session.players.find((p) => p.id === myGamePlayerId);
+            const myRank = myPlayer?.finish_rank;
+
+            document.getElementById('finished-title').textContent = isMeJuara1
+                ? '🏆 Selamat, Anda Juara 1!'
+                : (myRank ? `Selamat, Anda Juara ${myRank}!` : 'Permainan Selesai');
+            document.getElementById('finished-subtitle').textContent = isMeJuara1
+                ? 'Anda berhasil menjadi pemenang pertama permainan ini!'
+                : `${juara1?.is_robot ? 'Robot' : (juara1?.nama ?? 'Pemain lain')} berhasil meraih Juara 1.`;
+
+            const podiumListEl = document.getElementById('finished-podium-list');
+            if (podiumListEl) {
+                podiumListEl.innerHTML = '';
+                sortedPlayers.forEach((p) => {
+                    const isMe = p.id === myGamePlayerId;
+                    const rankStr = p.finish_rank === 1 ? '🥇 Juara 1' : (p.finish_rank === 2 ? '🥈 Juara 2' : (p.finish_rank === 3 ? '🥉 Juara 3' : `Peringkat #${p.finish_rank || '-'}`));
+                    const bgClass = p.finish_rank === 1 ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/30 dark:border-amber-700/50' : (isMe ? 'bg-primary-50 border-primary-200 dark:bg-primary-900/30' : 'bg-slate-50 border-slate-200 dark:bg-slate-700/50');
+                    
+                    const item = document.createElement('div');
+                    item.className = `flex items-center justify-between p-3 rounded-xl border ${bgClass} transition-all`;
+                    item.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <span class="font-bold text-sm text-slate-700 dark:text-slate-200">${rankStr}</span>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-sm text-slate-800 dark:text-white flex items-center gap-1.5">
+                                    ${p.is_robot ? '🤖 Robot' : p.nama}
+                                    ${isMe ? '<span class="text-[10px] bg-primary-500 text-white px-1.5 py-0.2 rounded-full">Anda</span>' : ''}
+                                </span>
+                                <span class="text-xs text-slate-400">Posisi: ${p.posisi_pion}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-black text-sm text-accent-600 dark:text-amber-400">${p.skor} Poin</span>
+                        </div>
+                    `;
+                    podiumListEl.appendChild(item);
+                });
+            }
 
             window.dispatchEvent(new CustomEvent('open-modal', { detail: 'game-finished-modal' }));
             rollButton.classList.add('hidden');
@@ -2182,6 +2246,12 @@ document.addEventListener('DOMContentLoaded', () => {
             await delay(1800);
             hideQuestion();
 
+            // Cek apakah misteri diterapkan: tampilkan gacha modal SEBELUM animasi pergerakan
+            if (result.mystery_applied && actingPlayer && actingPlayer.id === myGamePlayerId) {
+                const mysteryWithSession = { ...result.mystery_effect, session: result.session };
+                await showGachaModal(mysteryWithSession);
+            }
+
             // Jawaban bisa memicu konektor (ular/tangga)
             if (actingPlayer && result.konektor_applied && result.konektor_info) {
                 const el = getOrCreatePawnEl(actingPlayer);
@@ -2210,6 +2280,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await delay(200);
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 // Fallback jika berubah posisi tapi bukan konektor
+                // (misal efek teleport maju dari misteri, akan dianimasikan di sini setelah modal tertutup)
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
             }
 
@@ -2225,14 +2296,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Hentikan alur di sini, tunggu pemain submit jawaban lagi
             }
 
-            // Cek apakah misteri diterapkan
+            // Animasi efek area mystery (misal angin puyuh yang mengenai player lain)
             if (result.mystery_applied && actingPlayer && actingPlayer.id === myGamePlayerId) {
-                const mysteryWithSession = { ...result.mystery_effect, session: result.session };
-                await showGachaModal(mysteryWithSession);
                 if (result.mystery_effect && result.mystery_effect.item_id === 'whirlwind') {
                     await animateWhirlwind(actingPlayer.id);
                 }
             }
+
             if (actingPlayer) {
                 knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
             }

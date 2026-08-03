@@ -9,13 +9,8 @@
         <input type="hidden" name="_version" value="{{ $version }}">
 
         <x-admin.select label="Jenis Petak" name="jenis_petak" required x-model="jenis"
-                         :options="['biasa' => 'Biasa', 'soal' => 'Soal', 'bonus' => 'Bonus', 'penalti' => 'Penalti', 'mystery' => 'Mystery']"
+                         :options="['biasa' => 'Biasa', 'mystery' => 'Mystery']"
                          :value="$petak->jenis_petak->value" />
-
-        <div x-show="jenis === 'soal'">
-            <x-admin.select label="Kategori (untuk petak Soal)" name="kategori_id" :options="$kategoriOptions"
-                            :value="$petak->kategori_id" placeholder="Pilih kategori" />
-        </div>
 
         <x-admin.input label="Label (opsional)" name="label" :value="$petak->label" />
         <x-admin.input label="Icon (opsional)" name="icon" :value="$petak->icon" />

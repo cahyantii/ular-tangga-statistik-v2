@@ -5,16 +5,14 @@ import { state, dom, config } from './state.js';
     // lihat catatan di resources/views/components/game/log-card.blade.php
     // ---------------------------------------------------------------
     const LOG_ICONS = {
-        dice: { icon: '\u{1F3B2}', color: 'text-primary-600' },
-        correct: { icon: '✅', color: 'text-secondary-600' },
-        wrong: { icon: '❌', color: 'text-rose-600' },
-        ladder: { icon: '\u{1FA9C}', color: 'text-secondary-600' },
-        snake: { icon: '\u{1F40D}', color: 'text-rose-600' },
-        bonus: { icon: '⭐', color: 'text-accent-600' },
-        penalti: { icon: '⚠️', color: 'text-rose-600' },
-        mystery: { icon: '❓', color: 'text-violet-600' },
-        info: { icon: '\u{1F514}', color: 'text-slate-500' },
-        finish: { icon: '\u{1F3C6}', color: 'text-accent-600' },
+        dice:    { icon: '\u{1F3B2}', color: 'text-primary-600' },
+        correct: { icon: '✅',        color: 'text-secondary-600' },
+        wrong:   { icon: '❌',        color: 'text-rose-600' },
+        ladder:  { icon: '\u{1FA9C}', color: 'text-secondary-600' },
+        snake:   { icon: '\u{1F40D}', color: 'text-rose-600' },
+        mystery: { icon: '❓',        color: 'text-violet-600' },
+        info:    { icon: '\u{1F514}', color: 'text-slate-500' },
+        finish:  { icon: '\u{1F3C6}', color: 'text-accent-600' },
     };
 
     function pushLog(kind, message) {
@@ -50,12 +48,6 @@ import { state, dom, config } from './state.js';
         switch (result.type) {
             case 'blocked':
                 pushLog('info', `${nama}: langkah terlalu jauh, giliran dilewati`);
-                break;
-            case 'bonus':
-                pushLog('bonus', `${nama} mendapat petak Bonus`);
-                break;
-            case 'penalti':
-                pushLog('penalti', `${nama} kena petak Penalti`);
                 break;
             case 'mystery':
                 const itemName = result.item_name || 'Power-Up';

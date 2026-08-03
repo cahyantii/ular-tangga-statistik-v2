@@ -32,4 +32,21 @@ class ScoreService
 
         return $delta;
     }
+
+    public function applyRankBonus(GamePlayer $gamePlayer, int $rank): int
+    {
+        $delta = match ($rank) {
+            1 => 100,
+            2 => 50,
+            3 => 25,
+            default => 0,
+        };
+
+        if ($delta > 0) {
+            $gamePlayer->skor += $delta;
+            $gamePlayer->save();
+        }
+
+        return $delta;
+    }
 }

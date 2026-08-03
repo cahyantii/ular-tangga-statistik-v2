@@ -21,6 +21,8 @@ class GamePlayerResource extends JsonResource
             'pawn_color' => $this->pawn_color,
             'pawn_icon' => $this->pawn_icon,
             'posisi_pion' => $this->posisi_pion,
+            'finish_rank' => $this->finish_rank,
+            'finished_at_turn' => $this->finished_at_turn,
             'skor' => $this->skor,
             'accuracy' => $this->accuracy,
             'status' => $this->status->value,

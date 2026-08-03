@@ -14,8 +14,9 @@
 
             <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-bold text-slate-800" data-field="nama"></p>
-                <div class="mt-0.5 flex items-center gap-1.5">
+                <div class="mt-0.5 flex flex-wrap items-center gap-1.5">
                     <span class="me-badge hidden rounded-full bg-primary-50 px-1.5 py-0.5 text-[10px] font-semibold text-primary-600">Anda</span>
+                    <span class="rank-badge hidden rounded-full px-2 py-0.5 text-[10px] font-bold text-white shadow-sm" data-field="rank-badge"></span>
                     <span class="turn-badge hidden items-center gap-1 rounded-full bg-secondary-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
                         <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-white"></span> Giliran
                     </span>

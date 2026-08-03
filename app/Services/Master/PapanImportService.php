@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Validator;
  */
 class PapanImportService
 {
-    private const VALID_JENIS = ['start', 'finish', 'biasa', 'soal', 'bonus', 'penalti', 'mystery', 'tangga', 'ular'];
+    private const VALID_JENIS = ['start', 'finish', 'biasa', 'mystery', 'tangga', 'ular'];
 
     public function parseAndValidate(string $absoluteJsonPath): array
     {
@@ -64,10 +64,7 @@ class PapanImportService
             $rows = [];
 
             foreach ($parsed['petak'] as $row) {
-                $kategoriId = null;
-                if (($row['jenis_petak'] ?? null) === 'soal' && ! empty($row['kategori_nama'])) {
-                    $kategoriId = $kategoriByNama->get(strtolower($row['kategori_nama']))?->id;
-                }
+                $kategoriId = null; // Petak soal dihapus, kategori_id tidak digunakan
 
                 $rows[] = [
                     'papan_id' => $papan->id,

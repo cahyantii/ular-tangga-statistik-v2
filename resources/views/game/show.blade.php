@@ -366,14 +366,18 @@
     </x-player.modal>
 
     {{-- Modal Hasil Akhir --}}
-    <x-player.modal name="game-finished-modal">
+    <x-player.modal name="game-finished-modal" maxWidth="max-w-lg">
         <div class="text-center">
-            <span id="finished-icon" class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-accent-500 text-white shadow-soft">
+            <span id="finished-icon" class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-400 text-white shadow-soft">
                 <x-player.icon name="trophy" class="h-8 w-8" />
             </span>
-            <p id="finished-title" class="mt-4 text-xl font-bold text-slate-800"></p>
-            <p id="finished-subtitle" class="mt-1 text-sm text-slate-500"></p>
-            <a href="{{ route('dashboard') }}" class="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-600">
+            <p id="finished-title" class="mt-3 text-2xl font-black text-slate-800 dark:text-white"></p>
+            <p id="finished-subtitle" class="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400"></p>
+
+            {{-- List Podium Juara --}}
+            <div id="finished-podium-list" class="mt-5 space-y-2.5 text-left"></div>
+
+            <a href="{{ route('dashboard') }}" class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-6 py-3 text-sm font-bold text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary-600">
                 Kembali ke Dashboard
             </a>
         </div>
@@ -424,21 +428,12 @@
                 message += data.text;
             } else {
                 switch (data.jenis) {
-                    case 'soal':
-                        message += 'Jika Anda mendarat di petak ini, Anda harus menjawab pertanyaan dengan benar untuk mendapatkan poin.';
-                        break;
-                    case 'bonus':
-                        message += 'Anda akan mendapatkan bonus poin jika berhenti di petak ini.';
-                        break;
-                    case 'penalti':
-                        message += 'Poin Anda akan dikurangi jika berhenti di petak ini.';
-                        break;
                     case 'ular':
                     case 'tangga':
                         message += `Petak ini adalah jalur ${data.jenis}.`;
                         break;
                     case 'mystery':
-                        message += 'Petak misteri bisa memberikan Anda bonus poin atau penalti!';
+                        message += 'Petak Misteri: Anda akan mendapatkan Power-Up acak!';
                         break;
                 }
             }

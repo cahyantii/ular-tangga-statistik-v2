@@ -14,6 +14,7 @@ enum PlayerStatus: string
      * sesi untuk pemain lain yang masih aktif.
      */
     case Forfeited = 'forfeited';
+    case Finished = 'finished';
 
     public function label(): string
     {
@@ -21,6 +22,7 @@ enum PlayerStatus: string
             self::Active => 'Aktif',
             self::Disconnected => 'Terputus',
             self::Forfeited => 'Keluar',
+            self::Finished => 'Selesai',
         };
     }
 }

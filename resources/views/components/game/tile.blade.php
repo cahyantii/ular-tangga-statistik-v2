@@ -2,15 +2,12 @@
 
 @php
     $palette = [
-        'start' => ['color' => 'text-secondary-500', 'icon' => 'flag'],
-        'finish' => ['color' => 'text-violet-600', 'icon' => 'trophy'],
-        'soal' => ['color' => 'text-primary-600', 'icon' => 'book'],
-        'bonus' => ['color' => 'text-accent-500', 'icon' => 'star'],
-        'mystery' => ['color' => 'text-violet-600', 'icon' => 'help'],
-        'ular' => ['color' => 'text-rose-600', 'icon' => null],
-        'tangga' => ['color' => 'text-secondary-600', 'icon' => null],
-        'penalti' => ['color' => 'text-rose-500', 'icon' => 'alert'],
-        'biasa' => ['color' => 'text-slate-400', 'icon' => null],
+        'start'   => ['color' => 'text-secondary-500', 'icon' => 'flag'],
+        'finish'  => ['color' => 'text-violet-600',    'icon' => 'trophy'],
+        'mystery' => ['color' => 'text-violet-600',    'icon' => 'help'],
+        'ular'    => ['color' => 'text-rose-600',      'icon' => null],
+        'tangga'  => ['color' => 'text-secondary-600', 'icon' => null],
+        'biasa'   => ['color' => 'text-slate-400',     'icon' => null],
     ];
 
     // Petak yang di-nonaktifkan admin (is_active=false) diperlakukan visual &
@@ -40,23 +37,8 @@
     );
 
     $previewText = '';
-    if ($type === 'soal' && $tile->kategori_id) {
-        $sampleSoal = \App\Models\Soal::where('kategori_id', $tile->kategori_id)->active()->inRandomOrder()->first();
-        if ($sampleSoal) {
-            $previewText = 'Contoh Pertanyaan: ' . htmlspecialchars($sampleSoal->pertanyaan, ENT_QUOTES);
-        } else {
-            $previewText = 'Belum ada soal untuk kategori ini.';
-        }
-    } elseif ($type === 'bonus') {
-        $bonus = app(\App\Repositories\Game\GameSettingsRepository::class)->getInt('bonus_point');
-        $previewText = 'Anda akan mendapatkan bonus poin sebesar +' . $bonus . ' poin!';
-    } elseif ($type === 'penalti') {
-        $penalty = app(\App\Repositories\Game\GameSettingsRepository::class)->getInt('tile_penalty_point');
-        $previewText = 'Poin Anda akan dikurangi sebesar ' . $penalty . ' poin.';
-    } elseif ($type === 'mystery') {
-        $bonus = app(\App\Repositories\Game\GameSettingsRepository::class)->getInt('bonus_point');
-        $penalty = app(\App\Repositories\Game\GameSettingsRepository::class)->getInt('tile_penalty_point');
-        $previewText = 'Bisa mendapatkan bonus poin (+' . $bonus . ') atau penalti (-' . $penalty . ').';
+    if ($type === 'mystery') {
+        $previewText = 'Petak Misteri: Anda akan mendapatkan Power-Up acak!';
     }
 @endphp
 
