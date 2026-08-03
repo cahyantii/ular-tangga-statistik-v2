@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\ConnectorType;
 use App\Enums\TileType;
-use App\Models\KategoriMateri;
 use App\Models\PapanKonektor;
 use App\Models\PapanPermainan;
 use App\Models\Petak;
@@ -15,11 +14,7 @@ class PapanPermainanSeeder extends Seeder
 {
     public function run(): void
     {
-        $statistikaDasar = KategoriMateri::where('slug', 'statistika-dasar')->firstOrFail();
-        $pengenalanBps = KategoriMateri::where('slug', 'pengenalan-bps')->firstOrFail();
-        $indikatorStatistik = KategoriMateri::where('slug', 'indikator-statistik')->firstOrFail();
-
-        DB::transaction(function () use ($statistikaDasar, $pengenalanBps, $indikatorStatistik) {
+        DB::transaction(function () {
             $papan = PapanPermainan::updateOrCreate(
                 ['nama' => 'Papan Statistik Indonesia'],
                 [
@@ -47,10 +42,10 @@ class PapanPermainanSeeder extends Seeder
                 24 => TileType::Tangga,
                 31 => TileType::Ular,
                 33 => TileType::Tangga,
-                40 => TileType::Bonus,
+                40 => TileType::Biasa,
                 45 => TileType::Ular,
                 52 => TileType::Tangga,
-                55 => TileType::Penalti,
+                55 => TileType::Mystery,
                 58 => TileType::Ular,
                 61 => TileType::Tangga,
                 68 => TileType::Ular,
@@ -62,21 +57,15 @@ class PapanPermainanSeeder extends Seeder
                 100 => TileType::Finish,
             ];
 
-            // Sisa posisi (di luar $jenisPerPosisi) diisi lewat pola berulang, BUKAN
-            // default Soal seperti sebelumnya — supaya papan tidak didominasi petak
-            // Soal (dulu 80 dari 100 posisi menjadi Soal, jauh lebih banyak dari
-            // kebutuhan wajar dibanding jumlah soal aktif per kategori). Pola 16-slot
-            // ini menghasilkan sekitar 50% Biasa, 25% Soal, sisanya Bonus/Penalti/
-            // Mystery — komposisi papan yang jauh lebih bervariasi dan realistis.
+            // Sisa posisi (di luar $jenisPerPosisi) diisi lewat pola berulang.
+            // Menghasilkan kombinasi Biasa dan Mystery.
             $fillerPattern = [
-                TileType::Biasa, TileType::Soal, TileType::Biasa, TileType::Penalti,
-                TileType::Biasa, TileType::Soal, TileType::Bonus, TileType::Biasa,
-                TileType::Biasa, TileType::Soal, TileType::Biasa, TileType::Mystery,
-                TileType::Biasa, TileType::Soal, TileType::Bonus, TileType::Biasa,
+                TileType::Biasa, TileType::Biasa, TileType::Biasa, TileType::Mystery,
+                TileType::Biasa, TileType::Biasa, TileType::Biasa, TileType::Biasa,
+                TileType::Biasa, TileType::Biasa, TileType::Biasa, TileType::Mystery,
+                TileType::Biasa, TileType::Biasa, TileType::Biasa, TileType::Biasa,
             ];
 
-            $kategoriCycle = [$statistikaDasar->id, $pengenalanBps->id, $indikatorStatistik->id];
-            $kategoriIndex = 0;
             $fillerIndex = 0;
 
             $petakRows = [];
@@ -89,11 +78,6 @@ class PapanPermainanSeeder extends Seeder
                 }
 
                 $kategoriId = null;
-
-                if ($jenis === TileType::Soal) {
-                    $kategoriId = $kategoriCycle[$kategoriIndex % 3];
-                    $kategoriIndex++;
-                }
 
                 $petakRows[] = [
                     'papan_id' => $papan->id,
