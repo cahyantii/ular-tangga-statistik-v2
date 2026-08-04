@@ -41,7 +41,7 @@
             value="{{ old($name, $value) }}"
             aria-invalid="{{ $hasError ? 'true' : 'false' }}"
             {{ $attributes->merge([
-                'class' => "w-full border {$borderClasses} {$sizeClasses} bg-white dark:bg-dark-surface-hover text-slate-700 dark:text-dark-text placeholder:text-slate-400 dark:placeholder:text-dark-muted transition focus:outline-none focus:ring-2 "
+                'class' => "w-full border {$borderClasses} {$sizeClasses} bg-white dark:bg-dark-bg text-slate-700 dark:text-dark-text placeholder:text-slate-400 dark:placeholder:text-dark-muted transition focus:outline-none focus:ring-2 "
                     . ($icon ? $iconPad : $noIconPad)
                     . (isset($suffix) ? ' pr-32' : ($isLg ? ' pr-4' : ' pr-3.5')),
             ]) }}

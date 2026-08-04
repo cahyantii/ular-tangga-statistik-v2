@@ -6,13 +6,14 @@
             src="{{ asset('images/brand/logo-landigpage.png') }}"
             alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
             loading="lazy"
-            class="absolute inset-0 z-0 h-full w-full object-cover object-right opacity-90 dark:opacity-50"
+            class="absolute inset-0 z-0 h-full w-full object-cover object-[70%_center] sm:object-right opacity-25 sm:opacity-90 dark:opacity-15 dark:sm:opacity-50 transition-all duration-500"
         >
 
-        {{-- Gradient Overlay for better readability (fade from left to right) --}}
-        <div class="absolute inset-0 z-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-dark-bg dark:via-dark-bg/80 dark:to-transparent"></div>
+        {{-- Gradient Overlay for better readability --}}
+        <div class="absolute inset-0 z-0 bg-gradient-to-r from-white via-white/90 to-white/40 sm:to-transparent dark:from-dark-bg dark:via-dark-bg/90 dark:to-dark-bg/40 dark:sm:to-transparent"></div>
+        
         {{-- Bottom gradient for mobile readability --}}
-        <div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-dark-bg sm:hidden"></div>
+        <div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-white/50 to-white dark:via-dark-bg/50 dark:to-dark-bg sm:hidden"></div>
 
         <div class="relative z-10 mx-auto w-full max-w-[1600px] px-4 py-20 sm:px-6 lg:px-8">
             <div class="flex max-w-3xl flex-col items-start text-left">

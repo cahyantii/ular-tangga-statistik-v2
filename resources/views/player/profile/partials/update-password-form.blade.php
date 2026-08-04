@@ -4,8 +4,8 @@
             <x-player.icon name="lock" class="h-5 w-5" />
         </span>
         <div>
-            <h3 class="text-base font-bold text-slate-800">Ubah Password</h3>
-            <p class="mt-1 text-sm text-slate-500">Pastikan akun kamu menggunakan password yang kuat dan tidak mudah ditebak.</p>
+            <h3 class="text-base font-bold text-slate-800 dark:text-dark-text">Ubah Password</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-dark-muted">Pastikan akun kamu menggunakan password yang kuat dan tidak mudah ditebak.</p>
         </div>
     </header>
 

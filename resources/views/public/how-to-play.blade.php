@@ -22,7 +22,7 @@
     @endphp
 
     {{-- Hero --}}
-    <section class="relative overflow-hidden bg-gradient-to-b from-[#EAF3FF] via-[#F4F8FF] to-white">
+    <section class="relative overflow-hidden bg-gradient-to-b from-[#EAF3FF] via-[#F4F8FF] to-white dark:from-dark-bg dark:via-dark-bg/80 dark:to-dark-bg">
         {{-- Decorative light --}}
         <div aria-hidden="true" class="pointer-events-none absolute left-1/4 top-0 h-64 w-64 -translate-x-1/2 -translate-y-1/3 rounded-full bg-white/70 blur-3xl"></div>
         <div aria-hidden="true" class="pointer-events-none absolute right-1/4 bottom-0 h-72 w-72 translate-x-1/3 translate-y-1/3 rounded-full bg-blue-200/40 blur-3xl"></div>
@@ -42,8 +42,8 @@
             </div>
 
             <div class="text-center md:flex-1">
-                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">Cara Bermain</h1>
-                <p class="mx-auto mt-4 max-w-xl text-lg text-slate-600">
+                <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-dark-text sm:text-5xl">Cara Bermain</h1>
+                <p class="mx-auto mt-4 max-w-xl text-lg text-slate-600 dark:text-dark-muted">
                     Ikuti langkah-langkah berikut untuk mulai bermain dan jadi juara statistik!
                 </p>
             </div>
@@ -63,7 +63,7 @@
     <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 lg:gap-x-10 lg:gap-y-10">
             @foreach ($steps as $step)
-                <div class="group relative flex flex-col items-center rounded-2xl bg-white p-6 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
+                <div class="group relative flex flex-col items-center rounded-2xl bg-white dark:bg-dark-surface p-6 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
                     <span class="absolute left-4 top-4 flex h-7 w-7 items-center justify-center rounded-full bg-primary-500 text-xs font-bold text-white">
                         {{ $loop->iteration }}
                     </span>
@@ -91,8 +91,8 @@
                         @endswitch
                     </span>
 
-                    <h3 class="mt-4 font-bold text-slate-900">{{ $step['judul'] }}</h3>
-                    <p class="mt-1.5 text-sm text-slate-600">{{ $step['deskripsi'] }}</p>
+                    <h3 class="mt-4 font-bold text-slate-900 dark:text-dark-text">{{ $step['judul'] }}</h3>
+                    <p class="mt-1.5 text-sm text-slate-600 dark:text-dark-muted">{{ $step['deskripsi'] }}</p>
 
                     @if ($loop->iteration % 5 !== 0 && ! $loop->last)
                         <span class="pointer-events-none absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-1/2 lg:flex" aria-hidden="true">
@@ -109,7 +109,7 @@
 
     {{-- CTA --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 p-6 text-center shadow-sm sm:gap-6 sm:p-8 md:flex-row md:justify-between md:gap-6 md:text-left lg:gap-10">
+        <div class="relative flex flex-col items-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-r from-primary-50 via-blue-50 to-primary-50 dark:from-primary-900/20 dark:via-blue-900/20 dark:to-primary-900/20 p-6 text-center shadow-sm sm:gap-6 sm:p-8 md:flex-row md:justify-between md:gap-6 md:text-left lg:gap-10">
             {{-- Decorative light --}}
             <div aria-hidden="true" class="pointer-events-none absolute left-8 top-1/2 h-32 w-32 -translate-y-1/2 rounded-full bg-white/70 blur-3xl"></div>
 
@@ -122,8 +122,8 @@
             >
 
             <div class="relative md:flex-1">
-                <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Siap Menguji Pengetahuanmu?</h2>
-                <p class="mt-1 text-slate-600">Belajar jadi lebih seru, statistik jadi lebih mudah dipahami!</p>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-dark-text sm:text-2xl">Siap Menguji Pengetahuanmu?</h2>
+                <p class="mt-1 text-slate-600 dark:text-dark-muted">Belajar jadi lebih seru, statistik jadi lebih mudah dipahami!</p>
             </div>
 
             <a

@@ -1,12 +1,12 @@
 <section id="avatar-picker">
-    <h3 class="text-base font-bold text-slate-800">Avatar</h3>
-    <p class="mt-1 text-sm text-slate-500">Pilih avatar yang kamu suka atau unggah foto sendiri.</p>
+    <h3 class="text-base font-bold text-slate-800 dark:text-dark-text">Avatar</h3>
+    <p class="mt-1 text-sm text-slate-500 dark:text-dark-muted">Pilih avatar yang kamu suka atau unggah foto sendiri.</p>
 
     <div class="mt-5 grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] justify-items-center gap-4">
         <form method="POST" action="{{ route('profile.avatar.update') }}" enctype="multipart/form-data">
             @csrf
             @method('patch')
-            <label class="group flex h-[90px] w-[90px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-primary-200 bg-primary-50/50 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50">
+            <label class="group flex h-[90px] w-[90px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[20px] border-2 border-dashed border-primary-200 dark:border-primary-900/50 bg-primary-50/50 dark:bg-primary-900/20 text-primary-500 transition duration-200 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/40">
                 <input
                     type="file"
                     name="avatar"

@@ -37,7 +37,7 @@
             id="{{ $name }}"
             name="{{ $name }}"
             aria-invalid="{{ $hasError ? 'true' : 'false' }}"
-            {{ $attributes->merge(['class' => "w-full border {$borderClasses} {$sizeClasses} bg-white dark:bg-dark-surface-hover text-slate-700 dark:text-dark-text placeholder:text-slate-400 dark:placeholder:text-dark-muted transition focus:outline-none focus:ring-2"]) }}
+            {{ $attributes->merge(['class' => "w-full border {$borderClasses} {$sizeClasses} bg-white dark:bg-dark-bg text-slate-700 dark:text-dark-text placeholder:text-slate-400 dark:placeholder:text-dark-muted transition focus:outline-none focus:ring-2"]) }}
         >
 
         <button

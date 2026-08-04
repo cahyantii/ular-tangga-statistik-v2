@@ -5,13 +5,16 @@
 ])
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ $title ?? config('app.name') }}</title>
+
+        {{-- Dark mode: harus load pertama kali untuk menghindari flash of wrong theme --}}
+        @vite('resources/js/dark-mode.js')
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800&display=swap" rel="stylesheet" />
@@ -52,6 +55,7 @@
                 </a>
 
                 <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+                    <x-dark-mode-toggle />
                     <span class="hidden text-sm text-slate-500 dark:text-dark-muted sm:inline">{{ $navPromptText }}</span>
                     <a
                         href="{{ $navLinkHref }}"

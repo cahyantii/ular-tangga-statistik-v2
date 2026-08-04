@@ -1,7 +1,7 @@
 <section>
     <header>
-        <h3 class="text-base font-bold text-slate-800">Informasi Profil</h3>
-        <p class="mt-1 text-sm text-slate-500">Perbarui informasi akun dan email kamu.</p>
+        <h3 class="text-base font-bold text-slate-800 dark:text-dark-text">Informasi Profil</h3>
+        <p class="mt-1 text-sm text-slate-500 dark:text-dark-muted">Perbarui informasi akun dan email kamu.</p>
     </header>
 
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
@@ -47,7 +47,7 @@
             </x-player.form-input>
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                <p class="mt-2 text-sm text-slate-500">
+                <p class="mt-2 text-sm text-slate-500 dark:text-dark-muted">
                     Email kamu belum terverifikasi.
                     <button form="send-verification" class="font-semibold text-primary-600 underline hover:text-primary-700">
                         Klik di sini

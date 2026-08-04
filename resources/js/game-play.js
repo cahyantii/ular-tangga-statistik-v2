@@ -1274,8 +1274,8 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150';
-            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+            button.className = 'w-full rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-150';
+            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-500 dark:text-slate-300">${kunci}</span>${teks}`;
             button.dataset.kunci = kunci;
             
             if (isMyTurn) {
@@ -1382,8 +1382,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.disabled = true;
-                    button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 cursor-default transition-all';
-                    button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+                    button.className = 'w-full rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 cursor-default transition-all';
+                    button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-500 dark:text-slate-300">${kunci}</span>${teks}`;
                     button.dataset.kunci = kunci;
                     optionsEl.appendChild(button);
                 });
@@ -1504,8 +1504,8 @@ document.addEventListener('DOMContentLoaded', () => {
         Object.entries(soal.opsi_jawaban).forEach(([kunci, teks]) => {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-rose-400 hover:bg-rose-50';
-            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+            button.className = 'w-full rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 transition-all duration-150 hover:-translate-y-0.5 hover:border-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 dark:hover:border-rose-500';
+            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-500 dark:text-slate-300">${kunci}</span>${teks}`;
             button.dataset.kunci = kunci;
             button.addEventListener('click', () => {
                 const timeTaken = Date.now() - duelStartTime;
@@ -2029,8 +2029,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const button = document.createElement('button');
             button.type = 'button';
             button.disabled = true;
-            button.className = 'w-full rounded-xl border border-slate-200 px-4 py-2.5 text-left text-sm font-medium text-slate-700 cursor-default';
-            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">${kunci}</span>${teks}`;
+            button.className = 'w-full rounded-xl border border-slate-200 dark:border-slate-600 px-4 py-2.5 text-left text-sm font-medium text-slate-700 dark:text-slate-200 cursor-default';
+            button.innerHTML = `<span class="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700 text-xs font-bold text-slate-500 dark:text-slate-300">${kunci}</span>${teks}`;
             button.dataset.kunci = kunci;
             botQuestionOptionsEl.appendChild(button);
         });
