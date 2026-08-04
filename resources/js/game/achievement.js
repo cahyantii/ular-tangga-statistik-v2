@@ -24,7 +24,7 @@ import { state, dom, config } from './state.js';
 
     let achievementQueue = [];
 
-    function queueAchievementUnlocks(list) {
+    export function queueAchievementUnlocks(list) {
         achievementQueue.push(...list);
         if (achievementQueue.length === list.length) {
             showNextAchievementUnlock();
@@ -99,33 +99,3 @@ import { state, dom, config } from './state.js';
         }
     });
 
-    function applySessionState(session, { pawnMode = 'diff', skipPawnIds = new Set(), deferOutcome = false } = {}) {
-        state.latestSession = session;
-
-        if (pawnMode === 'instant') {
-            session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players)));
-            syncKnownPositions(session);
-        } else if (pawnMode === 'skip') {
-            session.players.forEach((p) => {
-                if (!skipPawnIds.has(p.id)) {
-                    placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
-                }
-            });
-            syncKnownPositions(session);
-        } else {
-            state.animationChain = state.animationChain.then(() => animateExternalDiff(session)).then(() => syncKnownPositions(session));
-        }
-
-        renderPlayerPanels(session);
-        updateTurnIndicator(session);
-        renderPaused(session);
-        renderInventoryUI(session);
-
-        if (!deferOutcome) {
-            finalizeOutcome(session);
-        }
-
-        joinRealtimeChannel(session);
-        startHeartbeat(session);
-        stopRealtimeIfSessionOver(session);
-    }

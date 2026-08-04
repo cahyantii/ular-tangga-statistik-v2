@@ -22,8 +22,6 @@ class ScoreService
         $delta = match ($eventType) {
             ScoreEventType::CorrectAnswer => $this->settings->getInt('correct_answer_point'),
             ScoreEventType::WrongAnswer => -$this->settings->getInt('wrong_answer_penalty'),
-            ScoreEventType::Bonus => $this->settings->getInt('bonus_point'),
-            ScoreEventType::TilePenalty => -$this->settings->getInt('tile_penalty_point'),
             ScoreEventType::Win => $this->settings->getInt('win_point'),
         };
 

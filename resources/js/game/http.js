@@ -1,8 +1,8 @@
 import { state, dom, config } from './state.js';
-import { animatePlayerTurn, setTileGlow } from './pawn.js';
+import { animatePlayerTurn, setTileGlow, showGachaModal } from './pawn.js';
 import { logTurnResult, logAnswerResult, pushLog } from './ui.js';
 import { animateDiceRoll } from './dice.js';
-import { animateExternalDiff, finalizeOutcome, applySessionState } from './syncPion.js';
+import { animateExternalDiff, finalizeOutcome, applySessionState, animateWhirlwind } from './syncPion.js';
 import { hideQuestion, showQuestion } from './modalSoal.js';
 import { hideDuel, showDuel } from './modalDuel.js';
 import { updateTurnIndicator } from './panel.js';
@@ -376,6 +376,7 @@ import { playSound } from './audio.js';
             hideQuestion();
 
             // Jawaban bisa memicu konektor (ular/tangga)
+            // Cek apakah mendarat di mystery tile setelah konektor
             if (actingPlayer && result.konektor_applied && result.konektor_info) {
                 const el = getOrCreatePawnEl(actingPlayer);
                 const info = result.konektor_info;
@@ -401,18 +402,22 @@ import { playSound } from './audio.js';
 
                 placePawnAt(el, info.posisi_akhir, stackIndexAt(info.posisi_akhir, actingPlayer.id, result.session?.players));
                 await delay(200);
-
-                // Cek apakah mendarat di mystery tile setelah konektor
-                if (result.mystery_after_konektor && actingPlayer.id === state.myGamePlayerId) {
-                    // Inject session ke objek mystery agar showGachaModal bisa cek inventory
-                    const mysteryWithSession = { ...result.mystery_after_konektor, session: result.session };
-                    await showGachaModal(mysteryWithSession);
-                    if (result.mystery_after_konektor.item_id === 'whirlwind') {
-                        await animateWhirlwind(actingPlayer.id);
-                    }
-                }
             } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
                 await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
+            }
+
+            if (actingPlayer) {
+                state.knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
+            }
+
+            // Tampilkan Modal Gacha JIKA misteri diterapkan (langsung atau setelah konektor)
+            if (result.mystery_applied && result.mystery_effect && actingPlayer && actingPlayer.id === state.myGamePlayerId) {
+                // Inject session ke objek mystery agar showGachaModal bisa cek inventory
+                const mysteryWithSession = { ...result.mystery_effect, session: result.session };
+                await showGachaModal(mysteryWithSession);
+                if (result.mystery_effect.item_id === 'whirlwind') {
+                    await animateWhirlwind(actingPlayer.id);
+                }
             }
             if (actingPlayer) {
                 state.knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);

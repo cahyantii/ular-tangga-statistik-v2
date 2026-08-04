@@ -10,7 +10,7 @@ import { playSound } from './audio.js';
         return { bg: player.pawn_color === 'red' ? '#e11d48' : (player.pawn_color || '#1d4ed8'), ring: '#ffffff' };
     }
 
-    function getOrCreatePawnEl(player) {
+    export function getOrCreatePawnEl(player) {
         let el = dom.pawnLayer.querySelector(`[data-pawn-id="${player.id}"]`);
         if (el) return el;
 
@@ -44,7 +44,7 @@ import { playSound } from './audio.js';
         return el;
     }
 
-    function placePawnAt(el, posisi, stackIndex = 0) {
+    export function placePawnAt(el, posisi, stackIndex = 0) {
         // posisi_pion 0 = belum bergerak dari Start; tampilkan pion bertengger
         // di kotak Start (posisi 1) alih-alih menyembunyikannya.
         el.style.opacity = '1';
@@ -63,7 +63,7 @@ import { playSound } from './audio.js';
      * Urutan diambil dari `turn_order` (stabil, sama di semua klien) supaya
      * offset-nya konsisten walau urutan array `players` di payload beda-beda.
      */
-    function stackIndexAt(posisi, playerId, players = state.latestSession?.players ?? []) {
+    export function stackIndexAt(posisi, playerId, players = state.latestSession?.players ?? []) {
         const sameTile = players
             .filter((p) => p.posisi_pion === posisi)
             .sort((a, b) => (a.turn_order ?? 0) - (b.turn_order ?? 0));
@@ -71,14 +71,14 @@ import { playSound } from './audio.js';
         return idx === -1 ? 0 : idx;
     }
 
-    function setTileGlow(posisi) {
+    export function setTileGlow(posisi) {
         dom.boardEl.querySelectorAll('.tile-active-ring').forEach((ring) => ring.classList.remove('opacity-100'));
         if (!posisi) return;
         const cell = dom.boardEl.querySelector(`[data-posisi="${posisi}"] .tile-active-ring`);
         cell?.classList.add('opacity-100');
     }
 
-    function bumpPawn(el) {
+    export function bumpPawn(el) {
         el.classList.add('pawn-bump');
         setTimeout(() => el.classList.remove('pawn-bump'), 450);
     }
@@ -89,7 +89,7 @@ import { playSound } from './audio.js';
      * server) berbeda dari hasil dadu murni, lanjutkan dengan animasi
      * tangga (naik) atau ular (meluncur turun) menuju posisi akhir itu.
      */
-    async function animatePlayerTurn(player, fromPosisi, result) {
+    export async function animatePlayerTurn(player, fromPosisi, result) {
         const el = getOrCreatePawnEl(player);
         const finalPosisi = player.posisi_pion;
         const nilaiDadu = result.nilai_dadu ?? null;
@@ -196,7 +196,7 @@ import { playSound } from './audio.js';
 
     }
 
-    function showGachaModal(result) {
+    export function showGachaModal(result) {
         return new Promise((resolve) => {
             const itemImages = {
                 'double_dice': '/images/powerups/double_dice.jpg',

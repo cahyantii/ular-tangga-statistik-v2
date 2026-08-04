@@ -59,7 +59,6 @@ class PapanImportService
                 'is_active' => $papanData['is_active'] ?? true,
             ]);
 
-            $kategoriByNama = KategoriMateri::query()->active()->get()->keyBy(fn ($k) => strtolower($k->nama));
             $now = now();
             $rows = [];
 
@@ -108,7 +107,7 @@ class PapanImportService
             return $errors;
         }
 
-        $kategoriByNama = KategoriMateri::query()->active()->get()->keyBy(fn ($k) => strtolower($k->nama));
+
         $posisiSeen = [];
 
         foreach ($petakRows as $index => $row) {
@@ -138,12 +137,7 @@ class PapanImportService
                 $errors[] = "Posisi {$jumlahPetak} harus berjenis finish.";
             }
 
-            if ($jenis === 'soal') {
-                $kategoriNama = $row['kategori_nama'] ?? null;
-                if (! $kategoriNama || ! $kategoriByNama->has(strtolower($kategoriNama))) {
-                    $errors[] = "Baris petak posisi {$posisi}: kategori \"{$kategoriNama}\" tidak ditemukan atau tidak aktif.";
-                }
-            }
+
         }
 
         if (count($posisiSeen) !== $jumlahPetak) {

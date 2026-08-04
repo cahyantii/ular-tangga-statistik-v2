@@ -163,6 +163,10 @@ class GameController extends Controller
             $response['kunci_jawaban'] = $result['kunci_jawaban'];
             $response['konektor_applied'] = $result['konektor_applied'] ?? false;
             $response['konektor_info'] = $result['konektor_info'] ?? null;
+            $response['mystery_applied'] = $result['mystery_applied'] ?? false;
+            if (isset($result['mystery_effect'])) {
+                $response['mystery_effect'] = $result['mystery_effect'];
+            }
 
             // Sertakan mystery tile yang dipicu setelah konektor (tangga/ular)
             if (isset($result['mystery_after_konektor'])) {

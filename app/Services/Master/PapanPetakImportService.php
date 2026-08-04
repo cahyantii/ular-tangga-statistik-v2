@@ -24,7 +24,8 @@ class PapanPetakImportService
         $import = new PapanPetakImport();
         Excel::import($import, $absolutePath);
 
-        $kategoriByNama = KategoriMateri::query()->active()->get()->keyBy(fn ($k) => strtolower($k->nama));
+        Excel::import($import, $absolutePath);
+
         $existingByPosisi = $papan->petak()->get()->keyBy('posisi');
 
         $valid = [];
@@ -56,15 +57,6 @@ class PapanPetakImportService
             }
 
             $kategoriId = null;
-            if ($jenis === 'soal') {
-                $kategoriNama = trim((string) ($row['kategori'] ?? ''));
-                $kategori = $kategoriByNama->get(strtolower($kategoriNama));
-                if (! $kategori) {
-                    $errors[] = "Kategori \"{$kategoriNama}\" tidak ditemukan atau tidak aktif.";
-                } else {
-                    $kategoriId = $kategori->id;
-                }
-            }
 
             if ($errors !== []) {
                 $invalid[] = ['row_number' => $rowNumber, 'raw' => $row, 'errors' => $errors];

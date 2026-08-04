@@ -27,14 +27,7 @@ class GameSettingSeeder extends Seeder
                 'deskripsi' => 'Poin yang dikurangi saat pemain menjawab soal dengan salah atau tidak menjawab hingga waktu habis. Disimpan sebagai nilai positif, dikurangkan oleh sistem.',
                 'group' => 'Skor',
             ],
-            [
-                'key' => 'bonus_point',
-                'value' => '20',
-                'type' => SettingType::Integer,
-                'label' => 'Poin Bonus',
-                'deskripsi' => 'Poin yang didapat pemain saat mendarat di petak Bonus.',
-                'group' => 'Skor',
-            ],
+
             [
                 'key' => 'tile_penalty_point',
                 'value' => '5',

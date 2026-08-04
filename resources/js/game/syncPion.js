@@ -1,11 +1,12 @@
 import { state, dom, config } from './state.js';
-import { stackIndexAt, placePawnAt } from './pawn.js';
-import { delay } from './utils.js';
-import { renderFinished } from './panel.js';
+import { stackIndexAt, placePawnAt, getOrCreatePawnEl } from './pawn.js';
+import { delay, spawnParticles, animateAlongConnector } from './utils.js';
+import { renderFinished, renderPlayerPanels, updateTurnIndicator, renderPaused, renderInventoryUI } from './panel.js';
 import { showQuestion, hideQuestion } from './modalSoal.js';
 import { showDuel, hideDuel } from './modalDuel.js';
 import { queueAchievementUnlocks } from './achievement.js';
 import { playSound } from './audio.js';
+import { joinRealtimeChannel, startHeartbeat, stopRealtimeIfSessionOver } from './multiplayer.js';
 
     // ---------------------------------------------------------------
     // Sinkronisasi pion untuk pemain LAIN (mis. lawan multiplayer) yang
@@ -13,7 +14,7 @@ import { playSound } from './audio.js';
     // kita tidak punya rincian nilai dadu lawan (payload sengaja minim),
     // jadi cukup animasikan selisih posisi lama -> baru secara wajar.
     // ---------------------------------------------------------------
-    async function animateExternalDiff(session) {
+    export async function animateExternalDiff(session) {
         for (const p of session.players) {
             const el = getOrCreatePawnEl(p);
             const prev = state.knownPositions.get(p.id);
@@ -74,7 +75,7 @@ import { playSound } from './audio.js';
         }
     }
 
-    async function animateWhirlwind(triggerPlayerId) {
+    export async function animateWhirlwind(triggerPlayerId) {
         const promises = [];
         for (const p of state.latestSession.players) {
             if (p.id === triggerPlayerId) continue;
@@ -98,7 +99,7 @@ import { playSound } from './audio.js';
         }
     }
 
-    function syncKnownPositions(session) {
+    export function syncKnownPositions(session) {
         session.players.forEach((p) => state.knownPositions.set(p.id, p.posisi_pion));
     }
 
@@ -120,7 +121,7 @@ import { playSound } from './audio.js';
      * (mis. giliran robot yang baru saja menyentuh Finish tidak boleh
      * memunculkan modal "selesai" sebelum pion robot terlihat berjalan).
      */
-    function finalizeOutcome(session, newlyUnlockedAchievements = []) {
+    export function finalizeOutcome(session, newlyUnlockedAchievements = []) {
         renderFinished(session);
         if (session.status === 'finished') {
             playSound('win_match');
@@ -143,4 +144,35 @@ import { playSound } from './audio.js';
             // akhir (game-finished-modal) sempat terlihat, bukan tabrakan.
             setTimeout(() => queueAchievementUnlocks(newlyUnlockedAchievements), session.status === 'finished' ? 700 : 0);
         }
+    }
+
+    export function applySessionState(session, { pawnMode = 'diff', skipPawnIds = new Set(), deferOutcome = false } = {}) {
+        state.latestSession = session;
+
+        if (pawnMode === 'instant') {
+            session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players)));
+            syncKnownPositions(session);
+        } else if (pawnMode === 'skip') {
+            session.players.forEach((p) => {
+                if (!skipPawnIds.has(p.id)) {
+                    placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
+                }
+            });
+            syncKnownPositions(session);
+        } else {
+            state.animationChain = state.animationChain.then(() => animateExternalDiff(session)).then(() => syncKnownPositions(session));
+        }
+
+        renderPlayerPanels(session);
+        updateTurnIndicator(session);
+        renderPaused(session);
+        renderInventoryUI(session);
+
+        if (!deferOutcome) {
+            finalizeOutcome(session);
+        }
+
+        joinRealtimeChannel(session);
+        startHeartbeat(session);
+        stopRealtimeIfSessionOver(session);
     }

@@ -69,7 +69,7 @@ import { CoordinateHelper } from '../board/CoordinateHelper.js';
      * requestAnimationFrame, bukan CSS transition left/top biasa (yang akan
      * memotong lurus antar dua titik, mengabaikan lekukan ular).
      */
-    function animateAlongConnector(el, fromPosisi, toPosisi, jenis, durationMs) {
+    export function animateAlongConnector(el, fromPosisi, toPosisi, jenis, durationMs) {
         return new Promise((resolve) => {
             const curve = jenis === 'ular' ? snakeCubicPoints(fromPosisi, toPosisi) : null;
             const start = performance.now();
@@ -94,7 +94,7 @@ import { CoordinateHelper } from '../board/CoordinateHelper.js';
         });
     }
 
-    function spawnParticles(el, kind, count) {
+    export function spawnParticles(el, kind, count) {
         const layer = document.createElement('div');
         layer.className = 'pawn-sparkle-layer';
         el.appendChild(layer);
@@ -113,7 +113,7 @@ import { CoordinateHelper } from '../board/CoordinateHelper.js';
         setTimeout(() => layer.remove(), 900);
     }
 
-    function showToast(message) {
+    export function showToast(message) {
         dom.toastEl.textContent = message;
         dom.toastEl.classList.remove('hidden');
         dom.toastEl.classList.add('flex');

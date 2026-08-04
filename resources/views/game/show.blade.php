@@ -66,8 +66,8 @@
         </div>
 
         {{-- Kolom 2 (tengah): Papan --}}
-        <div class="max-xl:order-2 xl:col-start-2 xl:row-start-1">
-            <div id="board-card" class="animate-fade-in-up rounded-3xl bg-white p-3 shadow-sm sm:p-4 mx-auto w-full" style="aspect-ratio: 1 / 1;">
+        <div class="max-xl:order-1 xl:col-start-2 xl:row-start-1">
+            <div id="board-card" class="animate-fade-in-up rounded-3xl bg-white p-1.5 sm:p-3 xl:p-4 shadow-sm mx-auto w-full" style="aspect-ratio: 1 / 1;">
                 {{--
                     Toggle tema visual ular/perosotan - PURE client-side
                     (localStorage, lihat board-visuals.js initBoardThemeToggle()
@@ -100,11 +100,35 @@
 
 
         {{-- Kolom 3 (kanan): Giliran+Dadu --}}
-        <div id="turn-dice-card" class="max-xl:order-1 animate-fade-in-up rounded-[2rem] bg-white/90 backdrop-blur-md border border-white shadow-soft-xl p-5 xl:col-start-3 xl:row-start-1 relative overflow-hidden">
+        {{-- Mobile: bar horizontal kompak (order-2, setelah papan). Desktop: kolom kanan penuh --}}
+        <div id="turn-dice-card" class="max-xl:order-2 animate-fade-in-up xl:rounded-[2rem] rounded-2xl bg-white/90 backdrop-blur-md border border-white shadow-soft-xl xl:p-5 p-3 xl:col-start-3 xl:row-start-1 relative overflow-hidden">
             <!-- Dekorasi gradient background ringan -->
             <div class="absolute -top-24 -right-24 w-48 h-48 bg-primary-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 pointer-events-none"></div>
-            
-            <div class="flex flex-col items-center gap-5 relative z-10">
+
+            {{-- MOBILE: layout horizontal kompak --}}
+            <div class="xl:hidden flex items-center gap-3 relative z-10">
+                <div class="relative shrink-0">
+                    <span id="turn-avatar-mobile" class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-xs font-black text-white shadow-md"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p id="turn-indicator-mobile" class="text-sm font-bold text-slate-800 truncate flex items-center gap-1.5">
+                        Giliran
+                        <span id="turn-active-dot-mobile" class="hidden relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                    </p>
+                    <p id="turn-subtext-mobile" class="text-[11px] font-medium text-slate-400 truncate"></p>
+                </div>
+                <div class="shrink-0 flex items-center gap-2">
+                    <div id="dice-glow-wrap-mobile" class="rounded-full transition-all duration-300">
+                        <x-game.dice id="dice-3d-mobile" class="scale-75" />
+                    </div>
+                </div>
+            </div>
+
+            {{-- DESKTOP: layout vertikal penuh --}}
+            <div class="hidden xl:flex flex-col items-center gap-5 relative z-10">
                 <div class="flex items-center gap-3 self-start w-full">
                     <div class="relative">
                         <span id="turn-avatar" class="relative z-10 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-sm font-black text-white shadow-md"></span>
@@ -222,8 +246,8 @@
                 <img id="gacha-image" src="" alt="Power Up" style="transform: scale(0);" class="relative z-10 w-full h-full object-contain drop-shadow-2xl transition-transform duration-500 delay-200">
             </div>
 
-            <h4 id="gacha-item-name" class="text-lg font-bold text-slate-800 mb-1 opacity-0 transition-opacity duration-500 delay-500"></h4>
-            <p id="gacha-item-desc" class="text-sm text-slate-500 opacity-0 transition-opacity duration-500 delay-700"></p>
+            <h4 id="gacha-item-name" class="text-lg font-bold text-slate-800 mb-1 transition-opacity duration-300"></h4>
+            <p id="gacha-item-desc" class="text-sm text-slate-500 transition-opacity duration-300"></p>
             
             <div id="gacha-actions-normal" class="w-full mt-6 opacity-0 transition-opacity duration-500 delay-1000">
                 <button type="button" id="gacha-klaim-btn" class="w-full rounded-xl bg-violet-500 px-4 py-2 text-white font-bold hover:bg-violet-600 transition-colors">

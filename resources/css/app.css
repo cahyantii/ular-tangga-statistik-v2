@@ -129,6 +129,7 @@
         opacity 0.2s ease-in-out;
     z-index: 5;
     transform: translate(-50%, -50%);
+    overflow: visible; /* agar active-indicator arrow tidak terpotong */
 }
 
 /* Dipasang sementara saat animasi mengikuti jalur ular/tangga (requestAnimationFrame
@@ -136,6 +137,33 @@
 .game-pawn.pawn-path-follow {
     transition: none;
 }
+
+/* Animasi bouncy untuk panah penanda giliran aktif */
+/* Animasi hanya di SVG child — container menangani posisi horizontal */
+@keyframes pawn-active-bounce-kf {
+    0%, 100% {
+        transform: translateY(0px);
+        animation-timing-function: cubic-bezier(0.33, 0, 0.66, 0);
+    }
+    50% {
+        transform: translateY(-8px);
+        animation-timing-function: cubic-bezier(0.33, 1, 0.66, 1);
+    }
+}
+
+.pawn-active-bounce {
+    animation: pawn-active-bounce-kf 0.8s ease-in-out infinite;
+    display: block;
+}
+
+/* Mobile: arrow lebih kecil agar tidak menutupi pion */
+@media (max-width: 1279px) {
+    .active-indicator-svg {
+        width: 16px !important;
+        height: 16px !important;
+    }
+}
+
 
 .pawn-body {
     position: relative;

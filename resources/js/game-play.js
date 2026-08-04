@@ -581,8 +581,8 @@ document.addEventListener('DOMContentLoaded', () => {
         el.style.height = `${(100 / totalRows) * 0.8}%`;
         
         el.innerHTML = `
-            <div class="active-indicator hidden absolute -top-8 left-1/2 -translate-x-1/2 animate-bounce z-10">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fbbf24" stroke="#b45309" stroke-width="2" class="drop-shadow-md" xmlns="http://www.w3.org/2000/svg">
+            <div class="active-indicator hidden z-10" style="position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); pointer-events:none;">
+                <svg class="pawn-active-bounce active-indicator-svg drop-shadow-md" width="28" height="28" viewBox="0 0 24 24" fill="#fbbf24" stroke="#b45309" stroke-width="2" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 22L2 6h20L12 22z" stroke-linejoin="round" />
                 </svg>
             </div>
@@ -769,6 +769,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 'whirlwind': '/images/powerups/whirlwind.jpg'
             };
             
+            const itemNames = {
+                'double_dice': 'Dadu Ganda',
+                'snake_shield': 'Perisai Ular',
+                'teleport_forward': 'Teleportasi',
+                'curse_dice': 'Kutukan Dadu',
+                'whirlwind': 'Angin Puyuh'
+            };
+            
+            const itemDescs = {
+                'double_dice': 'Dapatkan 2 dadu untuk giliranmu berikutnya! (Gunakan dari tas)',
+                'snake_shield': 'Kebal terhadap gigitan ular 1x! (Otomatis dipakai jika terkena ular, atau dari tas)',
+                'teleport_forward': 'Langsung maju 3 petak ke depan!',
+                'curse_dice': 'Kutuk lawan! Dadu lawan maksimal hanya akan bernilai 3.',
+                'whirlwind': 'Meniup mundur semua pemain lain sebanyak 3 petak!'
+            };
+            
             const gachaImg = document.getElementById('gacha-image');
             const gachaName = document.getElementById('gacha-item-name');
             const gachaDesc = document.getElementById('gacha-item-desc');
@@ -780,9 +796,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            gachaImg.src = itemImages[result.item_id] || itemImages['double_dice'];
-            gachaName.textContent = result.item_name || 'Item Misteri';
-            gachaDesc.innerHTML = `<strong class="text-violet-600">Efek:</strong> ${result.item_description || '(Tidak ada efek khusus)'}`;
+            const itemId = result.item_id || result.item_name; // fallback
+            gachaImg.src = itemImages[itemId] || itemImages['double_dice'];
+            gachaName.textContent = result.item_name || itemNames[itemId] || 'Item Misteri';
+            gachaDesc.innerHTML = `<strong class="text-violet-600">Efek:</strong> ${result.item_description || itemDescs[itemId] || '(Tidak ada efek khusus)'}`;
             
             // Reset animasi
             gachaImg.style.transform = 'scale(0)';
@@ -1031,8 +1048,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const isMyTurn = currentPlayer && !currentPlayer.is_robot && myGamePlayerId === currentPlayer.id;
 
         const turnActiveDotEl = document.getElementById('turn-active-dot');
+        const turnActiveDotMobileEl = document.getElementById('turn-active-dot-mobile');
         const turnAvatarRingEl = document.getElementById('turn-avatar-ring');
         const diceGlowWrapEl = document.getElementById('dice-glow-wrap');
+
+        // Elemen mobile
+        const turnAvatarMobileEl = document.getElementById('turn-avatar-mobile');
+        const turnIndicatorMobileEl = document.getElementById('turn-indicator-mobile');
+        const turnSubtextMobileEl = document.getElementById('turn-subtext-mobile');
 
         if (session.status !== 'playing') {
             turnIndicatorEl.textContent = '';
@@ -1040,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
             turnAvatarEl.textContent = '';
             rollButton.classList.add('hidden');
             if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+            if (turnActiveDotMobileEl) turnActiveDotMobileEl.classList.add('hidden');
             if (turnAvatarRingEl) {
                 turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
                 turnAvatarRingEl.classList.add('opacity-0');
@@ -1049,31 +1073,50 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        turnAvatarEl.textContent = currentPlayer ? (currentPlayer.is_robot ? '\u{1F916}' : initials(currentPlayer.nama)) : '?';
-        turnAvatarEl.className = `relative z-10 flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
+        const avatarText = currentPlayer ? (currentPlayer.is_robot ? '🤖' : initials(currentPlayer.nama)) : '?';
+        const avatarClass = `relative z-10 flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
+
+        turnAvatarEl.textContent = avatarText;
+        turnAvatarEl.className = avatarClass;
+
+        // Sync mobile avatar
+        if (turnAvatarMobileEl) {
+            turnAvatarMobileEl.textContent = avatarText;
+            turnAvatarMobileEl.className = `flex h-10 w-10 items-center justify-center rounded-full text-xs font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
+        }
 
         if (isMyTurn) {
-            turnIndicatorEl.innerHTML = `Giliran Anda`; // The dot is now handled separately below
+            turnIndicatorEl.innerHTML = `Giliran Anda`;
+            if (turnIndicatorMobileEl) turnIndicatorMobileEl.innerHTML = `Giliran Anda`;
             if (turnActiveDotEl) {
                 turnActiveDotEl.classList.remove('hidden');
                 turnActiveDotEl.classList.add('flex');
+            }
+            if (turnActiveDotMobileEl) {
+                turnActiveDotMobileEl.classList.remove('hidden');
+                turnActiveDotMobileEl.classList.add('flex');
             }
             if (turnAvatarRingEl) {
                 turnAvatarRingEl.classList.remove('opacity-0');
                 turnAvatarRingEl.classList.add('animate-ping-slow', 'opacity-100');
             }
         } else {
+            const waitText = `Menunggu ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
             turnIndicatorEl.textContent = `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
+            if (turnIndicatorMobileEl) turnIndicatorMobileEl.textContent = waitText;
             if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+            if (turnActiveDotMobileEl) turnActiveDotMobileEl.classList.add('hidden');
             if (turnAvatarRingEl) {
                 turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
                 turnAvatarRingEl.classList.add('opacity-0');
             }
         }
 
-        turnSubtextEl.textContent = currentPlayer
+        const subtextContent = currentPlayer
             ? `Posisi: ${currentPlayer.posisi_pion} • Skor: ${currentPlayer.skor}`
             : '';
+        turnSubtextEl.textContent = subtextContent;
+        if (turnSubtextMobileEl) turnSubtextMobileEl.textContent = subtextContent;
 
         setTileGlow(currentPlayer?.posisi_pion);
 
@@ -2186,57 +2229,121 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function handleAnswerFeedback(result, selectedButtonEl) {
+        playSound(result.benar ? 'correct_answer' : 'false_answer');
+
+        questionFeedbackEl.textContent = result.benar
+            ? 'Jawaban benar!'
+            : `Jawaban salah. ${result.pembahasan ?? ''}`;
+        questionFeedbackEl.classList.remove('hidden');
+
+        if (selectedButtonEl) {
+            if (result.benar) {
+                selectedButtonEl.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
+                selectedButtonEl.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+            } else {
+                selectedButtonEl.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
+                selectedButtonEl.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
+                
+                if (result.kunci_jawaban) {
+                    const correctButton = Array.from(questionOptionsEl.children).find(b => b.dataset.kunci && b.dataset.kunci.toUpperCase() === result.kunci_jawaban.toUpperCase());
+                    if (correctButton) {
+                        correctButton.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
+                        correctButton.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
+                    }
+                }
+            }
+        }
+
+        Array.from(questionOptionsEl.children).forEach(b => {
+            b.disabled = true;
+            b.classList.remove('hover:-translate-y-0.5');
+        });
+    }
+
+    async function handleConnectorAnimation(actingPlayer, result) {
+        const el = getOrCreatePawnEl(actingPlayer);
+        const info = result.konektor_info;
+        const isNaik = info.jenis === 'tangga';
+
+        await delay(120);
+
+        if (isNaik) {
+            playSound('climb_ladder');
+            await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
+            await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
+            spawnParticles(el, 'sparkle', 10);
+            el.classList.add('pawn-climb');
+            setTimeout(() => el.classList.remove('pawn-climb'), 650);
+        } else {
+            playSound('snake_eat');
+            await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
+            boardEl.classList.add('board-shake');
+            await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
+            spawnParticles(el, 'dust', 8);
+            setTimeout(() => boardEl.classList.remove('board-shake'), 400);
+        }
+
+        placePawnAt(el, info.posisi_akhir, stackIndexAt(info.posisi_akhir, actingPlayer.id, result.session?.players));
+        await delay(200);
+    }
+
+    /**
+     * Menampilkan gacha modal untuk efek mystery, lalu menjalankan animasi
+     * khusus area (misal angin puyuh) jika dibutuhkan.
+     */
+    async function handleMysteryAnimation(actingPlayer, result) {
+        if (!result.mystery_applied || actingPlayer.id !== myGamePlayerId) {
+            return;
+        }
+
+        const mysteryWithSession = { ...result.mystery_effect, session: result.session };
+        await showGachaModal(mysteryWithSession);
+
+        if (result.mystery_effect?.item_id === 'whirlwind') {
+            await animateWhirlwind(actingPlayer.id);
+        }
+    }
+
+    /**
+     * Menangani animasi pergerakan pion pemain setelah menjawab soal.
+     * Memprioritaskan animasi konektor (tangga/ular) jika ada, lalu fallback
+     * ke animasi gerak biasa jika posisi berubah karena efek mystery.
+     */
+    async function handlePostAnswerMovement(actingPlayer, result, fromPosisi) {
+        if (!actingPlayer) {
+            return;
+        }
+
+        if (result.konektor_applied && result.konektor_info) {
+            await handleConnectorAnimation(actingPlayer, result);
+        } else if (actingPlayer.posisi_pion !== fromPosisi) {
+            // Posisi berubah bukan karena konektor (misal efek teleport maju dari mystery)
+            await animatePlayerTurn(actingPlayer, fromPosisi, {
+                type: 'answered',
+                nilai_dadu: actingPlayer.posisi_pion - fromPosisi,
+            });
+        }
+    }
+
     async function submitAnswer(soalId, jawaban, selectedButtonEl = null) {
         const robotBefore = latestSession?.players.find((p) => p.is_robot);
-        const robotFromPosisi = robotBefore ? (knownPositions.get(robotBefore.id) ?? robotBefore.posisi_pion) : 0;
         const meBefore = latestSession?.players.find((p) => p.id === myGamePlayerId);
         const myFromPosisi = meBefore ? meBefore.posisi_pion : 1;
 
         try {
             const result = await postJson(answerUrl, { soal_id: soalId, jawaban });
 
+            // --- Broadcast ke sesama pemain (multiplayer) ---
             if (colyseusRoom) {
-                if (result.mystery_applied) {
-                    colyseusRoom.send("broadcast_event", { 
-                        event: 'mystery-applied', 
-                        actor: myGamePlayerId,
-                        item_id: result.mystery_effect?.item_id,
-                        item_name: result.mystery_effect?.item_name
-                    });
-                } else {
-                    colyseusRoom.send("broadcast_event", { event: 'score-updated', actor: myGamePlayerId });
-                }
-            }
-            
-            playSound(result.benar ? 'correct_answer' : 'false_answer');
-
-            questionFeedbackEl.textContent = result.benar
-                ? 'Jawaban benar!'
-                : `Jawaban salah. ${result.pembahasan ?? ''}`;
-            questionFeedbackEl.classList.remove('hidden');
-
-            if (selectedButtonEl) {
-                if (result.benar) {
-                    selectedButtonEl.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
-                    selectedButtonEl.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
-                } else {
-                    selectedButtonEl.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
-                    selectedButtonEl.classList.add('border-red-500', 'bg-red-50', 'text-red-700');
-                    
-                    if (result.kunci_jawaban) {
-                        const correctButton = Array.from(questionOptionsEl.children).find(b => b.dataset.kunci && b.dataset.kunci.toUpperCase() === result.kunci_jawaban.toUpperCase());
-                        if (correctButton) {
-                            correctButton.classList.remove('border-slate-200', 'hover:border-primary-400', 'hover:bg-primary-50', 'text-slate-700');
-                            correctButton.classList.add('border-green-500', 'bg-green-50', 'text-green-700');
-                        }
-                    }
-                }
+                colyseusRoom.send('broadcast_event', result.mystery_applied
+                    ? { event: 'mystery-applied', actor: myGamePlayerId, item_id: result.mystery_effect?.item_id, item_name: result.mystery_effect?.item_name }
+                    : { event: 'score-updated', actor: myGamePlayerId }
+                );
             }
 
-            Array.from(questionOptionsEl.children).forEach(b => {
-                b.disabled = true;
-                b.classList.remove('hover:-translate-y-0.5');
-            });
+            // --- Tampilkan feedback jawaban & tunggu pemain membacanya ---
+            handleAnswerFeedback(result, selectedButtonEl);
 
             const actingPlayer = result.session.players.find((p) => p.id === myGamePlayerId);
             if (actingPlayer) {
@@ -2246,63 +2353,25 @@ document.addEventListener('DOMContentLoaded', () => {
             await delay(1800);
             hideQuestion();
 
-            // Cek apakah misteri diterapkan: tampilkan gacha modal SEBELUM animasi pergerakan
-            if (result.mystery_applied && actingPlayer && actingPlayer.id === myGamePlayerId) {
-                const mysteryWithSession = { ...result.mystery_effect, session: result.session };
-                await showGachaModal(mysteryWithSession);
-            }
+            // --- Tampilkan gacha modal (mystery) SEBELUM animasi pergerakan ---
+            await handleMysteryAnimation(actingPlayer, result);
 
-            // Jawaban bisa memicu konektor (ular/tangga)
-            if (actingPlayer && result.konektor_applied && result.konektor_info) {
-                const el = getOrCreatePawnEl(actingPlayer);
-                const info = result.konektor_info;
-                const isNaik = info.jenis === 'tangga';
+            // --- Animasi pergerakan pion (konektor atau efek mystery) ---
+            await handlePostAnswerMovement(actingPlayer, result, myFromPosisi);
 
-                await delay(120);
-
-                if (isNaik) {
-                    playSound('climb_ladder');
-                    await window.BoardVisuals?.reactLadder?.(info.posisi_awal);
-                    await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'tangga', 900);
-                    spawnParticles(el, 'sparkle', 10);
-                    el.classList.add('pawn-climb');
-                    setTimeout(() => el.classList.remove('pawn-climb'), 650);
-                } else {
-                    playSound('snake_eat');
-                    await window.BoardVisuals?.reactSnake?.(info.posisi_awal);
-                    boardEl.classList.add('board-shake');
-                    await animateAlongConnector(el, info.posisi_awal, info.posisi_akhir, 'ular', 900);
-                    spawnParticles(el, 'dust', 8);
-                    setTimeout(() => boardEl.classList.remove('board-shake'), 400);
-                }
-
-                placePawnAt(el, info.posisi_akhir, stackIndexAt(info.posisi_akhir, actingPlayer.id, result.session?.players));
-                await delay(200);
-            } else if (actingPlayer && actingPlayer.posisi_pion !== myFromPosisi) {
-                // Fallback jika berubah posisi tapi bukan konektor
-                // (misal efek teleport maju dari misteri, akan dianimasikan di sini setelah modal tertutup)
-                await animatePlayerTurn(actingPlayer, myFromPosisi, { type: 'answered', nilai_dadu: actingPlayer.posisi_pion - myFromPosisi });
-            }
-
-            // Jika respons adalah 'soal', berarti butuh menjawab soal lagi (misal menginjak misteri setelah konektor)
+            // --- Jika server meminta soal baru (misal: mendarat di mystery setelah konektor) ---
             if (result.type === 'soal') {
                 latestSession = result.session;
                 showQuestion(
-                    result.soal, 
+                    result.soal,
                     new Date(Date.now() + 15000).toISOString(),
                     true,
                     actingPlayer?.nama ?? 'Pemain'
                 );
-                return; // Hentikan alur di sini, tunggu pemain submit jawaban lagi
+                return;
             }
 
-            // Animasi efek area mystery (misal angin puyuh yang mengenai player lain)
-            if (result.mystery_applied && actingPlayer && actingPlayer.id === myGamePlayerId) {
-                if (result.mystery_effect && result.mystery_effect.item_id === 'whirlwind') {
-                    await animateWhirlwind(actingPlayer.id);
-                }
-            }
-
+            // --- Update posisi lokal & jalankan giliran robot ---
             if (actingPlayer) {
                 knownPositions.set(actingPlayer.id, actingPlayer.posisi_pion);
             }
