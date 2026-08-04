@@ -12,9 +12,9 @@
 
 @php
     $palette = [
-        'green' => ['circle' => 'bg-secondary-500', 'bar' => 'bg-secondary-500', 'text' => 'text-secondary-600', 'action' => 'bg-secondary-50 text-secondary-700'],
-        'purple' => ['circle' => 'bg-violet-500', 'bar' => 'bg-violet-500', 'text' => 'text-violet-600', 'action' => 'bg-violet-50 text-violet-700'],
-        'blue' => ['circle' => 'bg-primary-500', 'bar' => 'bg-primary-500', 'text' => 'text-primary-600', 'action' => 'bg-primary-50 text-primary-700'],
+        'green' => ['circle' => 'bg-secondary-500', 'bar' => 'bg-secondary-500', 'text' => 'text-secondary-600 dark:text-secondary-400', 'action' => 'bg-secondary-50 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-400'],
+        'purple' => ['circle' => 'bg-violet-500', 'bar' => 'bg-violet-500', 'text' => 'text-violet-600 dark:text-violet-400', 'action' => 'bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400'],
+        'blue' => ['circle' => 'bg-primary-500', 'bar' => 'bg-primary-500', 'text' => 'text-primary-600 dark:text-primary-400', 'action' => 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400'],
     ];
 
     $tonePalette = $palette[$tone] ?? $palette['blue'];
@@ -31,15 +31,15 @@
         </span>
 
         @unless ($isLast)
-            <span class="cert-timeline-line my-1 w-0.5 flex-1 border-l-2 border-dashed" aria-hidden="true"></span>
+            <span class="cert-timeline-line my-1 w-0.5 flex-1 border-l-2 border-dashed border-slate-200 dark:border-dark-border" aria-hidden="true"></span>
         @endunless
     </div>
 
     <div class="flex flex-1 flex-col gap-3 self-center pb-6 sm:flex-row sm:items-center sm:gap-5">
         <div class="min-w-0 flex-1">
-            <p class="font-bold text-slate-800">{!! $title !!}</p>
+            <p class="font-bold text-slate-800 dark:text-dark-text">{!! $title !!}</p>
             <div class="mt-2 flex items-center gap-3">
-                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-dark-surface-hover">
                     <div
                         class="cert-progress-bar h-2.5 rounded-full {{ $tonePalette['bar'] }} transition-all duration-700 ease-out"
                         style="width: {{ $percent }}%"

@@ -1,66 +1,53 @@
 <x-public-layout :title="config('app.name')">
     {{-- Hero --}}
-    <section class="relative overflow-hidden bg-white">
-        <div class="mx-auto max-w-[1600px] px-4 pb-10 pt-6 sm:px-6 lg:px-8 lg:pb-14 lg:pt-8">
-            <div class="relative isolate min-h-[560px] overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-blue-100 shadow-xl md:min-h-[500px] lg:min-h-[620px]">
+    <section class="relative flex min-h-[85vh] items-center overflow-hidden bg-white dark:bg-dark-bg">
+        {{-- Background Image --}}
+        <img
+            src="{{ asset('images/brand/logo-landigpage.png') }}"
+            alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
+            loading="lazy"
+            class="absolute inset-0 z-0 h-full w-full object-cover object-right opacity-90 dark:opacity-50"
+        >
 
-                {{-- Decorative light --}}
-                <div aria-hidden="true" class="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl"></div>
-                <div aria-hidden="true" class="pointer-events-none absolute -right-10 bottom-0 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl lg:h-96 lg:w-96"></div>
-                <div aria-hidden="true" class="pointer-events-none absolute right-1/3 top-10 hidden h-40 w-40 rounded-full bg-white/70 blur-2xl lg:block"></div>
+        {{-- Gradient Overlay for better readability (fade from left to right) --}}
+        <div class="absolute inset-0 z-0 bg-gradient-to-r from-white via-white/80 to-transparent dark:from-dark-bg dark:via-dark-bg/80 dark:to-transparent"></div>
+        {{-- Bottom gradient for mobile readability --}}
+        <div class="absolute inset-0 z-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-dark-bg sm:hidden"></div>
 
-                <div class="relative flex h-full flex-col items-center gap-8 px-6 py-8 text-center sm:px-8 md:px-10 md:py-12 lg:items-start lg:gap-0 lg:px-0 lg:py-0 lg:text-left">
+        <div class="relative z-10 mx-auto w-full max-w-[1600px] px-4 py-20 sm:px-6 lg:px-8">
+            <div class="flex max-w-3xl flex-col items-start text-left">
+                <span class="inline-flex items-center rounded-full bg-primary-50/90 backdrop-blur-sm dark:bg-primary-900/80 px-4 py-1.5 text-sm font-semibold text-primary-800 dark:text-primary-200 shadow-sm border border-primary-100 dark:border-primary-800/50">
+                    Belajar Statistik Jadi Seru
+                </span>
 
-                    {{-- Image: in-flow on mobile/tablet, full-bleed blended on desktop --}}
-                    <div class="relative order-2 w-full lg:absolute lg:inset-0 lg:order-none lg:flex lg:items-end lg:justify-end">
-                        <img
-                            src="{{ asset('images/brand/logo-landigpage.png') }}"
-                            alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
-                            width="1672"
-                            height="941"
-                            loading="lazy"
-                            class="animate-fade-in mx-auto h-auto w-4/5 object-contain drop-shadow-2xl transition-transform duration-300 hover:scale-[1.03] sm:w-3/4 md:w-3/5 lg:mx-0 lg:w-[95%] lg:origin-bottom-right"
-                        >
-                    </div>
+                <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 drop-shadow-sm dark:text-white sm:text-5xl lg:text-7xl">
+                    Ular Tangga
+                    <span class="block text-primary-600 dark:text-primary-400">Statistik Indonesia</span>
+                </h1>
 
-                    {{-- Blend overlay so the image melts into the text zone (desktop only) --}}
-                    <div aria-hidden="true" class="pointer-events-none absolute inset-0 hidden lg:block lg:bg-gradient-to-r lg:from-white lg:via-white/60 lg:to-transparent"></div>
+                <p class="mt-6 max-w-2xl text-lg font-medium text-slate-700 drop-shadow-sm dark:text-slate-300 sm:text-xl">
+                    Mainkan ular tangga digital sambil belajar Statistika, mengenal Badan Pusat Statistik (BPS),
+                    dan memahami indikator penting bangsa &mdash; IPM, PDRB, kemiskinan, pengangguran, hingga inflasi.
+                </p>
 
-                    <div class="animate-fade-in-up relative order-1 z-10 w-full lg:max-w-[45%] lg:px-16 lg:pt-16">
-                        <span class="inline-flex items-center rounded-full bg-primary-100 px-4 py-1.5 text-sm font-semibold text-primary-700">
-                            Belajar Statistik Jadi Seru
-                        </span>
-
-                        <h1 class="mt-6 text-4xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-                            Ular Tangga
-                            <span class="block text-primary-600">Statistik Indonesia</span>
-                        </h1>
-
-                        <p class="mx-auto mt-6 max-w-xl text-lg text-slate-600 lg:mx-0">
-                            Mainkan ular tangga digital sambil belajar Statistika, mengenal Badan Pusat Statistik (BPS),
-                            dan memahami indikator penting bangsa &mdash; IPM, PDRB, kemiskinan, pengangguran, hingga inflasi.
-                        </p>
-                    </div>
-
-                    <div class="relative order-3 z-10 flex w-full flex-col items-center justify-center gap-4 sm:flex-row lg:max-w-[45%] lg:justify-start lg:px-16 lg:pb-16">
-                        <a
-                            href="{{ route('register') }}"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:from-primary-600 hover:to-primary-700 hover:shadow-soft sm:w-auto"
-                        >
-                            <x-player.icon name="dice" class="h-5 w-5" />
-                            Mulai Bermain
-                        </a>
-                        <a
-                            href="{{ route('how-to-play') }}"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-primary-500 bg-white px-6 py-3 text-base font-semibold text-primary-600 transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-primary-50 sm:w-auto"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="h-5 w-5">
-                                <circle cx="12" cy="12" r="9.5" />
-                                <path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" />
-                            </svg>
-                            Lihat Cara Bermain
-                        </a>
-                    </div>
+                <div class="mt-10 flex w-full flex-col items-start justify-start gap-4 sm:flex-row">
+                    <a
+                        href="{{ route('register') }}"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-4 text-base font-semibold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:from-primary-600 hover:to-primary-700 hover:shadow-xl sm:w-auto sm:text-lg"
+                    >
+                        <x-player.icon name="dice" class="h-6 w-6" />
+                        Mulai Bermain
+                    </a>
+                    <a
+                        href="{{ route('how-to-play') }}"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-200/80 bg-white/90 backdrop-blur-md dark:border-primary-500/50 dark:bg-dark-surface/90 px-8 py-4 text-base font-semibold text-primary-700 dark:text-primary-300 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-white dark:hover:bg-dark-surface sm:w-auto sm:text-lg"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.75" stroke="currentColor" class="h-6 w-6">
+                            <circle cx="12" cy="12" r="9.5" />
+                            <path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" />
+                        </svg>
+                        Lihat Cara Bermain
+                    </a>
                 </div>
             </div>
         </div>
@@ -69,22 +56,22 @@
     {{-- Materi --}}
     <section class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div class="mb-12 text-center">
-            <h2 class="text-3xl font-bold text-slate-900">
-                Apa yang <span class="text-primary-600">Akan Kamu</span> Pelajari?
+            <h2 class="text-3xl font-bold text-slate-900 dark:text-dark-text">
+                Apa yang <span class="text-primary-600 dark:text-primary-400">Akan Kamu</span> Pelajari?
             </h2>
-            <p class="mt-3 text-slate-600">Materi disusun agar mudah dipahami pelajar SD hingga masyarakat umum.</p>
+            <p class="mt-3 text-slate-600 dark:text-dark-muted">Materi disusun agar mudah dipahami pelajar SD hingga masyarakat umum.</p>
         </div>
 
         <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div class="group flex items-center gap-4 rounded-2xl bg-primary-50/60 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
+            <div class="group flex items-center gap-4 rounded-2xl bg-primary-50/60 dark:bg-primary-900/20 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
                 <div class="min-w-0 flex-1">
                     <img
                         src="{{ asset('images/brand/logo-statistik1.png') }}"
                         alt="Statistika Dasar"
                         class="h-16 w-16 shrink-0 object-contain drop-shadow-[0_6px_12px_rgba(37,99,235,0.12)]"
                     >
-                    <h3 class="mt-4 font-bold text-slate-900">Statistika Dasar</h3>
-                    <p class="mt-1.5 text-sm text-slate-600">Mean, median, modus, serta cara membaca tabel dan grafik.</p>
+                    <h3 class="mt-4 font-bold text-slate-900 dark:text-dark-text">Statistika Dasar</h3>
+                    <p class="mt-1.5 text-sm text-slate-600 dark:text-dark-muted">Mean, median, modus, serta cara membaca tabel dan grafik.</p>
                 </div>
                 <img
                     src="{{ asset('images/brand/logo-statistik2.png') }}"
@@ -93,13 +80,13 @@
                 >
             </div>
 
-            <div class="group flex items-center gap-4 rounded-2xl bg-violet-50/60 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
+            <div class="group flex items-center gap-4 rounded-2xl bg-violet-50/60 dark:bg-violet-900/20 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft">
                 <div class="min-w-0 flex-1">
                     <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-500 text-white shadow-sm">
                         <x-player.icon name="building" class="h-6 w-6" />
                     </span>
-                    <h3 class="mt-4 font-bold text-slate-900">Pengenalan BPS</h3>
-                    <p class="mt-1.5 text-sm text-slate-600">Tugas, fungsi, serta sensus dan survei yang diselenggarakan BPS.</p>
+                    <h3 class="mt-4 font-bold text-slate-900 dark:text-dark-text">Pengenalan BPS</h3>
+                    <p class="mt-1.5 text-sm text-slate-600 dark:text-dark-muted">Tugas, fungsi, serta sensus dan survei yang diselenggarakan BPS.</p>
                 </div>
                 <svg viewBox="0 0 90 90" class="h-20 w-20 shrink-0 select-none" aria-hidden="true">
                     <rect x="18" y="14" width="54" height="66" rx="4" fill="#ffffff" stroke="#EDE9FE" stroke-width="2" />
@@ -114,13 +101,13 @@
                 </svg>
             </div>
 
-            <div class="group flex items-center gap-4 rounded-2xl bg-accent-50/60 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft sm:col-span-2 lg:col-span-1">
+            <div class="group flex items-center gap-4 rounded-2xl bg-accent-50/60 dark:bg-accent-900/20 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-soft sm:col-span-2 lg:col-span-1">
                 <div class="min-w-0 flex-1">
                     <span class="flex h-12 w-12 items-center justify-center rounded-xl bg-accent-500 text-white shadow-sm">
                         <x-player.icon name="trend-up" class="h-6 w-6" />
                     </span>
-                    <h3 class="mt-4 font-bold text-slate-900">Indikator Statistik</h3>
-                    <p class="mt-1.5 text-sm text-slate-600">IPM, PDRB, kemiskinan, pengangguran, dan inflasi.</p>
+                    <h3 class="mt-4 font-bold text-slate-900 dark:text-dark-text">Indikator Statistik</h3>
+                    <p class="mt-1.5 text-sm text-slate-600 dark:text-dark-muted">IPM, PDRB, kemiskinan, pengangguran, dan inflasi.</p>
                 </div>
                 <svg viewBox="0 0 90 90" class="h-20 w-20 shrink-0 select-none" aria-hidden="true">
                     <rect x="16" y="10" width="50" height="66" rx="4" fill="#ffffff" stroke="#FED7AA" stroke-width="2" />
@@ -137,24 +124,24 @@
 
     {{-- CTA --}}
     <section class="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-        <div class="relative flex flex-col items-center gap-8 overflow-hidden rounded-3xl bg-white p-8 shadow-soft-lg sm:p-10 lg:flex-row lg:justify-between">
+        <div class="relative flex flex-col items-center gap-8 overflow-hidden rounded-3xl bg-white dark:bg-dark-surface p-8 shadow-soft-lg sm:p-10 lg:flex-row lg:justify-between">
             {{-- Decorative light --}}
-            <div aria-hidden="true" class="pointer-events-none absolute -left-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-primary-50 blur-3xl"></div>
-            <div aria-hidden="true" class="pointer-events-none absolute -right-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-blue-50 blur-3xl"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -left-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-primary-50 dark:bg-primary-900/10 blur-3xl"></div>
+            <div aria-hidden="true" class="pointer-events-none absolute -right-10 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-blue-50 dark:bg-blue-900/10 blur-3xl"></div>
 
             <img
                 src="{{ asset('images/brand/logo-rob.png') }}"
                 alt=""
                 aria-hidden="true"
-                class="relative mx-auto h-auto w-28 shrink-0 select-none object-contain drop-shadow-[0_10px_28px_rgba(255,255,255,0.8)] transition-transform duration-300 sm:w-36 md:w-44 lg:w-60 lg:hover:scale-105"
+                class="relative mx-auto h-auto w-28 shrink-0 select-none object-contain drop-shadow-[0_10px_28px_rgba(255,255,255,0.8)] dark:drop-shadow-none transition-transform duration-300 sm:w-36 md:w-44 lg:w-60 lg:hover:scale-105"
                 loading="lazy"
             >
 
             <div class="relative text-center lg:flex-1 lg:text-left">
-                <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">
-                    Siap Memulai Petualangan <span class="text-primary-600">Statistikmu?</span>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-dark-text sm:text-3xl">
+                    Siap Memulai Petualangan <span class="text-primary-600 dark:text-primary-400">Statistikmu?</span>
                 </h2>
-                <p class="mt-3 text-slate-600">Bergabung sekarang dan uji kemampuanmu dalam dunia statistik!</p>
+                <p class="mt-3 text-slate-600 dark:text-dark-muted">Bergabung sekarang dan uji kemampuanmu dalam dunia statistik!</p>
                 <a
                     href="{{ route('register') }}"
                     class="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-6 py-3 text-base font-semibold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:from-primary-600 hover:to-primary-700 hover:shadow-soft"

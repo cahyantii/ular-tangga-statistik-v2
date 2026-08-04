@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,12 +8,15 @@
 
         <title>{{ config('app.name') }}</title>
 
+        {{-- Dark mode: harus load pertama kali untuk menghindari flash of wrong theme --}}
+        @vite('resources/js/dark-mode.js')
+
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800&display=swap" rel="stylesheet" />
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="overflow-x-hidden font-sans antialiased bg-app-bg text-slate-800">
+    <body class="overflow-x-hidden font-sans antialiased bg-app-bg text-slate-800 transition-colors duration-200 dark:bg-dark-bg dark:text-dark-text">
         <div x-data="{ sidebarOpen: false }" class="min-h-screen lg:flex">
             <x-player.sidebar />
 

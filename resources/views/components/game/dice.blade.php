@@ -34,8 +34,8 @@
     </div>
 
     {{-- Disabled Overlay SVG --}}
-    <div id="{{ $id }}-disabled-overlay" class="absolute inset-0 z-10 hidden items-center justify-center rounded-2xl bg-slate-100/60 backdrop-blur-[2px] transition-all duration-300">
-        <svg class="h-8 w-8 text-slate-500 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+    <div id="{{ $id }}-disabled-overlay" class="absolute inset-0 z-10 hidden items-center justify-center rounded-2xl bg-slate-100/60 dark:bg-slate-900/60 backdrop-blur-[2px] transition-all duration-300">
+        <svg class="h-8 w-8 text-slate-500 dark:text-slate-400 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
     </div>

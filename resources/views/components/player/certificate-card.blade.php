@@ -20,9 +20,9 @@
     ];
 @endphp
 
-<div class="rounded-3xl bg-white p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6">
+<div class="rounded-3xl bg-white dark:bg-dark-surface p-5 shadow-sm transition-shadow duration-300 hover:shadow-soft sm:p-6">
     <div class="mb-4 flex items-center justify-between">
-        <h3 class="flex items-center gap-2 text-base font-bold text-slate-700">
+        <h3 class="flex items-center gap-2 text-base font-bold text-slate-700 dark:text-dark-text">
             <x-player.icon name="certificate" class="h-5 w-5 text-primary-500" />
             Sertifikat Digital
         </h3>
@@ -43,14 +43,14 @@
                 @foreach ($items as $item)
                     <li class="flex items-center gap-2.5">
                         <x-player.icon name="check-circle" class="h-5 w-5 shrink-0 {{ $item['done'] ? 'text-secondary-500' : 'text-slate-300' }}" />
-                        <span class="text-slate-600">{{ $item['label'] }}</span>
+                        <span class="text-slate-600 dark:text-dark-muted">{{ $item['label'] }}</span>
                     </li>
                 @endforeach
             </ul>
 
             <button
                 @click="$dispatch('open-modal', 'sertifikat-preview')"
-                class="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-600 transition hover:bg-primary-100"
+                class="mt-4 inline-flex items-center gap-2 rounded-xl border border-primary-100 dark:border-primary-900/30 bg-primary-50 dark:bg-primary-900/20 px-4 py-2 text-sm font-semibold text-primary-600 dark:text-primary-400 transition hover:bg-primary-100 dark:hover:bg-primary-900/40"
             >
                 <x-player.icon name="eye" class="h-4 w-4" />
                 Lihat Preview

@@ -27,8 +27,13 @@
     >
     {{-- Overlay gradien agar menu tetap terbaca di atas artwork --}}
     <div
-        class="pointer-events-none absolute inset-0"
+        class="pointer-events-none absolute inset-0 dark:hidden"
         style="background: linear-gradient(180deg, rgba(6,36,120,.82), rgba(5,50,160,.74), rgba(3,30,110,.84));"
+        aria-hidden="true"
+    ></div>
+    <div
+        class="pointer-events-none absolute inset-0 hidden dark:block"
+        style="background: linear-gradient(180deg, rgba(15,23,42,.92), rgba(30,41,59,.88), rgba(15,23,42,.95));"
         aria-hidden="true"
     ></div>
 
@@ -43,14 +48,14 @@
                 >
                 <span class="leading-tight">
                     <span class="block text-base font-bold">Ular Tangga Statistik</span>
-                    <span class="block text-xs text-white/70">Belajar Statistik, Asyik &amp; Seru!</span>
+                    <span class="block text-xs text-white/70 dark:text-dark-muted">Belajar Statistik, Asyik &amp; Seru!</span>
                 </span>
             </a>
 
             <button
                 @click="sidebarOpen = false"
                 aria-label="Tutup menu"
-                class="rounded-lg p-1.5 text-white/80 transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 {{ $isGameShow ? '' : 'lg:hidden' }}"
+                class="rounded-lg p-1.5 text-white/80 transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 dark:text-dark-muted dark:hover:bg-dark-surface2 dark:hover:text-dark-text {{ $isGameShow ? '' : 'lg:hidden' }}"
             >
                 <x-player.icon name="close" class="h-6 w-6" />
             </button>
@@ -63,9 +68,9 @@
                 <a
                     href="{{ route($link['route']) }}"
                     aria-current="{{ $active ? 'page' : 'false' }}"
-                    class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 {{ $active ? 'bg-white text-secondary-600 shadow-soft' : 'text-white/85 hover:translate-x-1 hover:bg-white/10' }}"
+                    class="group flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 {{ $active ? 'bg-white text-secondary-600 shadow-soft dark:bg-dark-surface2 dark:text-secondary-500' : 'text-white/85 hover:translate-x-1 hover:bg-white/10 dark:text-dark-text dark:hover:bg-dark-surface2' }}"
                 >
-                    <x-player.icon :name="$link['icon']" class="h-5 w-5 {{ $active ? 'text-secondary-600' : 'text-white/80 group-hover:text-white' }}" />
+                    <x-player.icon :name="$link['icon']" class="h-5 w-5 {{ $active ? 'text-secondary-600 dark:text-secondary-500' : 'text-white/80 group-hover:text-white dark:text-dark-muted dark:group-hover:text-dark-text' }}" />
                     {{ $link['label'] }}
                 </a>
             @endforeach
@@ -76,7 +81,7 @@
             @csrf
             <button
                 type="submit"
-                class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-white/85 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70"
+                class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-white/85 transition-all duration-300 hover:translate-x-1 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 dark:text-dark-text dark:hover:bg-dark-surface2"
             >
                 <x-player.icon name="logout" class="h-5 w-5" />
                 Keluar
@@ -90,5 +95,5 @@
     x-show="sidebarOpen"
     x-transition.opacity
     @click="sidebarOpen = false"
-    class="fixed inset-0 z-30 bg-slate-900/40 {{ $isGameShow ? '' : 'lg:hidden' }}"
+    class="fixed inset-0 z-30 bg-slate-900/40 dark:bg-slate-900/80 {{ $isGameShow ? '' : 'lg:hidden' }}"
 ></div>

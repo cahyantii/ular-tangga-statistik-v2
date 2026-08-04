@@ -11,11 +11,11 @@
     use App\Enums\AchievementCriteriaType;
 
     $palette = [
-        'blue' => ['bg' => 'bg-primary-50', 'border' => 'border-primary-200', 'icon' => 'bg-primary-500', 'bar' => 'bg-primary-500', 'text' => 'text-primary-600'],
-        'green' => ['bg' => 'bg-secondary-50', 'border' => 'border-secondary-200', 'icon' => 'bg-secondary-500', 'bar' => 'bg-secondary-500', 'text' => 'text-secondary-600'],
-        'amber' => ['bg' => 'bg-accent-50', 'border' => 'border-accent-200', 'icon' => 'bg-accent-500', 'bar' => 'bg-accent-500', 'text' => 'text-accent-600'],
-        'purple' => ['bg' => 'bg-violet-50', 'border' => 'border-violet-200', 'icon' => 'bg-violet-500', 'bar' => 'bg-violet-500', 'text' => 'text-violet-600'],
-        'rose' => ['bg' => 'bg-rose-50', 'border' => 'border-rose-200', 'icon' => 'bg-rose-500', 'bar' => 'bg-rose-500', 'text' => 'text-rose-600'],
+        'blue' => ['bg' => 'bg-primary-50 dark:bg-primary-900/20', 'border' => 'border-primary-200 dark:border-primary-800/50', 'icon' => 'bg-primary-500', 'bar' => 'bg-primary-500', 'text' => 'text-primary-600 dark:text-primary-400'],
+        'green' => ['bg' => 'bg-secondary-50 dark:bg-secondary-900/20', 'border' => 'border-secondary-200 dark:border-secondary-800/50', 'icon' => 'bg-secondary-500', 'bar' => 'bg-secondary-500', 'text' => 'text-secondary-600 dark:text-secondary-400'],
+        'amber' => ['bg' => 'bg-accent-50 dark:bg-accent-900/20', 'border' => 'border-accent-200 dark:border-accent-800/50', 'icon' => 'bg-accent-500', 'bar' => 'bg-accent-500', 'text' => 'text-accent-600 dark:text-accent-400'],
+        'purple' => ['bg' => 'bg-violet-50 dark:bg-violet-900/20', 'border' => 'border-violet-200 dark:border-violet-800/50', 'icon' => 'bg-violet-500', 'bar' => 'bg-violet-500', 'text' => 'text-violet-600 dark:text-violet-400'],
+        'rose' => ['bg' => 'bg-rose-50 dark:bg-rose-900/20', 'border' => 'border-rose-200 dark:border-rose-800/50', 'icon' => 'bg-rose-500', 'bar' => 'bg-rose-500', 'text' => 'text-rose-600 dark:text-rose-400'],
     ];
 
     $tone = $palette[$achievement->warna_badge] ?? $palette['blue'];
@@ -30,7 +30,7 @@
 
 <div
     class="group relative overflow-hidden rounded-2xl border p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-soft
-        {{ $earned ? "{$tone['bg']} {$tone['border']}" : 'border-slate-200 bg-white' }}"
+        {{ $earned ? "{$tone['bg']} {$tone['border']}" : 'border-slate-200 bg-white dark:border-dark-border dark:bg-dark-surface' }}"
 >
     <div class="flex items-start gap-4">
         @if ($achievement->kode === 'WIN_10')
@@ -50,32 +50,32 @@
         @else
             <span
                 class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl shadow-sm transition-transform duration-200 group-hover:scale-105
-                    {{ $isLocked ? 'bg-slate-200 text-slate-400' : "{$tone['icon']} text-white" }}"
+                    {{ $isLocked ? 'bg-slate-200 text-slate-400 dark:bg-dark-surface-hover dark:text-dark-muted' : "{$tone['icon']} text-white" }}"
             >
                 <x-player.icon :name="$achievement->icon ?? 'trophy'" class="h-7 w-7" />
             </span>
         @endif
 
         <div class="min-w-0 flex-1">
-            <p class="font-bold text-slate-800">{{ $achievement->nama }}</p>
-            <p class="mt-1 text-sm leading-relaxed text-slate-500">{{ $achievement->deskripsi }}</p>
+            <p class="font-bold text-slate-800 dark:text-dark-text">{{ $achievement->nama }}</p>
+            <p class="mt-1 text-sm leading-relaxed text-slate-500 dark:text-dark-muted">{{ $achievement->deskripsi }}</p>
         </div>
     </div>
 
     @if ($isInProgress)
         <div class="mt-4 flex items-center justify-between text-xs">
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 px-2.5 py-1 font-semibold text-slate-500">
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-300 dark:border-dark-border px-2.5 py-1 font-semibold text-slate-500 dark:text-dark-muted">
                 <x-player.icon name="lock" class="h-3 w-3" />
                 Belum Diraih
             </span>
-            <span class="font-semibold text-slate-500">{{ $fraction }}</span>
+            <span class="font-semibold text-slate-500 dark:text-dark-muted">{{ $fraction }}</span>
         </div>
 
         <div class="mt-2 flex items-center gap-3">
-            <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+            <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-dark-surface-hover">
                 <div class="h-2.5 rounded-full {{ $tone['bar'] }} transition-all duration-700 ease-out" style="width: {{ $percent }}%"></div>
             </div>
-            <span class="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-accent-600">
+            <span class="inline-flex shrink-0 items-center gap-1 text-xs font-bold text-accent-600 dark:text-accent-400">
                 <x-player.icon name="coin" class="h-3.5 w-3.5" />
                 +{{ $achievement->reward_poin }} Poin
             </span>
@@ -88,13 +88,13 @@
                     Diraih
                 </span>
             @else
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-dark-surface-hover px-2.5 py-1 text-xs font-semibold text-slate-500 dark:text-dark-muted">
                     <x-player.icon name="lock" class="h-3 w-3" />
                     Terkunci
                 </span>
             @endif
 
-            <span class="inline-flex items-center gap-1 text-xs font-bold text-accent-600">
+            <span class="inline-flex items-center gap-1 text-xs font-bold text-accent-600 dark:text-accent-400">
                 <x-player.icon name="coin" class="h-3.5 w-3.5" />
                 +{{ $achievement->reward_poin }} Poin
             </span>

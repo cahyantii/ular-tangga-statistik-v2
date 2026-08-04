@@ -8,11 +8,11 @@
 
 @php
     $palette = [
-        'blue' => ['bg' => 'bg-primary-50', 'icon' => 'bg-primary-500 text-white', 'text' => 'text-primary-600'],
-        'green' => ['bg' => 'bg-secondary-50', 'icon' => 'bg-secondary-500 text-white', 'text' => 'text-secondary-600'],
-        'amber' => ['bg' => 'bg-accent-50', 'icon' => 'bg-accent-500 text-white', 'text' => 'text-accent-600'],
-        'purple' => ['bg' => 'bg-violet-50', 'icon' => 'bg-violet-500 text-white', 'text' => 'text-violet-600'],
-        'rose' => ['bg' => 'bg-rose-50', 'icon' => 'bg-rose-500 text-white', 'text' => 'text-rose-600'],
+        'blue' => ['bg' => 'bg-primary-50 dark:bg-primary-900/20', 'icon' => 'bg-primary-500 text-white', 'text' => 'text-primary-600 dark:text-primary-400'],
+        'green' => ['bg' => 'bg-secondary-50 dark:bg-secondary-900/20', 'icon' => 'bg-secondary-500 text-white', 'text' => 'text-secondary-600 dark:text-secondary-400'],
+        'amber' => ['bg' => 'bg-accent-50 dark:bg-accent-900/20', 'icon' => 'bg-accent-500 text-white', 'text' => 'text-accent-600 dark:text-accent-400'],
+        'purple' => ['bg' => 'bg-violet-50 dark:bg-violet-900/20', 'icon' => 'bg-violet-500 text-white', 'text' => 'text-violet-600 dark:text-violet-400'],
+        'rose' => ['bg' => 'bg-rose-50 dark:bg-rose-900/20', 'icon' => 'bg-rose-500 text-white', 'text' => 'text-rose-600 dark:text-rose-400'],
     ];
 
     $tone = $palette[$color] ?? $palette['blue'];
@@ -27,7 +27,7 @@
             <x-player.icon :name="$icon" class="h-5 w-5" />
         </span>
         <div class="min-w-0">
-            <p class="truncate text-xs font-medium text-slate-500">{{ $label }}</p>
+            <p class="truncate text-xs font-medium text-slate-500 dark:text-dark-muted">{{ $label }}</p>
             <p class="mt-0.5 text-2xl font-bold {{ $tone['text'] }}">{{ $value }}</p>
         </div>
     </div>

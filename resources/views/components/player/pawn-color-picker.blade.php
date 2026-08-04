@@ -14,7 +14,7 @@
     // tetap terlihat (ring putih di atas putih = tidak kelihatan).
     $ringClass = $dark
         ? 'border-white/70 peer-checked:ring-white peer-focus-visible:ring-white'
-        : 'border-slate-200 peer-checked:ring-slate-800 peer-focus-visible:ring-slate-800';
+        : 'border-slate-200 dark:border-dark-border peer-checked:ring-slate-800 dark:peer-checked:ring-white peer-focus-visible:ring-slate-800 dark:peer-focus-visible:ring-white';
 @endphp
 
 <div class="flex flex-wrap gap-2.5" role="radiogroup" aria-label="Pilih warna pion">

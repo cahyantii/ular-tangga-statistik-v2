@@ -13,10 +13,10 @@
     $isLg = $size === 'lg';
 
     $borderClasses = $hasError
-        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
+        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100 dark:border-rose-800 dark:focus:border-rose-500'
         : ($isLg
-            ? 'border-slate-200 focus:border-blue-700 focus:ring-blue-100'
-            : 'border-slate-200 focus:border-primary-400 focus:ring-primary-100');
+            ? 'border-slate-200 focus:border-blue-700 focus:ring-blue-100 dark:border-slate-700 dark:focus:border-blue-500'
+            : 'border-slate-200 focus:border-primary-400 focus:ring-primary-100 dark:border-slate-700 dark:focus:border-primary-500');
 
     $sizeClasses = $isLg ? 'h-14 rounded-[14px] text-base' : 'py-2.5 rounded-xl text-sm';
     $iconSizeClasses = $isLg ? 'h-5 w-5' : 'h-4 w-4';
@@ -25,7 +25,7 @@
 @endphp
 
 <div>
-    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700">{{ $label }}</label>
+    <label for="{{ $name }}" class="mb-1.5 block text-sm font-semibold text-slate-700 dark:text-dark-text">{{ $label }}</label>
 
     <div class="relative">
         @if ($icon)
@@ -41,7 +41,7 @@
             value="{{ old($name, $value) }}"
             aria-invalid="{{ $hasError ? 'true' : 'false' }}"
             {{ $attributes->merge([
-                'class' => "w-full border {$borderClasses} {$sizeClasses} bg-white text-slate-700 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 "
+                'class' => "w-full border {$borderClasses} {$sizeClasses} bg-white dark:bg-dark-surface-hover text-slate-700 dark:text-dark-text placeholder:text-slate-400 dark:placeholder:text-dark-muted transition focus:outline-none focus:ring-2 "
                     . ($icon ? $iconPad : $noIconPad)
                     . (isset($suffix) ? ' pr-32' : ($isLg ? ' pr-4' : ' pr-3.5')),
             ]) }}

@@ -26,7 +26,7 @@
 
     // Tema Checkerboard Merah Putih
     $isRed = ($row + $col) % 2 === 0;
-    $baseBgClass = $isRed ? 'bg-[#FFE2E2]' : 'bg-[#FBEFEF]';
+    $baseBgClass = $isRed ? 'bg-[#FFE2E2] dark:bg-red-950' : 'bg-[#FBEFEF] dark:bg-red-900';
     $baseTextClass = $isRed ? 'text-red-700' : 'text-red-700'; // Untuk angka raksasa (watermark)
 
 
@@ -66,7 +66,7 @@
 
         {{-- Label Tipe (Opsional) --}}
         @if (! in_array($type, ['biasa', 'start'], true))
-            <span class="absolute bottom-1 hidden text-[8px] font-bold uppercase tracking-wider opacity-90 sm:block {{ $isRed ? 'text-red-100' : 'text-slate-500' }} drop-shadow-sm z-10">{{ $type }}</span>
+            <span class="absolute bottom-1 hidden text-[8px] font-bold uppercase tracking-wider opacity-90 sm:block {{ $isRed ? 'text-red-100' : 'text-slate-500 dark:text-slate-400' }} drop-shadow-sm z-10">{{ $type }}</span>
         @endif
 
         {{-- Cincin glow, diaktifkan JS saat kotak ini adalah giliran berjalan --}}

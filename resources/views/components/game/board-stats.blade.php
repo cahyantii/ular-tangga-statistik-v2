@@ -17,20 +17,20 @@
     $jumlahUlar = $papan->papanKonektor->where('jenis', \App\Enums\ConnectorType::Ular)->count();
 @endphp
 
-<div {{ $attributes->merge(['class' => 'animate-fade-in-up flex flex-wrap items-center gap-2 rounded-2xl bg-white px-3 py-2.5 shadow-sm sm:gap-3 sm:px-4']) }}>
-    <span class="inline-flex items-center gap-1.5 rounded-xl bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 sm:text-sm">
+<div {{ $attributes->merge(['class' => 'animate-fade-in-up flex flex-wrap items-center gap-2 rounded-2xl bg-white dark:bg-dark-surface px-3 py-2.5 shadow-sm sm:gap-3 sm:px-4']) }}>
+    <span class="inline-flex items-center gap-1.5 rounded-xl bg-primary-50 dark:bg-primary-900/20 px-3 py-1.5 text-xs font-bold text-primary-700 dark:text-primary-400 sm:text-sm">
         <x-player.icon name="grid" class="h-4 w-4" />
         {{ $papan->jumlah_petak }} Kotak
     </span>
-    <span class="inline-flex items-center gap-1.5 rounded-xl bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700 sm:text-sm">
+    <span class="inline-flex items-center gap-1.5 rounded-xl bg-primary-50 dark:bg-primary-900/20 px-3 py-1.5 text-xs font-bold text-primary-700 dark:text-primary-400 sm:text-sm">
         <x-player.icon name="book" class="h-4 w-4" />
         {{ $jumlahSoal }} Soal
     </span>
-    <span class="inline-flex items-center gap-1.5 rounded-xl bg-secondary-50 px-3 py-1.5 text-xs font-bold text-secondary-700 sm:text-sm">
+    <span class="inline-flex items-center gap-1.5 rounded-xl bg-secondary-50 dark:bg-secondary-900/20 px-3 py-1.5 text-xs font-bold text-secondary-700 dark:text-secondary-400 sm:text-sm">
         <x-player.icon name="ladder" class="h-4 w-4" />
         {{ $jumlahTangga }} Tangga
     </span>
-    <span class="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 sm:text-sm">
+    <span class="inline-flex items-center gap-1.5 rounded-xl bg-rose-50 dark:bg-rose-900/20 px-3 py-1.5 text-xs font-bold text-rose-700 dark:text-rose-400 sm:text-sm">
         <x-player.icon name="snake" class="h-4 w-4" />
         {{ $jumlahUlar }} Ular
     </span>

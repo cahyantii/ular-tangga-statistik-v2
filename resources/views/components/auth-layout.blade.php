@@ -18,7 +18,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="overflow-x-hidden bg-[#F7FAFF] font-sans text-slate-800 antialiased">
+    <body class="overflow-x-hidden bg-[#F7FAFF] dark:bg-dark-bg font-sans text-slate-800 dark:text-dark-text antialiased">
         {{--
             Kegagalan OAuth (mis. konfigurasi Google/GitHub belum lengkap,
             atau user membatalkan proses di provider) di-flash ke
@@ -29,7 +29,7 @@
             storage/logs/laravel.log.
         --}}
 
-        <header class="border-b border-slate-100 bg-white">
+        <header class="border-b border-slate-100 bg-white dark:border-dark-border dark:bg-dark-surface">
             {{--
                 Nav mobile sengaja dirapatkan (gap/padding lebih kecil di
                 bawah sm:) supaya logo+nama+tombol tidak overflow di layar
@@ -46,16 +46,16 @@
                         class="h-9 w-9 shrink-0 object-contain sm:h-11 sm:w-11 md:h-12 md:w-12 lg:h-[52px] lg:w-[52px]"
                     >
                     <span class="min-w-0 truncate leading-tight">
-                        <span class="block truncate text-sm font-bold text-slate-900 sm:text-base">Ular Tangga Statistik</span>
-                        <span class="block truncate text-[11px] text-slate-500 sm:text-xs">Belajar Statistik, Asyik &amp; Seru!</span>
+                        <span class="block truncate text-sm font-bold text-slate-900 dark:text-dark-text sm:text-base">Ular Tangga Statistik</span>
+                        <span class="block truncate text-[11px] text-slate-500 dark:text-dark-muted sm:text-xs">Belajar Statistik, Asyik &amp; Seru!</span>
                     </span>
                 </a>
 
                 <div class="flex shrink-0 items-center gap-2 sm:gap-3">
-                    <span class="hidden text-sm text-slate-500 sm:inline">{{ $navPromptText }}</span>
+                    <span class="hidden text-sm text-slate-500 dark:text-dark-muted sm:inline">{{ $navPromptText }}</span>
                     <a
                         href="{{ $navLinkHref }}"
-                        class="inline-flex items-center gap-1.5 rounded-xl border border-blue-700 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                        class="inline-flex items-center gap-1.5 rounded-xl border border-blue-700 px-2.5 py-1.5 text-xs font-semibold text-blue-700 transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-900/20 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
                     >
                         <x-player.icon name="user-plus" class="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         {{ $navLinkText }}
@@ -92,12 +92,12 @@
             </div>
         </main>
 
-        <footer class="border-t border-slate-100">
-            <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-slate-500 sm:flex-row sm:px-6 lg:px-8">
+        <footer class="border-t border-slate-100 dark:border-dark-border">
+            <div class="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-10 text-sm text-slate-500 dark:text-dark-muted sm:flex-row sm:px-6 lg:px-8">
                 <p>&copy; {{ now()->year }} Ular Tangga Statistik Indonesia. Dibuat untuk literasi statistik masyarakat.</p>
                 <div class="flex gap-6">
-                    <a href="{{ route('about') }}" class="hover:text-blue-700">Tentang</a>
-                    <a href="{{ route('faq') }}" class="hover:text-blue-700">FAQ</a>
+                    <a href="{{ route('about') }}" class="hover:text-blue-700 dark:hover:text-blue-400">Tentang</a>
+                    <a href="{{ route('faq') }}" class="hover:text-blue-700 dark:hover:text-blue-400">FAQ</a>
                 </div>
             </div>
         </footer>

@@ -27,10 +27,10 @@
     $dashboardActive = request()->routeIs('dashboard');
 @endphp
 
-<div class="fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-sm items-end justify-between gap-1 rounded-[28px] bg-white/95 p-2 shadow-soft-lg backdrop-blur-md lg:hidden">
+<div class="fixed inset-x-3 bottom-3 z-40 mx-auto flex max-w-sm items-end justify-between gap-1 rounded-[28px] bg-white/95 dark:bg-slate-800/95 p-2 shadow-soft-lg backdrop-blur-md lg:hidden">
     @foreach ($left as $link)
         @php $active = request()->routeIs($link['is']); @endphp
-        <a href="{{ route($link['route']) }}" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors duration-150 {{ $active ? 'text-primary-600' : 'text-slate-500 hover:bg-slate-100' }}">
+        <a href="{{ route($link['route']) }}" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors duration-150 {{ $active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
             <x-player.icon :name="$link['icon']" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">{{ $link['label'] }}</span>
         </a>
@@ -45,7 +45,7 @@
 
     @foreach ($right as $link)
         @php $active = request()->routeIs($link['is']); @endphp
-        <a href="{{ route($link['route']) }}" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors duration-150 {{ $active ? 'text-primary-600' : 'text-slate-500 hover:bg-slate-100' }}">
+        <a href="{{ route($link['route']) }}" class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 transition-colors duration-150 {{ $active ? 'text-primary-600 dark:text-primary-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
             <x-player.icon :name="$link['icon']" class="h-5 w-5" />
             <span class="text-[10px] font-semibold">{{ $link['label'] }}</span>
         </a>

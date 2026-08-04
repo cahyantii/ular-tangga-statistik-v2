@@ -3,6 +3,7 @@ import forms from '@tailwindcss/forms';
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -48,6 +49,15 @@ export default {
                     600: '#DB7610',
                 },
                 'app-bg': '#F6FAFF',
+                // ── Dark mode surfaces ──────────────────────────────
+                dark: {
+                    bg:        '#0F172A',   // slate-900  — background utama
+                    surface:   '#1E293B',   // slate-800  — card/panel
+                    surface2:  '#334155',   // slate-700  — nested card
+                    border:    '#334155',   // slate-700  — border
+                    text:      '#F1F5F9',   // slate-100  — teks utama
+                    muted:     '#94A3B8',   // slate-400  — teks sekunder
+                },
             },
             boxShadow: {
                 soft: '0 10px 30px -12px rgba(15, 76, 186, 0.18)',
