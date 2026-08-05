@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let questionCountdownInterval = null;
     let duelCountdownInterval = null;
     let pausedCountdownInterval = null;
+    let turnCountdownInterval = null;
     let heartbeatIntervalId = null;
     let presenceChannel = null;
     let leaveConfirmed = false;
@@ -1047,14 +1048,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentPlayer = session.players.find((p) => p.id === session.current_turn_game_player_id);
         const isMyTurn = currentPlayer && !currentPlayer.is_robot && myGamePlayerId === currentPlayer.id;
 
+        const turnIndicatorEl = document.getElementById('turn-indicator');
+        const turnIndicatorMobileEl = document.getElementById('turn-indicator-mobile');
+        const turnIndicatorTextEl = document.getElementById('turn-indicator-text');
+        const turnIndicatorTextMobileEl = document.getElementById('turn-indicator-text-mobile');
         const turnActiveDotEl = document.getElementById('turn-active-dot');
         const turnActiveDotMobileEl = document.getElementById('turn-active-dot-mobile');
         const turnAvatarRingEl = document.getElementById('turn-avatar-ring');
         const diceGlowWrapEl = document.getElementById('dice-glow-wrap');
 
         // Elemen mobile
+        const turnAvatarEl = document.getElementById('turn-avatar');
         const turnAvatarMobileEl = document.getElementById('turn-avatar-mobile');
-        const turnIndicatorMobileEl = document.getElementById('turn-indicator-mobile');
+        const turnSubtextEl = document.getElementById('turn-subtext');
         const turnSubtextMobileEl = document.getElementById('turn-subtext-mobile');
 
         if (session.status !== 'playing') {
@@ -1073,6 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+
         const avatarText = currentPlayer ? (currentPlayer.is_robot ? '🤖' : initials(currentPlayer.nama)) : '?';
         const avatarClass = `relative z-10 flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
 
@@ -1085,31 +1092,58 @@ document.addEventListener('DOMContentLoaded', () => {
             turnAvatarMobileEl.className = `flex h-10 w-10 items-center justify-center rounded-full text-xs font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
         }
 
-        if (isMyTurn) {
-            turnIndicatorEl.innerHTML = `Giliran Anda`;
-            if (turnIndicatorMobileEl) turnIndicatorMobileEl.innerHTML = `Giliran Anda`;
-            if (turnActiveDotEl) {
-                turnActiveDotEl.classList.remove('hidden');
-                turnActiveDotEl.classList.add('flex');
+        clearInterval(turnCountdownInterval);
+
+        const updateText = (countdownStr = '') => {
+            if (isMyTurn) {
+                const txt = `Giliran Anda ${countdownStr}`.trim();
+                if (turnIndicatorTextEl) turnIndicatorTextEl.textContent = txt;
+                if (turnIndicatorTextMobileEl) turnIndicatorTextMobileEl.textContent = txt;
+                if (turnActiveDotEl) {
+                    turnActiveDotEl.classList.remove('hidden');
+                    turnActiveDotEl.classList.add('flex');
+                }
+                if (turnActiveDotMobileEl) {
+                    turnActiveDotMobileEl.classList.remove('hidden');
+                    turnActiveDotMobileEl.classList.add('flex');
+                }
+                if (turnAvatarRingEl) {
+                    turnAvatarRingEl.classList.remove('opacity-0');
+                    turnAvatarRingEl.classList.add('animate-ping-slow', 'opacity-100');
+                }
+            } else {
+                const txt = `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')} ${countdownStr}`.trim();
+                if (turnIndicatorTextEl) turnIndicatorTextEl.textContent = txt;
+                if (turnIndicatorTextMobileEl) turnIndicatorTextMobileEl.textContent = txt;
+                if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+                if (turnActiveDotMobileEl) turnActiveDotMobileEl.classList.add('hidden');
+                if (turnAvatarRingEl) {
+                    turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
+                    turnAvatarRingEl.classList.add('opacity-0');
+                }
             }
-            if (turnActiveDotMobileEl) {
-                turnActiveDotMobileEl.classList.remove('hidden');
-                turnActiveDotMobileEl.classList.add('flex');
-            }
-            if (turnAvatarRingEl) {
-                turnAvatarRingEl.classList.remove('opacity-0');
-                turnAvatarRingEl.classList.add('animate-ping-slow', 'opacity-100');
-            }
+        };
+
+        if (session.current_turn_remaining_seconds !== null && session.current_turn_remaining_seconds !== undefined) {
+            let remaining = Math.round(session.current_turn_remaining_seconds);
+            const tick = () => {
+                if (remaining > 0) {
+                    updateText(`(${Math.round(remaining)}s)`);
+                    remaining--;
+                } else {
+                    updateText(`(Auto...)`);
+                    clearInterval(turnCountdownInterval);
+                    // Ambil state baru dari server setelah auto-roll dieksekusi
+                    setTimeout(() => {
+                        loadState();
+                    }, 2500);
+                }
+            };
+            
+            tick();
+            turnCountdownInterval = setInterval(tick, 1000);
         } else {
-            const waitText = `Menunggu ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
-            turnIndicatorEl.textContent = `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
-            if (turnIndicatorMobileEl) turnIndicatorMobileEl.textContent = waitText;
-            if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
-            if (turnActiveDotMobileEl) turnActiveDotMobileEl.classList.add('hidden');
-            if (turnAvatarRingEl) {
-                turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
-                turnAvatarRingEl.classList.add('opacity-0');
-            }
+            updateText();
         }
 
         const subtextContent = currentPlayer
@@ -1631,8 +1665,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startHeartbeat(session) {
-        // MATIKAN SEMENTARA untuk keperluan debugging agar Debugbar tidak penuh
-        return; 
+        // Heartbeat dinonaktifkan: sistem autoroll (CheckGameHeartbeats::checkAutoRolls)
+        // sudah cukup menangani pemain AFK — dadu otomatis dilempar setelah 30 detik,
+        // dan setelah 3x auto-roll pemain di-forfeit. Heartbeat tidak diperlukan
+        // untuk game edukasi ini dan hanya menambah beban request.
+        return;
 
         if (session.mode !== 'multiplayer' || heartbeatIntervalId) {
             return;
@@ -2009,7 +2046,19 @@ document.addEventListener('DOMContentLoaded', () => {
             await playRobotTurns(result.robot_turns, result.session, finalRobotFromPosisi);
             finalizeOutcome(result.session, result.newly_unlocked_achievements ?? []);
         } catch (error) {
-            showToast(error.message);
+            // 403 = NotYourTurnException: giliran sudah berpindah (misalnya autoroll
+            // scheduler sudah mengeksekusi dadu untuk kita). Refresh state supaya
+            // UI sinkron dengan server dan tampilkan pesan yang jelas.
+            const msg = error.message ?? '';
+            const isNotYourTurn = msg.toLowerCase().includes('bukan giliran') || msg.toLowerCase().includes('not your turn');
+            if (isNotYourTurn) {
+                showToast('Giliran sudah berlanjut secara otomatis.');
+                await loadState();
+            } else {
+                showToast(msg || 'Terjadi kesalahan.');
+                // Refresh state juga, agar UI kembali sinkron dari kondisi error apapun
+                await loadState().catch(() => {});
+            }
         } finally {
             rollButton.disabled = false;
         }

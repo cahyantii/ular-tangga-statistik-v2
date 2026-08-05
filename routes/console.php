@@ -16,7 +16,7 @@ Schedule::command('game:abandon-stale-sessions')->hourly();
  * Reverb/queue worker), bukan cron sekali per menit, supaya deteksi
  * disconnect multiplayer terasa dekat dengan real-time.w
  */
-Schedule::command('game:check-heartbeats')->everyTenSeconds()->withoutOverlapping();
+Schedule::command('game:check-heartbeats')->everyTenSeconds()->withoutOverlapping(1);
 
 Schedule::command('game:expire-waiting-rooms')->everyMinute()->withoutOverlapping();
 

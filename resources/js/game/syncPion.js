@@ -1,5 +1,5 @@
 import { state, dom, config } from './state.js';
-import { stackIndexAt, placePawnAt, getOrCreatePawnEl } from './pawn.js';
+import { stackIndexAt, placePawnAt, getOrCreatePawnEl, removePawnEl } from './pawn.js';
 import { delay, spawnParticles, animateAlongConnector } from './utils.js';
 import { renderFinished, renderPlayerPanels, updateTurnIndicator, renderPaused, renderInventoryUI } from './panel.js';
 import { showQuestion, hideQuestion } from './modalSoal.js';
@@ -16,6 +16,8 @@ import { joinRealtimeChannel, startHeartbeat, stopRealtimeIfSessionOver } from '
     // ---------------------------------------------------------------
     export async function animateExternalDiff(session) {
         for (const p of session.players) {
+            if (p.status === 'forfeited' || p.status === 'left') continue;
+
             const el = getOrCreatePawnEl(p);
             const prev = state.knownPositions.get(p.id);
 
@@ -128,7 +130,7 @@ import { joinRealtimeChannel, startHeartbeat, stopRealtimeIfSessionOver } from '
         }
 
         if (session.active_question) {
-            showQuestion(session.active_question, session.active_question_expires_at);
+            showQuestion(session.active_question, session.active_question_remaining_seconds);
         } else {
             hideQuestion();
         }
@@ -150,17 +152,26 @@ import { joinRealtimeChannel, startHeartbeat, stopRealtimeIfSessionOver } from '
         state.latestSession = session;
 
         if (pawnMode === 'instant') {
-            session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players)));
+            session.players.forEach((p) => {
+                if (p.status === 'forfeited' || p.status === 'left') removePawnEl(p);
+                else placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
+            });
             syncKnownPositions(session);
         } else if (pawnMode === 'skip') {
             session.players.forEach((p) => {
-                if (!skipPawnIds.has(p.id)) {
+                if (p.status === 'forfeited' || p.status === 'left') removePawnEl(p);
+                else if (!skipPawnIds.has(p.id)) {
                     placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players));
                 }
             });
             syncKnownPositions(session);
         } else {
-            state.animationChain = state.animationChain.then(() => animateExternalDiff(session)).then(() => syncKnownPositions(session));
+            state.animationChain = state.animationChain.then(() => animateExternalDiff(session)).then(() => {
+                session.players.forEach((p) => {
+                    if (p.status === 'forfeited' || p.status === 'left') removePawnEl(p);
+                });
+                syncKnownPositions(session);
+            });
         }
 
         renderPlayerPanels(session);

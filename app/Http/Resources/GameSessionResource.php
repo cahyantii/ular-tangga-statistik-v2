@@ -21,10 +21,13 @@ class GameSessionResource extends JsonResource
             'status' => $this->status->value,
             'total_turn' => $this->total_turn,
             'current_turn_game_player_id' => $this->current_turn_game_player_id,
+            'current_turn_started_at' => $this->current_turn_started_at ? \Carbon\Carbon::parse($this->current_turn_started_at)->toIso8601String() : null,
+            'current_turn_remaining_seconds' => $this->current_turn_started_at ? (int) max(0, round(30 - \Carbon\Carbon::parse($this->current_turn_started_at)->diffInSeconds(now()))) : null,
             'winner_game_player_id' => $this->winner_game_player_id,
             'win_reason' => $this->win_reason?->value,
             'duration_seconds' => $this->duration_seconds,
-            'active_question_expires_at' => $this->active_question_expires_at?->toIso8601String(),
+            'active_question_expires_at' => $this->active_question_expires_at ? \Carbon\Carbon::parse($this->active_question_expires_at)->toIso8601String() : null,
+            'active_question_remaining_seconds' => $this->active_question_expires_at ? (int) max(0, round(\Carbon\Carbon::parse($this->active_question_expires_at)->diffInSeconds(now()))) : null,
             'active_question' => $this->when(
                 $this->active_question_id !== null,
                 fn () => new SoalPublicResource($this->activeQuestion)

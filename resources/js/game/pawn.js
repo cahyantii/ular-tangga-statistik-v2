@@ -44,6 +44,11 @@ import { playSound } from './audio.js';
         return el;
     }
 
+    export function removePawnEl(player) {
+        const el = dom.pawnLayer.querySelector(`[data-pawn-id="${player.id}"]`);
+        if (el) el.remove();
+    }
+
     export function placePawnAt(el, posisi, stackIndex = 0) {
         // posisi_pion 0 = belum bergerak dari Start; tampilkan pion bertengger
         // di kotak Start (posisi 1) alih-alih menyembunyikannya.

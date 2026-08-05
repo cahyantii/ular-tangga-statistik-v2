@@ -112,7 +112,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p id="turn-indicator-mobile" class="text-sm font-bold text-slate-800 dark:text-white truncate flex items-center gap-1.5">
-                        Giliran
+                        <span id="turn-indicator-text-mobile">Giliran</span>
                         <span id="turn-active-dot-mobile" class="hidden relative flex h-2 w-2">
                             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -136,7 +136,7 @@
                     </div>
                     <div class="flex-1">
                         <p id="turn-indicator" class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                            Giliran
+                            <span id="turn-indicator-text">Giliran</span>
                             <span id="turn-active-dot" class="hidden relative flex h-2.5 w-2.5">
                                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>

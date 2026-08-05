@@ -28,6 +28,7 @@ use Illuminate\Support\Str;
  * @property int|null $duration_seconds
  * @property int $total_turn
  * @property \Illuminate\Support\Carbon|null $started_at
+ * @property \Illuminate\Support\Carbon|null $current_turn_started_at
  * @property \Illuminate\Support\Carbon|null $finished_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -88,6 +89,7 @@ class GameSession extends Model
         'duration_seconds',
         'total_turn',
         'started_at',
+        'current_turn_started_at',
         'finished_at',
         'uuid',
     ];
@@ -118,6 +120,7 @@ class GameSession extends Model
             'duration_seconds' => 'integer',
             'total_turn' => 'integer',
             'started_at' => 'datetime',
+            'current_turn_started_at' => 'datetime',
             'finished_at' => 'datetime',
         ];
     }

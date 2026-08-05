@@ -187,51 +187,97 @@ import { pawnColorStyle } from './pawn.js';
         const isMyTurn = currentPlayer && !currentPlayer.is_robot && state.myGamePlayerId === currentPlayer.id;
 
         const turnActiveDotEl = document.getElementById('turn-active-dot');
+        const turnActiveDotMobileEl = document.getElementById('turn-active-dot-mobile');
+        const turnTextEl = document.getElementById('turn-indicator-text');
+        const turnTextMobileEl = document.getElementById('turn-indicator-text-mobile');
+        const turnSubtextMobileEl = document.getElementById('turn-subtext-mobile');
         const turnAvatarRingEl = document.getElementById('turn-avatar-ring');
         const diceGlowWrapEl = document.getElementById('dice-glow-wrap');
 
+        clearInterval(state.turnCountdownInterval);
+
         if (session.status !== 'playing') {
-            dom.turnIndicatorEl.textContent = '';
+            if (turnTextEl) turnTextEl.textContent = '';
+            if (turnTextMobileEl) turnTextMobileEl.textContent = '';
             dom.turnSubtextEl.textContent = '';
+            if (turnSubtextMobileEl) turnSubtextMobileEl.textContent = '';
             dom.turnAvatarEl.textContent = '';
             dom.rollButton.classList.add('hidden');
             if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+            if (turnActiveDotMobileEl) turnActiveDotMobileEl.classList.add('hidden');
             if (turnAvatarRingEl) {
                 turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
                 turnAvatarRingEl.classList.add('opacity-0');
             }
             if (diceGlowWrapEl) diceGlowWrapEl.classList.remove('animate-float', 'drop-shadow-lg');
-            setTileGlow(null);
+            if (typeof setTileGlow === 'function') setTileGlow(null); // Assuming setTileGlow is globally available
             return;
         }
 
-        dom.turnAvatarEl.textContent = currentPlayer ? (currentPlayer.is_robot ? '\u{1F916}' : initials(currentPlayer.nama)) : '?';
-        dom.turnAvatarEl.className = `relative z-10 flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
+        const avatarInitial = currentPlayer ? (currentPlayer.is_robot ? '\u{1F916}' : initials(currentPlayer.nama)) : '?';
+        dom.turnAvatarEl.textContent = avatarInitial;
+        const mobileAvatar = document.getElementById('turn-avatar-mobile');
+        if (mobileAvatar) mobileAvatar.textContent = avatarInitial;
+        
+        const avatarClass = `relative z-10 flex h-12 w-12 items-center justify-center rounded-full text-sm font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
+        dom.turnAvatarEl.className = avatarClass;
+        if (mobileAvatar) mobileAvatar.className = `flex h-10 w-10 items-center justify-center rounded-full text-xs font-black text-white shadow-md ${currentPlayer?.is_robot ? 'bg-gradient-to-br from-slate-600 to-slate-800' : 'bg-gradient-to-br from-primary-400 to-primary-600'}`;
 
-        if (isMyTurn) {
-            dom.turnIndicatorEl.innerHTML = `Giliran Anda`; // The dot is now handled separately below
-            if (turnActiveDotEl) {
-                turnActiveDotEl.classList.remove('hidden');
-                turnActiveDotEl.classList.add('flex');
+        const updateText = (countdownStr = '') => {
+            if (isMyTurn) {
+                const txt = `Giliran Anda ${countdownStr}`.trim();
+                if (turnTextEl) turnTextEl.textContent = txt;
+                if (turnTextMobileEl) turnTextMobileEl.textContent = txt;
+                
+                if (turnActiveDotEl) {
+                    turnActiveDotEl.classList.remove('hidden');
+                    turnActiveDotEl.classList.add('flex');
+                }
+                if (turnActiveDotMobileEl) {
+                    turnActiveDotMobileEl.classList.remove('hidden');
+                    turnActiveDotMobileEl.classList.add('flex');
+                }
+                if (turnAvatarRingEl) {
+                    turnAvatarRingEl.classList.remove('opacity-0');
+                    turnAvatarRingEl.classList.add('animate-ping-slow', 'opacity-100');
+                }
+            } else {
+                const txt = `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')} ${countdownStr}`.trim();
+                if (turnTextEl) turnTextEl.textContent = txt;
+                if (turnTextMobileEl) turnTextMobileEl.textContent = txt;
+                
+                if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
+                if (turnActiveDotMobileEl) turnActiveDotMobileEl.classList.add('hidden');
+                if (turnAvatarRingEl) {
+                    turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
+                    turnAvatarRingEl.classList.add('opacity-0');
+                }
             }
-            if (turnAvatarRingEl) {
-                turnAvatarRingEl.classList.remove('opacity-0');
-                turnAvatarRingEl.classList.add('animate-ping-slow', 'opacity-100');
-            }
+        };
+
+        if (session.current_turn_remaining_seconds !== null && session.current_turn_remaining_seconds !== undefined) {
+            let remaining = session.current_turn_remaining_seconds;
+            const tick = () => {
+                if (remaining > 0) {
+                    updateText(`(${remaining}s)`);
+                    remaining--;
+                } else {
+                    updateText(`(Auto...)`);
+                    clearInterval(state.turnCountdownInterval);
+                }
+            };
+            
+            tick();
+            state.turnCountdownInterval = setInterval(tick, 1000);
         } else {
-            dom.turnIndicatorEl.textContent = `Menunggu giliran ${currentPlayer?.is_robot ? 'Robot' : (currentPlayer?.nama ?? '...')}`;
-            if (turnActiveDotEl) turnActiveDotEl.classList.add('hidden');
-            if (turnAvatarRingEl) {
-                turnAvatarRingEl.classList.remove('animate-ping-slow', 'opacity-100');
-                turnAvatarRingEl.classList.add('opacity-0');
-            }
+            updateText();
         }
 
-        dom.turnSubtextEl.textContent = currentPlayer
-            ? `Posisi: ${currentPlayer.posisi_pion} • Skor: ${currentPlayer.skor}`
-            : '';
+        const subtext = currentPlayer ? `Posisi: ${currentPlayer.posisi_pion} • Skor: ${currentPlayer.skor}` : '';
+        dom.turnSubtextEl.textContent = subtext;
+        if (turnSubtextMobileEl) turnSubtextMobileEl.textContent = subtext;
 
-        setTileGlow(currentPlayer?.posisi_pion);
+        if (typeof setTileGlow === 'function') setTileGlow(currentPlayer?.posisi_pion);
 
         const questionPending = !!session.active_question;
         const canRoll = isMyTurn && !questionPending;

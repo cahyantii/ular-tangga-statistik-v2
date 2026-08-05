@@ -6,7 +6,7 @@
             src="{{ asset('images/brand/logo-landigpage.png') }}"
             alt="Ilustrasi permainan Ular Tangga Statistik Indonesia"
             loading="lazy"
-            class="absolute inset-0 z-0 h-full w-full object-cover object-[70%_center] sm:object-right opacity-25 sm:opacity-90 dark:opacity-15 dark:sm:opacity-50 transition-all duration-500"
+            class="absolute inset-0 z-0 h-full w-full object-cover object-[70%_center] sm:object-right opacity-25 sm:opacity-90 dark:opacity-15 dark:sm:opacity-90 transition-all duration-500"
         >
 
         {{-- Gradient Overlay for better readability --}}

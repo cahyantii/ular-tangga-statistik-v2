@@ -26,11 +26,14 @@ class CheckGameHeartbeats extends Command
 
     public function handle(GameSessionService $gameSessionService, GameSettingsRepository $settings): int
     {
-        $heartbeatTimeout = $settings->getInt('heartbeat_timeout_seconds');
-        $reconnectTimeout = $settings->getInt('reconnect_timeout_seconds');
+        // Sistem heartbeat disconnect dimatikan.
+        // $heartbeatTimeout = $settings->getInt('heartbeat_timeout_seconds');
+        // $reconnectTimeout = $settings->getInt('reconnect_timeout_seconds');
+        // $this->detectNewDisconnects($gameSessionService, $heartbeatTimeout);
+        // $this->resolveDisconnectedPlayers($gameSessionService, $heartbeatTimeout, $reconnectTimeout);
 
-        $this->detectNewDisconnects($gameSessionService, $heartbeatTimeout);
-        $this->resolveDisconnectedPlayers($gameSessionService, $heartbeatTimeout, $reconnectTimeout);
+        // Hanya jalankan autoroll untuk pemain AFK
+        $this->checkAutoRolls($gameSessionService);
 
         return self::SUCCESS;
     }
@@ -88,6 +91,25 @@ class CheckGameHeartbeats extends Command
 
                 if ($disconnected->updated_at->lt(now()->subSeconds($reconnectTimeout))) {
                     $gameSessionService->forfeitDueToDisconnect($gameSession, $disconnected);
+                }
+            }
+        }
+    }
+
+    private function checkAutoRolls(GameSessionService $gameSessionService): void
+    {
+        $playingSessions = GameSession::query()
+            ->where('status', GameStatus::Playing)
+            ->whereNull('active_question_id') // only process when waiting for dice roll
+            ->with('players')
+            ->get();
+
+        foreach ($playingSessions as $gameSession) {
+            // Check if 28+ seconds have passed since turn started
+            if ($gameSession->current_turn_started_at && \Carbon\Carbon::parse($gameSession->current_turn_started_at)->diffInSeconds(now()) >= 28) {
+                $player = $gameSession->players->firstWhere('id', $gameSession->current_turn_game_player_id);
+                if ($player && !$player->is_robot && $player->status === PlayerStatus::Active) {
+                    $gameSessionService->autoRoll($gameSession, $player);
                 }
             }
         }

@@ -4,24 +4,25 @@ import { submitAnswer } from './http.js';
     // ---------------------------------------------------------------
     // Modal Soal
     // ---------------------------------------------------------------
-    function startQuestionCountdown(expiresAtIso, soalId) {
+    function startQuestionCountdown(remainingSeconds, soalId) {
         clearInterval(state.questionCountdownInterval);
 
+        let remaining = remainingSeconds;
         const update = () => {
-            const remaining = Math.max(0, Math.floor((new Date(expiresAtIso).getTime() - Date.now()) / 1000));
             dom.questionTimerEl.textContent = `${remaining}s`;
 
             if (remaining <= 0) {
                 clearInterval(state.questionCountdownInterval);
                 submitAnswer(soalId, null);
             }
+            remaining--;
         };
 
         update();
         state.questionCountdownInterval = setInterval(update, 1000);
     }
 
-    function showQuestion(soal, expiresAtIso) {
+    function showQuestion(soal, remainingSeconds) {
         dom.questionFeedbackEl.classList.add('hidden');
         dom.questionTextEl.textContent = soal.pertanyaan;
         dom.questionOptionsEl.innerHTML = '';
@@ -37,7 +38,7 @@ import { submitAnswer } from './http.js';
         });
 
         window.dispatchEvent(new CustomEvent('open-modal', { detail: 'question-modal' }));
-        startQuestionCountdown(expiresAtIso, soal.id);
+        startQuestionCountdown(remainingSeconds, soal.id);
     }
 
     function hideQuestion() {

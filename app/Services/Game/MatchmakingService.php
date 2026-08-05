@@ -197,6 +197,7 @@ class MatchmakingService
                 'status' => GameStatus::Playing,
                 'current_turn_game_player_id' => $pertama->id,
                 'started_at' => now(),
+                'current_turn_started_at' => now(),
             ]);
 
             $room->update(['status' => GameStatus::Playing]);

@@ -142,7 +142,10 @@ class GameSessionService
                     'status' => PlayerStatus::Active,
                 ]);
 
-                $gameSession->update(['current_turn_game_player_id' => $human->id]);
+                $gameSession->update([
+                    'current_turn_game_player_id' => $human->id,
+                    'current_turn_started_at' => now(),
+                ]);
 
                 return $gameSession->fresh();
             });
@@ -887,7 +890,10 @@ class GameSessionService
             $reconnectedPlayer->update(['status' => PlayerStatus::Active]);
 
             if ($wasPaused) {
-                $gameSession->update(['status' => GameStatus::Playing]);
+                $gameSession->update([
+                    'status' => GameStatus::Playing,
+                    'current_turn_started_at' => now(), // Reset timer after pause
+                ]);
                 $this->gameLog->log($gameSession, GameLogEventType::Resumed, $reconnectedPlayer->user_id, $gameSession->total_turn, []);
                 $events[] = new SessionResumed($gameSession, $reconnectedPlayer);
             }
@@ -949,6 +955,22 @@ class GameSessionService
 
         $this->dispatchEvents($events);
         $this->flushNotifications();
+    }
+
+    /**
+     * Memutar dadu secara otomatis jika pemain tidak aktif selama waktu yang ditentukan.
+     * Jika pemain telah melakukan auto-roll >= 3 kali, ia akan dianggap forfeited dan dihapus dari sesi.
+     */
+    public function autoRoll(GameSession $gameSession, GamePlayer $gamePlayer): void
+    {
+        $gamePlayer->increment('auto_rolls_count');
+
+        if ($gamePlayer->auto_rolls_count >= 3) {
+            $gamePlayer->update(['posisi_pion' => 0]);
+            $this->leave($gameSession, $gamePlayer);
+        } else {
+            $this->rollDice($gameSession, $gamePlayer);
+        }
     }
 
     /**

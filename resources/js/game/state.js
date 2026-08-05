@@ -6,6 +6,7 @@ export const state = {
     questionCountdownInterval: null,
     duelCountdownInterval: null,
     pausedCountdownInterval: null,
+    turnCountdownInterval: null,
     heartbeatIntervalId: null,
     presenceChannel: null,
     leaveConfirmed: false,

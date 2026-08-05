@@ -43,6 +43,7 @@ class TurnService
 
         $gameSession->current_turn_game_player_id = $next->id;
         $gameSession->total_turn += 1;
+        $gameSession->current_turn_started_at = now();
         $gameSession->save();
 
         return $next;
