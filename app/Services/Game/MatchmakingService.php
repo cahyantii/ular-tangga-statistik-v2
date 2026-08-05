@@ -43,17 +43,20 @@ class MatchmakingService
      * memproses antrean satu per satu, jadi tidak butuh lock per-user seperti
      * pembuatan sesi Vs Robot/Private Room.
      */
-    public function quickMatch(User $user, ?string $pawnColor = null): Room
+    public function quickMatch(User $user, ?string $pawnColor = null): ?Room
     {
         return Cache::lock('matchmaking-queue', 10)->block(5, function () use ($user, $pawnColor) {
             $this->gameSessionService->assertNoActiveSession($user);
 
             $room = DB::transaction(function () use ($user, $pawnColor) {
                 $room = Room::query()
-                    ->where('tipe', RoomType::QuickMatch)
                     ->where('status', GameStatus::Waiting)
                     ->lockForUpdate()
-                    ->first();
+                    ->get()
+                    ->first(function ($r) {
+                        $count = $r->gameSession?->players()->count() ?? 0;
+                        return $count < $r->jumlah_pemain;
+                    });
 
                 if ($room) {
                     $this->joinExistingRoom($room, $user, $pawnColor);
@@ -61,10 +64,12 @@ class MatchmakingService
                     return $room->fresh();
                 }
 
-                return $this->createRoomWithFirstPlayer($user, RoomType::QuickMatch, null, $pawnColor);
+                return null;
             });
 
-            $this->notifyRoomOutcome($room, $user);
+            if ($room) {
+                $this->notifyRoomOutcome($room, $user);
+            }
 
             return $room;
         });

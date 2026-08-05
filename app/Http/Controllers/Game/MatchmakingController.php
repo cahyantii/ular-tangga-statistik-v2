@@ -43,6 +43,13 @@ class MatchmakingController extends Controller
 
         $room = $this->matchmaking->quickMatch($request->user(), $validated['pawn_color'] ?? null);
 
+        if (!$room) {
+            return redirect()
+                ->route('game.multiplayer.lobby')
+                ->with('no_room_available', true)
+                ->with('selected_pawn_color', $validated['pawn_color'] ?? null);
+        }
+
         return redirect()->route('game.room.show', $room);
     }
 

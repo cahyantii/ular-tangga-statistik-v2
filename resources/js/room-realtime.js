@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Render pemain yang sudah bergabung
             data.players.forEach(p => {
                 html += `
-                    <div class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 flex items-center justify-between transition-all duration-300">
+                    <div class="rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50/50 dark:bg-dark-surface2 px-4 py-2 text-sm text-slate-700 dark:text-dark-text flex items-center justify-between transition-all duration-300">
                         <span>${escapeHtml(p.name)}</span>
                         <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     </div>
@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Render sisa slot kosong
             for (let i = 0; i < data.sisa_slot; i++) {
                 html += `
-                    <div class="rounded-lg border border-dashed border-slate-200 px-4 py-2 text-sm text-slate-400">
+                    <div class="rounded-lg border border-dashed border-slate-200 dark:border-dark-border px-4 py-2 text-sm text-slate-400 dark:text-dark-muted">
                         Menunggu pemain...
                     </div>
                 `;
