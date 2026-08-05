@@ -9,6 +9,7 @@ use App\Http\Requests\Game\JoinRoomRequest;
 use App\Models\Room;
 use App\Services\Game\MatchmakingService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -104,5 +105,32 @@ class MatchmakingController extends Controller
         $this->matchmaking->cancelRoom($room);
 
         return redirect()->route('dashboard')->with('status', 'Room dibatalkan.');
+    }
+
+    public function roomStatus(Room $room): JsonResponse
+    {
+        Gate::authorize('view', $room);
+
+        $room->load(['gameSession.players.user']);
+        $pemain = $room->gameSession?->players ?? collect();
+        $jumlahPemain = $room->jumlah_pemain;
+        $pemainCount = $pemain->count();
+        $sisaSlot = max(0, $jumlahPemain - $pemainCount);
+
+        $gameUrl = ($room->status === GameStatus::Playing && $room->gameSession)
+            ? route('game.show', $room->gameSession)
+            : null;
+
+        return response()->json([
+            'status' => $room->status->value,
+            'jumlah_pemain' => $jumlahPemain,
+            'pemain_count' => $pemainCount,
+            'sisa_slot' => $sisaSlot,
+            'players' => $pemain->map(fn ($p) => [
+                'id' => $p->id,
+                'name' => $p->user?->name ?? 'Pemain',
+            ])->values()->all(),
+            'game_url' => $gameUrl,
+        ]);
     }
 }

@@ -26,6 +26,7 @@ Route::prefix('multiplayer')->name('multiplayer.')->group(function () {
 });
 
 Route::get('/room/{room}', [MatchmakingController::class, 'showRoom'])->name('room.show');
+Route::get('/room/{room}/status', [MatchmakingController::class, 'roomStatus'])->name('room.status');
 Route::post('/room/{room}/cancel', [MatchmakingController::class, 'cancelRoom'])->name('room.cancel');
 
 Route::get('/{gameSession}', [GameController::class, 'show'])->name('show');

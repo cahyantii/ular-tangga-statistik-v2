@@ -28,7 +28,7 @@
             <p class="text-sm text-slate-500">Quick Match</p>
         @endif
 
-        <p class="mt-6 text-lg font-semibold text-emerald-700">
+        <p id="room-status-text" class="mt-6 text-lg font-semibold text-emerald-700">
             {{ $pemain->count() }}/{{ $jumlahPemain }} pemain &mdash;
             @if ($sisaSlot > 0)
                 menunggu {{ $sisaSlot }} pemain lagi&hellip;
@@ -37,10 +37,11 @@
             @endif
         </p>
 
-        <div class="mt-4 space-y-2 text-left">
+        <div id="room-players-list" class="mt-4 space-y-2 text-left">
             @foreach ($pemain as $p)
-                <div class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700">
-                    {{ $p->user?->name ?? 'Pemain' }}
+                <div class="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 flex items-center justify-between">
+                    <span>{{ $p->user?->name ?? 'Pemain' }}</span>
+                    <span class="inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
                 </div>
             @endforeach
             @for ($i = 0; $i < $sisaSlot; $i++)
@@ -67,5 +68,6 @@
 
     <div id="room-realtime-data"
          data-room-id="{{ $room->id }}"
-         data-room-url="{{ route('game.room.show', $room) }}"></div>
+         data-room-url="{{ route('game.room.show', $room) }}"
+         data-status-url="{{ route('game.room.status', $room) }}"></div>
 </x-player-layout>
