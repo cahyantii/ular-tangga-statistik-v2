@@ -2,6 +2,7 @@
 
 namespace App\Services\Notification;
 
+use App\Enums\AuthProvider;
 use App\Enums\UserRole;
 use App\Models\Feedback;
 use App\Models\GamePlayer;
@@ -222,6 +223,20 @@ class NotificationService
             'sender_id' => $user->id,
         ];
     }
+
+    public function payloadUserLoggedInAdmin(User $user, AuthProvider $provider, string $ipAddress): array
+    {
+        return [
+            'title' => 'Aktivitas Login Pengguna',
+            'message' => "{$user->name} ({$user->email}) baru saja login (Provider: {$provider->value}, IP: {$ipAddress}).",
+            'icon' => 'log-in',
+            'color' => 'blue',
+            'category' => 'user',
+            'url' => route('admin.management.users.index'),
+            'sender_id' => $user->id,
+        ];
+    }
+
 
     public function payloadImportSuccess(string $label, int $count): array
     {

@@ -12,7 +12,8 @@
         "laravel/reverb": "^1.0",
         "laravel/socialite": "^5.28",
         "laravel/tinker": "^2.10.1",
-        "maatwebsite/excel": "^3.1"
+        "maatwebsite/excel": "^3.1",
+        "resend/resend-laravel": "^1.4"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.4",

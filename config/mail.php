@@ -18,6 +18,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email Notification Feature Toggles (Quota Optimization)
+    |--------------------------------------------------------------------------
+    */
+    'notify_login' => env('MAIL_NOTIFY_LOGIN', false),
+    'notify_admin_login' => env('MAIL_NOTIFY_ADMIN_LOGIN', false),
+    'notify_admin_new_user' => env('MAIL_NOTIFY_ADMIN_NEW_USER', false),
+    'send_welcome' => env('MAIL_SEND_WELCOME', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Mailer Configurations
     |--------------------------------------------------------------------------
     |

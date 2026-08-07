@@ -28,16 +28,28 @@ class AuthMailService
 
     public function sendWelcome(User $user, AuthProvider $provider, Carbon $occurredAt): void
     {
+        if (! config('mail.send_welcome', false)) {
+            return;
+        }
+
         Mail::to($user->email)->queue(new WelcomeMail($user, $provider, $occurredAt));
     }
 
     public function sendLoginNotification(User $user, AuthProvider $provider, string $ipAddress, ?string $userAgent, Carbon $occurredAt): void
     {
+        if (! config('mail.notify_login', false)) {
+            return;
+        }
+
         Mail::to($user->email)->queue(new LoginNotificationMail($user, $provider, $ipAddress, $userAgent, $occurredAt));
     }
 
     public function notifyAdminsOfNewUser(User $newUser, AuthProvider $provider, Carbon $occurredAt): void
     {
+        if (! config('mail.notify_admin_new_user', false)) {
+            return;
+        }
+
         $totalUsers = User::count();
 
         $this->adminRecipients($newUser)->each(
@@ -47,10 +59,15 @@ class AuthMailService
 
     public function notifyAdminsOfLoginActivity(User $user, AuthProvider $provider, string $ipAddress, ?string $userAgent, Carbon $occurredAt): void
     {
+        if (! config('mail.notify_admin_login', false)) {
+            return;
+        }
+
         $this->adminRecipients($user)->each(
             fn (User $admin) => Mail::to($admin->email)->queue(new AdminLoginActivityMail($user, $provider, $ipAddress, $userAgent, $occurredAt))
         );
     }
+
 
     /**
      * Semua admin KECUALI pelaku event itu sendiri (kalau kebetulan admin
