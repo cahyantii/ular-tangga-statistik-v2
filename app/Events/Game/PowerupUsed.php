@@ -5,11 +5,11 @@ namespace App\Events\Game;
 use App\Events\Game\Concerns\BroadcastsToGameRoom;
 use App\Models\GamePlayer;
 use App\Models\GameSession;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class PowerupUsed implements ShouldBroadcast
+class PowerupUsed implements ShouldBroadcastNow
 {
     use BroadcastsToGameRoom;
     use Dispatchable;

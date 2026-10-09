@@ -61,6 +61,10 @@ return [
             ],
             'client_options' => [
                 // Guzzle client options: https://docs.guzzlephp.org/en/stable/request-options.html
+                // Broadcast dikirim di dalam request pemain, jadi dibatasi supaya
+                // Pusher yang lambat tidak menahan respons lempar dadu/jawab soal.
+                'connect_timeout' => 2,
+                'timeout' => 4,
             ],
         ],
 

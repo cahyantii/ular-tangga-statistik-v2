@@ -5,7 +5,7 @@ namespace App\Events\Game;
 use App\Events\Game\Concerns\BroadcastsToGameRoom;
 use App\Models\GamePlayer;
 use App\Models\GameSession;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -18,7 +18,7 @@ use Illuminate\Queue\SerializesModels;
  * Broadcastable sejak Tahap 12b — lihat BroadcastsToGameRoom untuk aturan
  * channel (hanya Multiplayer yang benar-benar broadcast).
  */
-class DiceRolled implements ShouldBroadcast
+class DiceRolled implements ShouldBroadcastNow
 {
     use BroadcastsToGameRoom;
     use Dispatchable;

@@ -36,8 +36,6 @@
 
     <script>
     function konektorEditor() {
-        const SVG_NS = 'http://www.w3.org/2000/svg';
-
         return {
             jumlahKolom: 0,
             jumlahPetak: 0,
@@ -49,9 +47,11 @@
             icon: '',
             message: null,
             popover: null,
-            svgEl: null,
+            geometry: null,
             existingLayerEl: null,
             previewLayerEl: null,
+            existingRenderers: [],
+            previewRenderer: null,
             konektorRoutes: {},
 
             init() {
@@ -62,7 +62,7 @@
                     this.jumlahKolom = e.detail.config.jumlah_kolom;
                     this.jumlahPetak = e.detail.config.jumlah_petak;
                     this.existingKonektor = e.detail.config.konektor;
-                    this.setupSvgOverlay();
+                    this.setupOverlayLayers();
                     this.renderExistingConnectors();
                 });
                 window.addEventListener('konektor:tile-click', (e) => this.handleClick(e.detail.tile));
@@ -72,69 +72,67 @@
                 return this.popover ? (this.konektorRoutes[this.popover.posisi] ?? null) : null;
             },
 
-            setupSvgOverlay() {
+            /**
+             * Dua layer overlay POLOS (bukan lagi satu <svg> besar) — ular/
+             * tangga sekarang dibangun lewat SnakeRenderer/LadderRenderer asli
+             * (window.BoardVisualsKit, lihat konektor-editor.js), persis sama
+             * dengan yang dipakai papan gameplay sungguhan (gradient badan,
+             * rantai sisik, rel kayu bertekstur, dst — bukan versi sederhana
+             * lama yang cuma satu garis tipis + 2 titik mata). Setiap renderer
+             * membangun <div class="board-object"> + <svg> LOKAL miliknya
+             * sendiri dan menumpuknya sebagai child biasa di salah satu layer
+             * ini, sama seperti BoardRenderer.js di papan gameplay.
+             */
+            setupOverlayLayers() {
                 const grid = document.getElementById('board-grid');
                 const totalRows = Math.ceil(this.jumlahPetak / this.jumlahKolom);
-                const svg = document.createElementNS(SVG_NS, 'svg');
-                svg.setAttribute('viewBox', `0 0 ${this.jumlahKolom} ${totalRows}`);
-                svg.setAttribute('preserveAspectRatio', 'none');
-                svg.style.gridRow = '1 / -1';
-                svg.style.gridColumn = '1 / -1';
-                svg.style.width = '100%';
-                svg.style.height = '100%';
-                svg.style.pointerEvents = 'none';
-                // WAJIB: tanpa `position`, SVG ini "static" sementara setiap
-                // sel .board-tile "relative" - urutan cat CSS meletakkan SEMUA
-                // elemen positioned SETELAH elemen static apa pun urutan DOM-nya,
-                // jadi SVG ini (kalaupun ditambahkan terakhir di DOM) akan tetap
-                // tertutup total oleh sel-sel papan. `position: relative` + z-index
-                // membuatnya ikut lapisan "positioned" supaya benar-benar di atas.
-                svg.style.position = 'relative';
-                svg.style.zIndex = '5';
-                grid.appendChild(svg);
-                this.svgEl = svg;
+                const coord = new window.BoardVisualsKit.CoordinateHelper(this.jumlahKolom, totalRows);
+                this.geometry = new window.BoardVisualsKit.BoardGeometry(coord);
 
-                // Dua layer terpisah dalam satu SVG yang sama: existingLayerEl
-                // digambar SEKALI (konektor yang sudah tersimpan, pudar/muted)
-                // dan tidak pernah ikut terhapus saat admin mulai memilih
-                // asal/tujuan baru - hanya previewLayerEl yang dibersihkan
-                // berulang kali lewat clearSvg(). Tanpa pemisahan ini, admin
-                // membuat tangga/ular baru tanpa tahu jalur mana yang sudah
-                // dipakai, sehingga jalurnya bisa saling menyilang tanpa
-                // disadari (lihat kasus 5 pasang konektor yang berpotongan di
-                // PapanPermainanSeeder sebelum diperbaiki).
-                this.existingLayerEl = document.createElementNS(SVG_NS, 'g');
-                this.previewLayerEl = document.createElementNS(SVG_NS, 'g');
-                svg.appendChild(this.existingLayerEl);
-                svg.appendChild(this.previewLayerEl);
+                // existingLayerEl digambar SEKALI (konektor yang sudah
+                // tersimpan, pudar/muted) dan tidak pernah ikut terhapus saat
+                // admin mulai memilih asal/tujuan baru - hanya previewLayerEl
+                // yang dibersihkan berulang kali lewat clearPreview(). Tanpa
+                // pemisahan ini, admin membuat tangga/ular baru tanpa tahu
+                // jalur mana yang sudah dipakai, sehingga jalurnya bisa saling
+                // menyilang tanpa disadari (lihat kasus 5 pasang konektor yang
+                // berpotongan di PapanPermainanSeeder sebelum diperbaiki).
+                this.existingLayerEl = document.createElement('div');
+                this.existingLayerEl.className = 'pointer-events-none absolute inset-0';
+                this.existingLayerEl.style.zIndex = '5';
+
+                this.previewLayerEl = document.createElement('div');
+                this.previewLayerEl.className = 'pointer-events-none absolute inset-0';
+                this.previewLayerEl.style.zIndex = '6';
+
+                grid.appendChild(this.existingLayerEl);
+                grid.appendChild(this.previewLayerEl);
+            },
+
+            /** Satu konektor tersimpan -> satu instance SnakeRenderer/LadderRenderer asli, opacity diturunkan (muted). */
+            buildConnectorRenderer(layer, jenis, start, end, themeIndex) {
+                const cfg = { start, end, themeIndex, cols: this.jumlahKolom, rows: Math.ceil(this.jumlahPetak / this.jumlahKolom) };
+                return jenis === 'ular'
+                    ? new window.BoardVisualsKit.SnakeRenderer(layer, this.geometry, cfg)
+                    : new window.BoardVisualsKit.LadderRenderer(layer, this.geometry, cfg);
             },
 
             renderExistingConnectors() {
                 if (!this.existingLayerEl) {
                     return;
                 }
+                this.existingRenderers.forEach((r) => r.destroy?.());
+                this.existingRenderers = [];
                 this.existingLayerEl.innerHTML = '';
 
+                let snakeIndex = 0;
+                let ladderIndex = 0;
                 this.existingKonektor.forEach((k) => {
-                    const from = this.cellPosition(k.posisi_awal);
-                    const to = this.cellPosition(k.posisi_akhir);
-                    if (!from || !to) {
-                        return;
-                    }
-                    if (k.jenis === 'ular') {
-                        this.drawSnakeCurve(from, to, this.existingLayerEl, true);
-                    } else {
-                        this.drawLadderCurve(from, to, this.existingLayerEl, true);
-                    }
+                    const themeIndex = k.jenis === 'ular' ? snakeIndex++ : ladderIndex++;
+                    const renderer = this.buildConnectorRenderer(this.existingLayerEl, k.jenis, k.posisi_awal, k.posisi_akhir, themeIndex);
+                    renderer.wrap.style.opacity = '0.55';
+                    this.existingRenderers.push(renderer);
                 });
-            },
-
-            cellPosition(posisi) {
-                const cell = document.querySelector('[data-posisi="' + posisi + '"]');
-                if (!cell) {
-                    return null;
-                }
-                return { row: parseInt(cell.style.gridRow, 10), col: parseInt(cell.style.gridColumn, 10) };
             },
 
             handleClick(tile) {
@@ -154,7 +152,7 @@
                     this.origin = tile;
                     this.destination = null;
                     this.message = null;
-                    this.clearSvg();
+                    this.clearPreview();
                     this.applyHighlights();
                     return;
                 }
@@ -176,7 +174,7 @@
                 this.label = '';
                 this.icon = '';
                 this.message = null;
-                this.clearSvg();
+                this.clearPreview();
                 this.applyHighlights();
             },
 
@@ -197,151 +195,23 @@
                 }
             },
 
-            clearSvg() {
-                if (this.previewLayerEl) {
-                    this.previewLayerEl.innerHTML = '';
+            clearPreview() {
+                if (this.previewRenderer) {
+                    this.previewRenderer.destroy?.();
+                    this.previewRenderer.wrap?.remove();
+                    this.previewRenderer = null;
                 }
             },
 
+            /** Preview konektor yang sedang dipilih admin (belum disimpan) — SnakeRenderer/LadderRenderer asli, opacity penuh. */
             drawPreview() {
-                this.clearSvg();
+                this.clearPreview();
                 if (!this.origin || !this.destination || !this.previewLayerEl) {
                     return;
                 }
-                const from = this.cellPosition(this.origin.posisi);
-                const to = this.cellPosition(this.destination.posisi);
-                if (!from || !to) {
-                    return;
-                }
-                if (this.jenis === 'ular') {
-                    this.drawSnakeCurve(from, to, this.previewLayerEl, false);
-                } else {
-                    this.drawLadderCurve(from, to, this.previewLayerEl, false);
-                }
-            },
-
-            // muted=true dipakai renderExistingConnectors() untuk konektor yang
-            // SUDAH tersimpan (opacity diturunkan) supaya jelas beda dari
-            // konektor baru yang sedang dipilih admin (opacity penuh).
-            //
-            // Badan digambar sebagai SATU poligon meruncing (moncong kecil ->
-            // rahang lebar -> leher menyempit -> badan -> ekor meruncing ke
-            // titik) - versi statis ringkas dari anatomi yang sama dipakai
-            // SnakeRenderer.js di papan permainan sungguhan. Sebelumnya cuma
-            // satu garis stroke tipis tanpa lebar sama sekali, makanya
-            // terlihat seperti belut/selang, bukan ular (lihat keluhan admin).
-            drawSnakeCurve(from, to, layer = this.previewLayerEl, muted = false) {
-                const x1 = from.col - 0.5, y1 = from.row - 0.5;
-                const x2 = to.col - 0.5, y2 = to.row - 0.5;
-                const dx = x2 - x1, dy = y2 - y1;
-                const len = Math.max(Math.sqrt(dx * dx + dy * dy), 0.001);
-                const ux = dx / len, uy = dy / len;
-                const px = -uy, py = ux;
-                const wave = Math.min(len * 0.32, 1.1);
-                const c1x = x1 + ux * len * 0.25 + px * wave, c1y = y1 + uy * len * 0.25 + py * wave;
-                const c2x = x1 + ux * len * 0.75 - px * wave, c2y = y1 + uy * len * 0.75 - py * wave;
-
-                const cubicPoint = (t) => {
-                    const mt = 1 - t;
-                    const a = mt * mt * mt, b = 3 * mt * mt * t, c = 3 * mt * t * t, d = t * t * t;
-                    return { x: a * x1 + b * c1x + c * c2x + d * x2, y: a * y1 + b * c1y + c * c2y + d * y2 };
-                };
-                const cubicTangent = (t) => {
-                    const mt = 1 - t;
-                    const tx = 3 * mt * mt * (c1x - x1) + 6 * mt * t * (c2x - c1x) + 3 * t * t * (x2 - c2x);
-                    const ty = 3 * mt * mt * (c1y - y1) + 6 * mt * t * (c2y - c1y) + 3 * t * t * (y2 - c2y);
-                    const tl = Math.max(Math.hypot(tx, ty), 0.0001);
-                    return { x: tx / tl, y: ty / tl };
-                };
-
-                // t=0 selalu di petak ASAL (kepala ular, posisi lebih tinggi)
-                // dan t=1 di petak TUJUAN (ujung ekor, posisi pendaratan) -
-                // konsisten dengan urutan asal->tujuan yang sudah dipakai
-                // di seluruh fungsi ini.
-                const HEAD_W = 0.36, NECK_W = 0.16, BODY_W = 0.22;
-                const widthAt = (t) => {
-                    if (t < 0.08) return HEAD_W * (0.4 + 0.6 * (t / 0.08));
-                    if (t < 0.18) return HEAD_W - (HEAD_W - NECK_W) * ((t - 0.08) / 0.10);
-                    if (t < 0.82) return NECK_W + (BODY_W - NECK_W) * Math.min(1, (t - 0.18) / 0.06);
-                    return BODY_W * (1 - (t - 0.82) / 0.18);
-                };
-
-                const STEPS = 18;
-                const left = [], right = [];
-                for (let i = 0; i <= STEPS; i++) {
-                    const t = i / STEPS;
-                    const p = cubicPoint(t);
-                    const tan = cubicTangent(t);
-                    const n = { x: -tan.y, y: tan.x };
-                    const w = Math.max(widthAt(t), 0.001) / 2;
-                    left.push({ x: p.x + n.x * w, y: p.y + n.y * w });
-                    right.push({ x: p.x - n.x * w, y: p.y - n.y * w });
-                }
-                const outlinePts = [...left, ...right.reverse()];
-                const d = `M ${outlinePts.map((p) => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' L ')} Z`;
-                const opacity = muted ? '0.4' : '1';
-
-                const path = document.createElementNS(SVG_NS, 'path');
-                path.setAttribute('d', d);
-                path.setAttribute('fill', '#e11d48');
-                path.setAttribute('stroke', '#9f1239');
-                path.setAttribute('stroke-width', '0.02');
-                path.setAttribute('stroke-linejoin', 'round');
-                path.setAttribute('opacity', opacity);
-                layer.appendChild(path);
-
-                // Mata: dua titik gelap kecil dekat moncong, supaya langsung
-                // dikenali sebagai wajah ular (bukan sekadar bentuk pipa).
-                const headPt = cubicPoint(0.05);
-                const headTan = cubicTangent(0.05);
-                const headNorm = { x: -headTan.y, y: headTan.x };
-                const eyeOffset = HEAD_W * 0.32;
-                [1, -1].forEach((side) => {
-                    const eye = document.createElementNS(SVG_NS, 'circle');
-                    eye.setAttribute('cx', (headPt.x + headNorm.x * eyeOffset * side).toFixed(3));
-                    eye.setAttribute('cy', (headPt.y + headNorm.y * eyeOffset * side).toFixed(3));
-                    eye.setAttribute('r', '0.035');
-                    eye.setAttribute('fill', '#1c1917');
-                    eye.setAttribute('opacity', opacity);
-                    layer.appendChild(eye);
-                });
-            },
-
-            drawLadderCurve(from, to, layer = this.previewLayerEl, muted = false) {
-                const x1 = from.col - 0.5, y1 = from.row - 0.5;
-                const x2 = to.col - 0.5, y2 = to.row - 0.5;
-                const dx = x2 - x1, dy = y2 - y1;
-                const len = Math.max(Math.sqrt(dx * dx + dy * dy), 0.001);
-                const ux = dx / len, uy = dy / len;
-                const px = -uy, py = ux;
-                const offset = 0.13;
-                const rail1 = [x1 + px * offset, y1 + py * offset, x2 + px * offset, y2 + py * offset];
-                const rail2 = [x1 - px * offset, y1 - py * offset, x2 - px * offset, y2 - py * offset];
-                const rungCount = Math.max(Math.round(len / 0.45), 2);
-                const opacity = muted ? '0.35' : '1';
-
-                const addLine = (x1, y1, x2, y2, color, width) => {
-                    const line = document.createElementNS(SVG_NS, 'line');
-                    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
-                    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-                    line.setAttribute('stroke', color);
-                    line.setAttribute('stroke-width', width);
-                    line.setAttribute('stroke-linecap', 'round');
-                    line.setAttribute('opacity', opacity);
-                    layer.appendChild(line);
-                };
-
-                addLine(rail1[0], rail1[1], rail1[2], rail1[3], '#92400E', '0.08');
-                addLine(rail2[0], rail2[1], rail2[2], rail2[3], '#92400E', '0.08');
-
-                for (let i = 0; i <= rungCount; i++) {
-                    const t = i / rungCount;
-                    addLine(
-                        rail1[0] + (rail1[2] - rail1[0]) * t, rail1[1] + (rail1[3] - rail1[1]) * t,
-                        rail2[0] + (rail2[2] - rail2[0]) * t, rail2[1] + (rail2[3] - rail2[1]) * t,
-                        '#D97706', '0.06'
-                    );
-                }
+                this.previewRenderer = this.buildConnectorRenderer(
+                    this.previewLayerEl, this.jenis, this.origin.posisi, this.destination.posisi, 0,
+                );
             },
 
             validationErrors() {

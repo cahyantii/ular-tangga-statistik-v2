@@ -1218,8 +1218,21 @@ class GameSessionService
 
     private function dispatchEvents(array $events): void
     {
+        // Event game di-broadcast LANGSUNG (ShouldBroadcastNow) di dalam request,
+        // setelah transaksi commit. Kalau Pusher sedang tidak bisa dihubungi,
+        // aksi pemain tidak boleh ikut gagal: state sudah tersimpan, dan klien
+        // lain tetap menyusul lewat polling state (lihat game-play.js). Begitu
+        // satu broadcast gagal, sisa event di batch ini dilewati supaya request
+        // tidak menunggu timeout berkali-kali (event game tidak punya listener
+        // lain selain broadcast).
         foreach ($events as $domainEvent) {
-            event($domainEvent);
+            try {
+                event($domainEvent);
+            } catch (\Throwable $e) {
+                report($e);
+
+                break;
+            }
         }
     }
 }

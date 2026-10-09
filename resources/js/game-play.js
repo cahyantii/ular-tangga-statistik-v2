@@ -1,5 +1,4 @@
 import { CoordinateHelper } from './board/CoordinateHelper.js';
-import * as Colyseus from 'colyseus.js';
 
 /**
  * Kontroler gameplay Vs Robot & Multiplayer — presentasi visual (papan modern,
@@ -1587,80 +1586,210 @@ document.addEventListener('DOMContentLoaded', () => {
         return actor.is_robot ? 'Robot' : (actor.nama ?? 'Pemain lain');
     }
 
-    let colyseusClient = null;
-    let colyseusRoom = null;
-    let isJoiningColyseus = false;
+    /**
+     * Sinyal realtime multiplayer: Pusher lewat Laravel Echo (window.Echo,
+     * lihat echo.js), presence channel `room.{room_id}` — channel yang sama
+     * dengan Waiting Room (room-realtime.js) dan dengan yang dipakai server
+     * (BroadcastsToGameRoom). Event dikirim SERVER sendiri setiap state
+     * berubah, termasuk lemparan dadu otomatis pemain AFK, jadi tidak ada
+     * klien yang perlu "memberi tahu" klien lain.
+     *
+     * Payload event sengaja minim: hanya dipakai sebagai sinyal "ada yang
+     * berubah", lalu state diambil ulang dari server (refreshFromServer).
+     * Polling state berjalan terus sebagai cadangan — rapat kalau Pusher
+     * tidak tersambung, jarang kalau tersambung — supaya permainan tetap
+     * sinkron tanpa refresh halaman walau websocket diblokir jaringan.
+     */
+    const REALTIME_EVENTS = [
+        'dice-rolled', 'pawn-moved', 'movement-blocked', 'connector-applied',
+        'question-presented', 'score-updated', 'game-finished', 'session-paused',
+        'session-resumed', 'player-finished', 'powerup-used',
+    ];
+    const POLL_INTERVAL_MS = 3000;
+    const POLL_INTERVAL_REALTIME_OK_MS = 12000;
+    const REMOTE_REFRESH_DEBOUNCE_MS = 250;
 
-    async function joinRealtimeChannel(session) {
-        if (session.mode !== 'multiplayer' || colyseusRoom || isJoiningColyseus) {
+    let realtimeChannelName = null;
+    let realtimeSubscribed = false;
+    let pollIntervalId = null;
+    let lastRefreshAt = 0;
+    let refreshDebounceId = null;
+    let refreshInFlight = false;
+    let pendingRemoteRefresh = false;
+    let localActionDepth = 0; // > 0 selama aksi kita sendiri (dadu/jawab) masih dianimasikan
+    let lastStateSignature = null;
+    let remoteDicePromise = Promise.resolve();
+
+    /**
+     * Sidik jari state sesi, dipakai supaya refresh berkala tidak merender
+     * ulang (dan mereset modal soal/timer) kalau tidak ada yang berubah.
+     * Sisa detik dibuang karena nilainya berubah tiap request.
+     */
+    function stateSignature(session) {
+        return JSON.stringify(session, (key, value) => (key.endsWith('_remaining_seconds') ? undefined : value));
+    }
+
+    function isRealtimeHealthy() {
+        return realtimeSubscribed && window.Echo?.connector?.pusher?.connection?.state === 'connected';
+    }
+
+    async function refreshFromServer() {
+        if (localActionDepth > 0 || refreshInFlight) {
+            pendingRemoteRefresh = true;
             return;
         }
 
-        isJoiningColyseus = true;
+        refreshInFlight = true;
 
         try {
-            if (!colyseusClient) {
-                const defaultColyseusUrl = (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + '/colyseus';
-                const colyseusUrl = import.meta.env.VITE_COLYSEUS_URL || defaultColyseusUrl;
-                colyseusClient = new Colyseus.Client(colyseusUrl);
+            const response = await fetch(stateUrl, { headers: { Accept: 'application/json' } });
+            if (!response.ok) {
+                return;
             }
-            colyseusRoom = await colyseusClient.joinOrCreate("game_room", { 
-                token: csrfToken,
-                session_id: session.id,
-                player_id: myGamePlayerId
-            });
 
-            console.log("Joined Colyseus room successfully", colyseusRoom.roomId);
+            const session = await response.json();
+            lastRefreshAt = Date.now();
 
-            let diceRollPromise = Promise.resolve();
+            if (localActionDepth > 0) {
+                pendingRemoteRefresh = true;
+                return;
+            }
 
-            colyseusRoom.onMessage("state_changed", (message) => {
-                const eventName = message.event;
-                const actorId = message.actor ?? null;
-                
-                if (actorId !== null && actorId === myGamePlayerId) {
-                    return; // Ignore our own broadcasts
-                }
-
-                if (eventName === 'dice-rolled') {
-                    // Animasi dadu dijalankan dan disimpan promisenya
-                    diceRollPromise = animateDiceRoll(message.raw_nilai_dadu ?? message.nilai_dadu ?? 1, message.double_dice_active ?? false);
-                    return; // Tunggu event pawn-moved untuk me-loadState
-                }
-                
-                if (eventName === 'mystery-applied') {
-                    showToast(`${resolveActorName(actorId)} mendapatkan item Misteri: ${message.item_name ?? 'Item'}!`);
-                    pushLog('info', `${resolveActorName(actorId)} mendapatkan power-up!`);
-                    // We let it continue to loadState() so the pawn movement syncs
-                }
-
-                if (REALTIME_EVENT_LABELS[eventName]) {
-                    const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
-                    showToast(label);
-                    pushLog('info', label);
-                }
-                
-                diceRollPromise.then(() => {
-                    loadState();
-                });
-            });
-
-            colyseusRoom.onMessage("error", (msg) => {
-                showToast(msg);
-                pushLog('error', msg);
-            });
-
-        } catch (e) {
-            console.error("Colyseus JOIN ERROR", e);
+            if (stateSignature(session) !== lastStateSignature) {
+                applySessionState(session);
+            }
+        } catch (error) {
+            // Jaringan putus sesaat: dicoba lagi pada polling berikutnya.
         } finally {
-            isJoiningColyseus = false;
+            refreshInFlight = false;
+
+            if (pendingRemoteRefresh && localActionDepth === 0) {
+                pendingRemoteRefresh = false;
+                scheduleRemoteRefresh();
+            }
+        }
+    }
+
+    /**
+     * Satu aksi lawan memancarkan beberapa event sekaligus (dadu, pion, soal,
+     * skor) — digabung jadi satu refresh, dan menunggu animasi dadu lawan.
+     */
+    function scheduleRemoteRefresh() {
+        clearTimeout(refreshDebounceId);
+        refreshDebounceId = setTimeout(() => {
+            remoteDicePromise.catch(() => {}).then(() => refreshFromServer());
+        }, REMOTE_REFRESH_DEBOUNCE_MS);
+    }
+
+    /**
+     * Dipanggil di awal/akhir aksi kita sendiri. Selama aksi berjalan, hasil
+     * dan animasinya datang dari respons HTTP aksi itu, jadi refresh dari
+     * sinyal realtime/polling ditunda supaya pion tidak dianimasikan dua kali.
+     */
+    function beginLocalAction() {
+        localActionDepth += 1;
+    }
+
+    function endLocalAction() {
+        localActionDepth = Math.max(0, localActionDepth - 1);
+
+        if (localActionDepth === 0 && pendingRemoteRefresh) {
+            pendingRemoteRefresh = false;
+            scheduleRemoteRefresh();
+        }
+    }
+
+    function handleRealtimeEvent(eventName, payload) {
+        const actorId = payload?.game_player_id
+            ?? payload?.disconnected_game_player_id
+            ?? payload?.reconnected_game_player_id
+            ?? null;
+        const isMine = actorId !== null && actorId === myGamePlayerId;
+
+        if (!isMine) {
+            if (eventName === 'dice-rolled') {
+                remoteDicePromise = animateDiceRoll(payload?.nilai_dadu ?? 1, false);
+            } else if (REALTIME_EVENT_LABELS[eventName]) {
+                const label = REALTIME_EVENT_LABELS[eventName](resolveActorName(actorId));
+                showToast(label);
+                pushLog('info', label);
+            }
+        }
+
+        scheduleRemoteRefresh();
+    }
+
+    function startStatePolling(session) {
+        if (session.mode !== 'multiplayer' || pollIntervalId) {
+            return;
+        }
+
+        pollIntervalId = setInterval(() => {
+            if (document.hidden) {
+                return;
+            }
+
+            // Jawaban duel lawan tidak punya event broadcast, jadi selama duel
+            // polling tetap rapat walau Pusher tersambung.
+            const needFastPolling = !isRealtimeHealthy() || latestSession?.status === 'duel';
+            const minGap = needFastPolling ? POLL_INTERVAL_MS : POLL_INTERVAL_REALTIME_OK_MS;
+
+            if (Date.now() - lastRefreshAt >= minGap - 200) {
+                refreshFromServer();
+            }
+        }, POLL_INTERVAL_MS);
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && pollIntervalId) {
+            refreshFromServer();
+        }
+    });
+
+    function joinRealtimeChannel(session) {
+        if (session.mode !== 'multiplayer' || session.status === 'finished' || session.status === 'abandoned') {
+            return;
+        }
+
+        startStatePolling(session);
+
+        if (realtimeChannelName || !window.Echo || !session.room_id) {
+            return;
+        }
+
+        realtimeChannelName = `room.${session.room_id}`;
+
+        try {
+            const channel = window.Echo.join(realtimeChannelName);
+
+            channel
+                .subscribed(() => {
+                    realtimeSubscribed = true;
+                    refreshFromServer();
+                })
+                .error((error) => {
+                    realtimeSubscribed = false;
+                    console.warn('[Realtime] Gagal subscribe channel room, memakai polling.', error);
+                });
+
+            REALTIME_EVENTS.forEach((eventName) => {
+                channel.listen(`.${eventName}`, (payload) => handleRealtimeEvent(eventName, payload));
+            });
+        } catch (error) {
+            realtimeSubscribed = false;
+            console.warn('[Realtime] Echo tidak tersedia, memakai polling.', error);
         }
     }
 
     function leaveRealtimeChannel(session) {
-        if (colyseusRoom) {
-            colyseusRoom.leave();
-            colyseusRoom = null;
+        clearInterval(pollIntervalId);
+        pollIntervalId = null;
+        clearTimeout(refreshDebounceId);
+
+        if (realtimeChannelName) {
+            window.Echo?.leave(realtimeChannelName);
+            realtimeChannelName = null;
+            realtimeSubscribed = false;
         }
     }
 
@@ -1937,6 +2066,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applySessionState(session, { pawnMode = 'diff', skipPawnIds = new Set(), deferOutcome = false } = {}) {
         latestSession = session;
+        lastStateSignature = stateSignature(session);
 
         if (pawnMode === 'instant') {
             session.players.forEach((p) => placePawnAt(getOrCreatePawnEl(p), p.posisi_pion, stackIndexAt(p.posisi_pion, p.id, session.players)));
@@ -1991,6 +2121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function rollDice() {
         rollButton.disabled = true;
+        beginLocalAction();
 
         const me = latestSession?.players.find((p) => p.id === myGamePlayerId);
         const fromPosisi = me ? me.posisi_pion : 1;
@@ -2005,17 +2136,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const body = forcedRoll ? { forced_roll: parseInt(forcedRoll, 10) } : {};
             const result = await postJson(rollUrl, body);
 
-            if (colyseusRoom) {
-                // Beri tahu Colyseus untuk mem-broadcast ke klien lain
-                colyseusRoom.send("broadcast_event", { 
-                    event: 'dice-rolled', 
-                    actor: myGamePlayerId,
-                    nilai_dadu: result.nilai_dadu ?? 1,
-                    raw_nilai_dadu: result.raw_nilai_dadu,
-                    double_dice_active: result.double_dice_active ?? false
-                });
-                colyseusRoom.send("broadcast_event", { event: 'pawn-moved', actor: myGamePlayerId });
-            }
 
             await animateDiceRoll(result.raw_nilai_dadu ?? result.nilai_dadu ?? 1, result.double_dice_active ?? false);
 
@@ -2061,6 +2181,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } finally {
             rollButton.disabled = false;
+            endLocalAction();
         }
     }
 
@@ -2191,15 +2312,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function submitDuelAnswer(soalId, jawaban, timeTakenMs, selectedButtonEl = null) {
         clearInterval(duelCountdownInterval);
+        beginLocalAction();
 
         try {
             const duelAnswerUrl = answerUrl.replace('/answer', '/duel-answer');
             const result = await postJson(duelAnswerUrl, { soal_id: soalId, jawaban, time_taken_ms: timeTakenMs });
 
             if (result.type === 'duel_answered') {
-                if (colyseusRoom) {
-                    colyseusRoom.send("broadcast_event", { event: 'duel-progress', actor: myGamePlayerId });
-                }
                 
                 playSound(result.benar ? 'correct_answer' : 'false_answer');
 
@@ -2239,9 +2358,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // the duel during our 1.8s delay.
                 await loadState();
             } else if (result.type === 'duel_finished') {
-                if (colyseusRoom) {
-                    colyseusRoom.send("broadcast_event", { event: 'duel-finished', actor: myGamePlayerId });
-                }
 
                 duelFeedbackEl.textContent = 'Semua soal telah dijawab. Memproses hasil duel...';
                 duelFeedbackEl.classList.remove('hidden');
@@ -2275,6 +2391,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showToast(error.message);
             hideDuel();
+        } finally {
+            endLocalAction();
         }
     }
 
@@ -2379,17 +2497,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const robotBefore = latestSession?.players.find((p) => p.is_robot);
         const meBefore = latestSession?.players.find((p) => p.id === myGamePlayerId);
         const myFromPosisi = meBefore ? meBefore.posisi_pion : 1;
+        beginLocalAction();
 
         try {
             const result = await postJson(answerUrl, { soal_id: soalId, jawaban });
-
-            // --- Broadcast ke sesama pemain (multiplayer) ---
-            if (colyseusRoom) {
-                colyseusRoom.send('broadcast_event', result.mystery_applied
-                    ? { event: 'mystery-applied', actor: myGamePlayerId, item_id: result.mystery_effect?.item_id, item_name: result.mystery_effect?.item_name }
-                    : { event: 'score-updated', actor: myGamePlayerId }
-                );
-            }
 
             // --- Tampilkan feedback jawaban & tunggu pemain membacanya ---
             handleAnswerFeedback(result, selectedButtonEl);
@@ -2435,6 +2546,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             showToast(error.message);
             hideQuestion();
+        } finally {
+            endLocalAction();
         }
     }
 

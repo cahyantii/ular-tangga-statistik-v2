@@ -6,11 +6,11 @@ use App\Events\Game\Concerns\BroadcastsToGameRoom;
 use App\Models\GamePlayer;
 use App\Models\GameSession;
 use App\Models\Soal;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class QuestionPresented implements ShouldBroadcast
+class QuestionPresented implements ShouldBroadcastNow
 {
     use BroadcastsToGameRoom;
     use Dispatchable;
